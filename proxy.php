@@ -340,42 +340,70 @@ function fetchUrl($url, $headers = [], $postData = null, $timeout = 10)
         return json_encode(['error' => 'No URL provided']);
 
     $verifySSL = getenv('APP_ENV') !== 'local';
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    // Masquerade as a real browser to prevent blocks
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : false);
 
-    if (!empty($headers)) {
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        // Masquerade as a real browser to prevent blocks
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : false);
+
+        if (!empty($headers)) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        }
+        
+        if ($postData !== null) {
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        }
+
+        $output = curl_exec($ch);
+        $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($output === false) {
+            return json_encode(['error' => "CURL Error: $error"]);
+        }
+
+        if ($httpCode !== 200) {
+            return json_encode([
+                'error' => "Upstream API returned status $httpCode",
+                'response' => json_decode($output, true) ?: $output
+            ]);
+        }
+
+        return $output;
+    } else {
+        $headerStr = "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\n";
+        if (!empty($headers)) {
+            $headerStr .= implode("\r\n", $headers) . "\r\n";
+        }
+        $opts = [
+            'http' => [
+                'method'  => $postData !== null ? 'POST' : 'GET',
+                'header'  => $headerStr,
+                'timeout' => $timeout,
+            ],
+            'ssl' => [
+                'verify_peer'      => $verifySSL,
+                'verify_peer_name' => $verifySSL,
+            ]
+        ];
+        if ($postData !== null) {
+            $opts['http']['content'] = $postData;
+        }
+        $context = stream_context_create($opts);
+        $output = @file_get_contents($url, false, $context);
+        if ($output === false) {
+            return json_encode(['error' => 'HTTP request failed']);
+        }
+        return $output;
     }
-    
-    if ($postData !== null) {
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-    }
-
-    $output = curl_exec($ch);
-    $error = curl_error($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($output === false) {
-        return json_encode(['error' => "CURL Error: $error"]);
-    }
-
-    if ($httpCode !== 200) {
-        return json_encode([
-            'error' => "Upstream API returned status $httpCode",
-            'response' => json_decode($output, true) ?: $output
-        ]);
-    }
-
-    return $output;
 }
 
 // --- Configuration ---
@@ -523,37 +551,51 @@ switch ($type) {
         exit;
 
     case 'translate':
-        // Google Translate (GTX) - Free endpoint
-        // URL: https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=TEXT
         $text = $query;
         if (empty($text)) {
             echo json_encode(['error' => 'No text provided']);
             exit;
         }
 
-        $gtxUrl = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=" . urlencode($text);
-
-        // Use fetchUrl helper (handles SSL etc)
-        $response = fetchUrl($gtxUrl);
+        // 1. Try Google Translate endpoint with client=dict-chrome-ex
+        $dictUrl = "https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ar&dt=t&q=" . urlencode($text);
+        $response = fetchUrl($dictUrl);
         $data = json_decode($response, true);
 
-        // GTX returns [[["Translated Text", "Original Text", ...], ...], ...]
-        if ($data && isset($data[0])) {
+        if ($data && isset($data[0]) && is_array($data[0])) {
             $translatedText = "";
             foreach ($data[0] as $segment) {
                 if (isset($segment[0])) {
                     $translatedText .= $segment[0];
                 }
             }
+            if (!empty($translatedText)) {
+                echo json_encode([
+                    'responseStatus' => 200,
+                    'responseData' => [
+                        'translatedText' => $translatedText
+                    ]
+                ]);
+                exit;
+            }
+        }
+
+        // 2. Fallback: Try MyMemory API
+        $mymemoryUrl = "https://api.mymemory.translated.net/get?q=" . urlencode($text) . "&langpair=en|ar";
+        $mmResponse = fetchUrl($mymemoryUrl);
+        $mmData = json_decode($mmResponse, true);
+
+        if ($mmData && isset($mmData['responseData']['translatedText'])) {
             echo json_encode([
                 'responseStatus' => 200,
                 'responseData' => [
-                    'translatedText' => $translatedText
+                    'translatedText' => $mmData['responseData']['translatedText']
                 ]
             ]);
-        } else {
-            echo json_encode(['error' => 'Translation failed']);
+            exit;
         }
+
+        echo json_encode(['error' => 'Translation failed']);
         exit;
 
     case 'anime':

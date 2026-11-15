@@ -17,6 +17,10 @@
 	encode zstd br gzip
 
 	route {
+		# One canonical host: send www to the bare domain (path and query kept)
+		@www host www.muhafid.com
+		redir @www https://muhafid.com{uri} permanent
+
 		# Never serve VCS metadata, dotfiles (.git, .env, .htaccess...), raw data,
 		# docs, legacy pages, or build/server config. .htaccess is NOT read by
 		# Caddy/FrankenPHP, so these rules replace its <FilesMatch> blocks.

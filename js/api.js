@@ -18,6 +18,9 @@ export async function handleSearch() {
         const resp = await fetch(`${config.WORKER_URL}?query=${encodeURIComponent(query)}&type=${type}`);
         const data = await resp.json();
 
+        // Drop responses that arrive after the user switched type or changed the query
+        if (state.type !== type || searchQuery.value.trim() !== query) return;
+
         if (data) showSearchResults(data, type);
     } catch (err) {
         console.error('Search Error:', err);

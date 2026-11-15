@@ -118,13 +118,15 @@ function setupEventListeners() {
             const scoreText = document.getElementById('score-text');
             const posterImg = document.getElementById('poster-img');
 
-            if (state.type === 'manual') {
-                // UI Updates
-                const searchResults = document.getElementById('search-results');
-                const searchQuery = document.getElementById('search-query');
-                searchResults.classList.add('hidden');
-                searchQuery.value = '';
+            // Clear the previous type's query and results so they can't be
+            // re-opened and selected under the new type (e.g. a game saved as a book)
+            const searchResults = document.getElementById('search-results');
+            const searchQuery = document.getElementById('search-query');
+            searchResults.classList.add('hidden');
+            searchResults.innerHTML = '';
+            searchQuery.value = '';
 
+            if (state.type === 'manual') {
                 posterImg.classList.add('manual-mode');
                 posterImg.classList.add('empty-poster');
 

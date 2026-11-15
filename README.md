@@ -21,15 +21,15 @@ Conservative Classification of Creative Content (CCCC)
 
 ## العربية
 
-> **باختصار:** محافظ أداة مجانية تخليك تعرف شنو داخل أي عمل (لعبة، أنمي، مسلسل، فيلم، مانجا، كتاب) وبأي درجة، قبل ما تشوفه أو تلعبه أو تقراه، وتطلع لك بطاقة جاهزة تشاركها. التصنيف من المتابع للمتابع، والمشروع مفتوح المصدر ويمديك تساهم فيه.
+> **باختصار:** محافظ منصة تصنّف فيها الأعمال اللي خلّصتها (لعبة، أنمي، مسلسل، فيلم، مانجا، كتاب) وتقول للناس شنو فيها وبأي درجة، عشان تفيدهم قبل ما يبدأون فيها، من غير حرق. تحدد المحاذير وتطلع لك بطاقة جاهزة تشاركها. التصنيف من المتابع للمتابع، والمشروع مفتوح المصدر ويمديك تساهم فيه.
 
-**محافظ** أداة مجانية مفتوحة المصدر تُعرّفك بما يحتويه العمل الفني وبمقدار ذلك قبل أن تشاهده أو تلعبه أو تقرأه، وفق معايير محافظة مستمدّة من القيم الإسلامية. تختار العمل، وتحدّد ما فيه من محاذير ودرجة كلٍّ منها، فتحصل على بطاقة أنيقة جاهزة للمشاركة.
+**محافظ** منصة مجانية مفتوحة المصدر يصنّف فيها المستهلك الأعمال الفنية التي أنهاها، فيبيّن ما تحتويه من محاذير ومقدار كلٍّ منها، ليفيد بذلك من يريد مشاهدتها أو لعبها أو قراءتها لاحقًا، وفق معايير محافظة مستمدّة من القيم الإسلامية. تختار العمل الذي أنهيته، وتحدّد ما فيه من محاذير ودرجة كلٍّ منها، فتحصل على بطاقة أنيقة جاهزة للمشاركة.
 
 لا يتطلب الموقع إنشاء حساب ولا تسجيل دخول.
 
 ### نبذة عن المشروع
 
-تبيّن التصنيفات العمرية الشائعة، مثل ESRB وPEGI وGCAM، الفئة العمرية التي يناسبها العمل، لكنها لا تفصّل ما يحتويه ولا مقداره. ويهدف محافظ إلى سدّ هذه الفجوة بوصف المحتوى ودرجة حضوره وصفًا واضحًا، دون كشف أحداث العمل.
+تبيّن التصنيفات العمرية الشائعة، مثل ESRB وPEGI وGCAM، الفئة العمرية التي يناسبها العمل، لكنها لا تفصّل ما يحتويه ولا مقداره. ويهدف محافظ إلى سدّ هذه الفجوة: فمن أنهى عملًا يصف لغيره محتواه ودرجة حضوره وصفًا واضحًا، دون كشف أحداثه.
 
 ### مبادئ المشروع
 
@@ -39,9 +39,9 @@ Conservative Classification of Creative Content (CCCC)
 
 ### لمن هذه الأداة؟
 
-- **للأسر والآباء** الذين يرغبون في معرفة محتوى العمل قبل أن يطّلع عليه أبناؤهم.
+- **لكل من أنهى عملًا** ويريد أن يُطلع غيره على ما فيه دون حرق للأحداث.
 - **للمراجعين وصنّاع المحتوى** الذين يقدّمون توصياتهم لجمهور محافظ.
-- **لكل من يريد قرارًا واعيًا** قبل أن يبدأ عملًا جديدًا، دون أن تُحرق عليه أحداثه.
+- **للأسر والآباء ولكل من يريد قرارًا واعيًا** قبل أن يبدأ عملًا جديدًا أو قبل أن يطّلع عليه أبناؤهم: يطّلعون على البطاقات التي يشاركها المُصنِّفون.
 
 ### الأنواع المدعومة
 
@@ -73,26 +73,27 @@ Conservative Classification of Creative Content (CCCC)
 
 ### الموجودات: ما قد يحتويه العمل
 
-| المجموعة | المحذور | الوصف |
-|---|---|---|
-| محاذير عقدية وفكرية | **كفريات** | ما يروّج للكفر والإلحاد ويسخر من الأديان والذات الإلهية، بما في ذلك تقديم الفلسفات والعقائد المنحرفة بصورة إيجابية أو محايدة. |
-| | **سحر** | القوى والرموز والتعويذات المرتبطة بالسحر والتنجيم ورؤية المستقبل. |
-| انحرافات أخلاقية وصادمة | **جنس** | مشاهد جنسية إيحائية أو مباشرة. |
-| | **تعرّي** | ظهور أشخاص بجسد عارٍ كليًّا أو جزئيًّا. |
-| | **شذوذ** | عرض الشذوذ الجنسي أو تمجيده بأشكاله المختلفة، كالمثلية والتحوّل الجنسي. |
-| | **صادم** | محتوى يُلحق أثرًا نفسيًّا بالمشاهد، من عنف دموي وأشلاء واغتصاب وانتحار وتعذيب وما يثير الاشمئزاز الشديد. |
-| | **مفاسد** | الترويج للقمار أو تعاطي المخدرات أو إظهارهما بصورة إيجابية، فضلًا عن المشاهد المثيرة للغرائز كالإيحاءات الجسدية والإغراء غير الصريح. |
-| استغلال مالي وسلوكي<br>(خاص بالألعاب) | **إدمانيّات** | تصميم يدفع اللاعب إلى العودة المستمرة والمتابعة اليومية لتحقيق التقدم. |
-| | **تبذير** | تصميم يربط التقدم بالمال المُنفَق على أغراض داخل اللعبة. |
-| | **قمار** | تصميم يشجّع على شراء الصناديق ذات المحتوى العشوائي وأنظمة السحب. |
+| المجموعة | المحذور | الأيقونة (شديد · متوسط · خفيف) | الوصف |
+|---|---|---|---|
+| محاذير عقدية وفكرية | **كفريات** | <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA1.png" alt="كفريات · 1" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA2.png" alt="كفريات · 2" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA3.png" alt="كفريات · 3" height="44"> | ما يروّج للكفر والإلحاد ويسخر من الأديان والذات الإلهية، بما في ذلك تقديم الفلسفات والعقائد المنحرفة بصورة إيجابية أو محايدة. |
+| | **سحر** | <img src="assets/icons/%D8%B3%D8%AD%D8%B11.png" alt="سحر · 1" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B12.png" alt="سحر · 2" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B13.png" alt="سحر · 3" height="44"> | القوى والرموز والتعويذات المرتبطة بالسحر والتنجيم ورؤية المستقبل. |
+| انحرافات أخلاقية وصادمة | **جنس** | <img src="assets/icons/%D8%AC%D9%86%D8%B31.png" alt="جنس · 1" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B32.png" alt="جنس · 2" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B33.png" alt="جنس · 3" height="44"> | مشاهد جنسية إيحائية أو مباشرة. |
+| | **تعرّي** | <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A1.png" alt="تعرّي · 1" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A2.png" alt="تعرّي · 2" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A3.png" alt="تعرّي · 3" height="44"> | ظهور أشخاص بجسد عارٍ كليًّا أو جزئيًّا. |
+| | **شذوذ** | <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B01.png" alt="شذوذ · 1" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B02.png" alt="شذوذ · 2" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B03.png" alt="شذوذ · 3" height="44"> | عرض الشذوذ الجنسي أو تمجيده بأشكاله المختلفة، كالمثلية والتحوّل الجنسي. |
+| | **صادم** | <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%851.png" alt="صادم · 1" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%852.png" alt="صادم · 2" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%853.png" alt="صادم · 3" height="44"> | محتوى يُلحق أثرًا نفسيًّا بالمشاهد، من عنف دموي وأشلاء واغتصاب وانتحار وتعذيب وما يثير الاشمئزاز الشديد. |
+| | **مفاسد** | <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF1.png" alt="مفاسد · 1" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF2.png" alt="مفاسد · 2" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF3.png" alt="مفاسد · 3" height="44"> | الترويج للقمار أو تعاطي المخدرات أو إظهارهما بصورة إيجابية، فضلًا عن المشاهد المثيرة للغرائز كالإيحاءات الجسدية والإغراء غير الصريح. |
+| استغلال مالي وسلوكي<br>(خاص بالألعاب) | **إدمانيّات** | <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA1.png" alt="إدمانيّات · 1" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA2.png" alt="إدمانيّات · 2" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA3.png" alt="إدمانيّات · 3" height="44"> | تصميم يدفع اللاعب إلى العودة المستمرة والمتابعة اليومية لتحقيق التقدم. |
+| | **تبذير** | <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B11.png" alt="تبذير · 1" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B12.png" alt="تبذير · 2" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B13.png" alt="تبذير · 3" height="44"> | تصميم يربط التقدم بالمال المُنفَق على أغراض داخل اللعبة. |
+| | **قمار** | <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B11.png" alt="قمار · 1" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B12.png" alt="قمار · 2" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B13.png" alt="قمار · 3" height="44"> | تصميم يشجّع على شراء الصناديق ذات المحتوى العشوائي وأنظمة السحب. |
 
 ### المستثنيات: ما يخلو منه العمل
 
 يفترض التصنيف المحافظ أن جميع الأعمال الإبداعية تحتوي على الموسيقى والأغاني، والألفاظ النابية، والعلاقات خارج إطار الزواج. فإن خلا العمل من شيء منها، أشار المُصنِّف إلى ذلك بإحدى الشارات الخضراء الآتية:
 
-- **لا موسيقى**
-- **لا ألفاظ نابية**
-- **لا علاقات حب**
+
+<div align="center">
+<img src="assets/icons/%D9%85%D9%88%D8%B3%D9%8A%D9%82%D9%890.png" alt="لا موسيقى" height="96"> <img src="assets/icons/%D8%A3%D9%84%D9%81%D8%A7%D8%B8%20%D9%86%D8%A7%D8%A8%D9%8A%D8%A90.png" alt="لا ألفاظ نابية" height="96"> <img src="assets/icons/%D8%B9%D9%84%D8%A7%D9%82%D8%A7%D8%AA%20%D8%AD%D8%A80.png" alt="لا علاقات حب" height="96">
+</div>
 
 للاطلاع على الشرح الكامل، راجع [دليل الدرجات والتصانيف](https://muhafid.com/guide).
 
@@ -119,6 +120,10 @@ Conservative Classification of Creative Content (CCCC)
 - أبلغ عن خطأ، أو تصنيف ناقص، أو فكرة: افتح [Issue](https://github.com/Avuduru/cccc/issues) جديدًا.
 - عدّل المشروع مباشرةً عبر طلب دمج (Pull Request): راجع [قسم المطوّرين](#for-developers).
 
+### الترخيص
+
+المشروع مرخّص بموجب [رخصة MIT](LICENSE).
+
 ### المساهمون والشكر
 
 - **هادي** ([Hadi Alahmad](https://github.com/hadealahmad) · [hadealahmad.com](https://hadealahmad.com)) — أسهم في تصميم الموقع وتطويره.
@@ -133,15 +138,15 @@ Conservative Classification of Creative Content (CCCC)
 
 ## English
 
-> **In short:** Muhafid is a free tool that tells you what a game, anime, series, movie, manga, or book contains, and how much, before you watch, play, or read it, and gives you a card to share. Ratings come from consumers, not an authority, and the project is open source.
+> **In short:** Muhafid is a platform where you rate works you have already finished — games, anime, series, movies, manga, books — and tell others what they contain and how strong it is, so they can decide before starting, without spoilers. You mark the warnings and get a card to share. Ratings come from consumers, not an authority, and the project is open source.
 
-**Muhafid** is a free, open-source website that tells you what a movie, series, anime, game, or book contains, and how much of it, *before* you watch, play, or read it — based on conservative Islamic values. Pick a work, mark what it contains and how strong it is, and get a clean card you can share.
+**Muhafid** is a free, open-source platform where you rate a movie, series, anime, game, manga, or book *after you have finished it*, recording what it contains and how strong each element is, so that others can decide before they watch, play, or read it — based on conservative Islamic values. Pick the work, mark what it contains and how strong it is, and get a clean card you can share.
 
 No account or sign-up needed.
 
 ### About the project
 
-Common age ratings such as ESRB, PEGI, and GCAM tell you which age group a work suits, but not what it contains or how much. Muhafid fills that gap by describing the content and how prominent it is, clearly and without spoilers.
+Common age ratings such as ESRB, PEGI, and GCAM tell you which age group a work suits, but not what it contains or how much. Muhafid fills that gap: whoever has finished a work describes its content and how prominent it is, clearly and without spoilers.
 
 ### Principles
 
@@ -151,9 +156,9 @@ Common age ratings such as ESRB, PEGI, and GCAM tell you which age group a work 
 
 ### Who is it for?
 
-- **Families and parents** who want to check a work before their kids see it.
+- **Anyone who has finished a work** and wants to tell others what is in it, without spoilers.
 - **Reviewers and creators** who recommend content to a conservative audience.
-- **Anyone** who wants to decide before starting something new — without spoilers.
+- **Families, parents, and anyone deciding what to start next**, who read the cards classifiers share — for example before their kids see a work.
 
 ### What can you rate?
 
@@ -179,22 +184,26 @@ Anime · Manga · Movies · TV series · Games · Books — plus **manual mode**
 
 **Warnings (what a work may contain)**
 
-| Group | Warning | Meaning |
-|---|---|---|
-| Belief | **Kufr** (كفريات) | Promotes disbelief or atheism, mocks religion or God, or presents false beliefs in a positive or neutral way. |
-| | **Magic** (سحر) | Sorcery, spells, fortune-telling, and occult symbols. |
-| Morals & shock | **Sex** (جنس) | Sexual scenes, suggestive or explicit. |
-| | **Nudity** (تعرّي) | Full or partial nudity. |
-| | **LGBT** (شذوذ) | Showing or glorifying homosexuality, gender transition, and similar. |
-| | **Shocking** (صادم) | Gore, dismemberment, rape, suicide, torture, or deeply disturbing content. |
-| | **Vices** (مفاسد) | Promoting gambling or drugs, or seductive and suggestive scenes. |
-| Money & habits<br>(games only) | **Addictive** (إدمانيّات) | Built to make you come back every day to progress. |
-| | **Pay to win** (تبذير) | Progress is tied to spending real money. |
-| | **Gambling** (قمار) | Loot boxes and gacha pulls. |
+| Group | Warning | Icon (severe · moderate · mild) | Meaning |
+|---|---|---|---|
+| Belief | **Kufr** (كفريات) | <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA1.png" alt="Kufr · 1" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA2.png" alt="Kufr · 2" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA3.png" alt="Kufr · 3" height="44"> | Promotes disbelief or atheism, mocks religion or God, or presents false beliefs in a positive or neutral way. |
+| | **Magic** (سحر) | <img src="assets/icons/%D8%B3%D8%AD%D8%B11.png" alt="Magic · 1" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B12.png" alt="Magic · 2" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B13.png" alt="Magic · 3" height="44"> | Sorcery, spells, fortune-telling, and occult symbols. |
+| Morals & shock | **Sex** (جنس) | <img src="assets/icons/%D8%AC%D9%86%D8%B31.png" alt="Sex · 1" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B32.png" alt="Sex · 2" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B33.png" alt="Sex · 3" height="44"> | Sexual scenes, suggestive or explicit. |
+| | **Nudity** (تعرّي) | <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A1.png" alt="Nudity · 1" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A2.png" alt="Nudity · 2" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A3.png" alt="Nudity · 3" height="44"> | Full or partial nudity. |
+| | **LGBT** (شذوذ) | <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B01.png" alt="LGBT · 1" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B02.png" alt="LGBT · 2" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B03.png" alt="LGBT · 3" height="44"> | Showing or glorifying homosexuality, gender transition, and similar. |
+| | **Shocking** (صادم) | <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%851.png" alt="Shocking · 1" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%852.png" alt="Shocking · 2" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%853.png" alt="Shocking · 3" height="44"> | Gore, dismemberment, rape, suicide, torture, or deeply disturbing content. |
+| | **Vices** (مفاسد) | <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF1.png" alt="Vices · 1" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF2.png" alt="Vices · 2" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF3.png" alt="Vices · 3" height="44"> | Promoting gambling or drugs, or seductive and suggestive scenes. |
+| Money & habits<br>(games only) | **Addictive** (إدمانيّات) | <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA1.png" alt="Addictive · 1" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA2.png" alt="Addictive · 2" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA3.png" alt="Addictive · 3" height="44"> | Built to make you come back every day to progress. |
+| | **Pay to win** (تبذير) | <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B11.png" alt="Pay to win · 1" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B12.png" alt="Pay to win · 2" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B13.png" alt="Pay to win · 3" height="44"> | Progress is tied to spending real money. |
+| | **Gambling** (قمار) | <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B11.png" alt="Gambling · 1" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B12.png" alt="Gambling · 2" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B13.png" alt="Gambling · 3" height="44"> | Loot boxes and gacha pulls. |
 
 **"Free of" badges**
 
 The system assumes every work has music, profanity, and relationships outside marriage. When a work is free of one of these, the classifier adds a green badge: **No music**, **No profanity**, or **No romance**.
+
+<div align="center">
+<img src="assets/icons/%D9%85%D9%88%D8%B3%D9%8A%D9%82%D9%890.png" alt="لا موسيقى" height="96"> <img src="assets/icons/%D8%A3%D9%84%D9%81%D8%A7%D8%B8%20%D9%86%D8%A7%D8%A8%D9%8A%D8%A90.png" alt="لا ألفاظ نابية" height="96"> <img src="assets/icons/%D8%B9%D9%84%D8%A7%D9%82%D8%A7%D8%AA%20%D8%AD%D8%A80.png" alt="لا علاقات حب" height="96">
+</div>
 
 Full details: [rating guide](https://muhafid.com/guide) (Arabic).
 
@@ -220,6 +229,10 @@ The tool is in alpha/beta and usable today. Contributions are welcome:
 
 - Found a bug, a missing category, or an idea? [Open an issue](https://github.com/Avuduru/cccc/issues).
 - Change the project directly with a pull request: see [For developers](#for-developers).
+
+### License
+
+Released under the [MIT License](LICENSE).
 
 ### Contributors and acknowledgements
 

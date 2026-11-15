@@ -21,9 +21,21 @@ Conservative Classification of Creative Content (CCCC)
 
 ## العربية
 
-**محافظ** أداة مجانية على الويب تُعرّفك بما يحتويه العمل الفني قبل أن تشاهده أو تلعبه أو تقرأه، وفق معايير محافظة مستمدّة من القيم الإسلامية. تختار العمل، وتحدّد ما فيه من محاذير ودرجة كلٍّ منها، فتحصل على بطاقة أنيقة جاهزة للمشاركة.
+> **باختصار:** محافظ أداة مجانية تخليك تعرف شنو داخل أي عمل (لعبة، أنمي، مسلسل، فيلم، مانجا، كتاب) وبأي درجة، قبل ما تشوفه أو تلعبه أو تقراه، وتطلع لك بطاقة جاهزة تشاركها. التصنيف من المتابع للمتابع، والمشروع مفتوح المصدر ويمديك تساهم فيه.
+
+**محافظ** أداة مجانية مفتوحة المصدر تُعرّفك بما يحتويه العمل الفني وبمقدار ذلك قبل أن تشاهده أو تلعبه أو تقرأه، وفق معايير محافظة مستمدّة من القيم الإسلامية. تختار العمل، وتحدّد ما فيه من محاذير ودرجة كلٍّ منها، فتحصل على بطاقة أنيقة جاهزة للمشاركة.
 
 لا يتطلب الموقع إنشاء حساب ولا تسجيل دخول.
+
+### نبذة عن المشروع
+
+تبيّن التصنيفات العمرية الشائعة، مثل ESRB وPEGI وGCAM، الفئة العمرية التي يناسبها العمل، لكنها لا تفصّل ما يحتويه ولا مقداره. ويهدف محافظ إلى سدّ هذه الفجوة بوصف المحتوى ودرجة حضوره وصفًا واضحًا، دون كشف أحداث العمل.
+
+### مبادئ المشروع
+
+- **تصنيف من المستهلك إلى المستهلك:** يصنّف العملَ من شاهده أو لعبه أو قرأه، وليس هيئة رسمية.
+- **المصداقية للمُصنِّف:** التصنيف رأي صاحبه في العمل، وتقوم الثقة به على سمعته.
+- **مفتوح المصدر:** المشروع مفتوح للمجتمع، يراجعه ويطوّره من شاء.
 
 ### لمن هذه الأداة؟
 
@@ -100,9 +112,20 @@ Conservative Classification of Creative Content (CCCC)
 - **الكتب:** [Open Library](https://openlibrary.org)
 - **الترجمة إلى العربية:** Google Translate، و[MyMemory](https://mymemory.translated.net) بديلًا احتياطيًّا
 
-### الملاحظات والاقتراحات
+### حالة المشروع والمساهمة
 
-وجدت خطأً أو لديك اقتراح؟ افتح [Issue](https://github.com/Avuduru/cccc/issues) جديدًا.
+الأداة في مرحلة تجريبية (ألفا/بيتا)، وهي قابلة للاستخدام من الآن. والمساهمات مرحّب بها:
+
+- أبلغ عن خطأ، أو تصنيف ناقص، أو فكرة: افتح [Issue](https://github.com/Avuduru/cccc/issues) جديدًا.
+- عدّل المشروع مباشرةً عبر طلب دمج (Pull Request): راجع [قسم المطوّرين](#for-developers).
+
+### المساهمون والشكر
+
+- **هادي** ([Hadi Alahmad](https://github.com/hadealahmad) · [hadealahmad.com](https://hadealahmad.com)) — أسهم في تصميم الموقع وتطويره.
+- **Claude** (من Anthropic) — مساعدة في التطوير.
+- **Cyro** — مساعدة في بعض المسمّيات.
+
+يطوّر المشروع ويديره **كوريجي** ([@Avuduru](https://github.com/Avuduru) · [@iKureiji](https://twitter.com/iKureiji)).
 
 </div>
 
@@ -110,9 +133,21 @@ Conservative Classification of Creative Content (CCCC)
 
 ## English
 
-**Muhafid** is a free website that tells you what a movie, series, anime, game, or book contains *before* you watch, play, or read it — based on conservative Islamic values. Pick a work, mark what it contains and how strong it is, and get a clean card you can share.
+> **In short:** Muhafid is a free tool that tells you what a game, anime, series, movie, manga, or book contains, and how much, before you watch, play, or read it, and gives you a card to share. Ratings come from consumers, not an authority, and the project is open source.
+
+**Muhafid** is a free, open-source website that tells you what a movie, series, anime, game, or book contains, and how much of it, *before* you watch, play, or read it — based on conservative Islamic values. Pick a work, mark what it contains and how strong it is, and get a clean card you can share.
 
 No account or sign-up needed.
+
+### About the project
+
+Common age ratings such as ESRB, PEGI, and GCAM tell you which age group a work suits, but not what it contains or how much. Muhafid fills that gap by describing the content and how prominent it is, clearly and without spoilers.
+
+### Principles
+
+- **Consumer to consumer:** a work is rated by someone who watched, played, or read it, not by an official body.
+- **Credibility belongs to the classifier:** a rating is its author's opinion of the work, and trust in it rests on their reputation.
+- **Open source:** the project is open to the community to review and improve.
 
 ### Who is it for?
 
@@ -179,9 +214,20 @@ Muhafid uses these services and is not affiliated with any of them:
 - **Books:** [Open Library](https://openlibrary.org)
 - **Translation to Arabic:** Google Translate, with [MyMemory](https://mymemory.translated.net) as a backup
 
-### Feedback
+### Status and contributing
 
-Found a bug or have an idea? [Open an issue](https://github.com/Avuduru/cccc/issues).
+The tool is in alpha/beta and usable today. Contributions are welcome:
+
+- Found a bug, a missing category, or an idea? [Open an issue](https://github.com/Avuduru/cccc/issues).
+- Change the project directly with a pull request: see [For developers](#for-developers).
+
+### Contributors and acknowledgements
+
+- **Hadi** ([Hadi Alahmad](https://github.com/hadealahmad) · [hadealahmad.com](https://hadealahmad.com)) — contributed to the site's design and development.
+- **Claude** (by Anthropic) — development assistance.
+- **Cyro** — help with some of the naming.
+
+Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) · [@iKureiji](https://twitter.com/iKureiji)).
 
 ---
 
@@ -222,6 +268,21 @@ php -c php.ini -S localhost:8080
 Open http://localhost:8080.
 
 > **Windows:** PHP for Windows has no CA certificate bundle, so with `APP_ENV=production` every API call fails with `SSL certificate problem`. `APP_ENV=local` skips the certificate check — never use it in production.
+
+### Contributing with the GitHub CLI
+
+The project is open to contributions. With the [GitHub CLI](https://cli.github.com) (`gh`), the whole flow takes a few commands:
+
+```bash
+gh repo fork Avuduru/cccc --clone    # fork the repo and clone your copy
+cd cccc
+git switch -c my-change              # work on a branch
+# edit, then test locally (see "Run it locally")
+git commit -am "Describe the change"
+gh pr create --fill                  # open a pull request to Avuduru/cccc
+```
+
+To report a bug or suggest a change without code: `gh issue create --repo Avuduru/cccc`. Please say what you changed and why.
 
 ### Environment variables
 

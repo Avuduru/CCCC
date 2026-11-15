@@ -205,71 +205,105 @@ function applySmartSort($data, $type, $query)
  * then searches for a game and returns completion times.
  */
 
-function hltbGet($url)
+function hltbHeaders($extra = [])
 {
-    if (!function_exists('curl_init')) return null; // PHP cURL extension not enabled
-    $verifySSL = getenv('APP_ENV') !== 'local';
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_SSL_VERIFYPEER => $verifySSL,
-        CURLOPT_SSL_VERIFYHOST => $verifySSL ? 2 : false,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_HTTPHEADER => [
-            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-            'Accept: */*',
-            'Referer: https://howlongtobeat.com/'
-        ],
-    ]);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    if ($response === false || $httpCode !== 200) return null;
-    return $response;
+    return array_merge([
+        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+        'Accept: */*',
+        'Referer: https://howlongtobeat.com/',
+        'Origin: https://howlongtobeat.com',
+    ], $extra);
 }
 
-function searchHltb($gameName)
+/**
+ * Low-level HLTB request. Returns ['code' => int, 'body' => string|null].
+ */
+function hltbRequest($url, $postBody = null, $extraHeaders = [], $timeout = 8)
 {
-    global $dataDir;
-
-    // 1. Check cache first
-    $cacheFile = $dataDir . '/hltb_cache.json';
-    $cache = [];
-    if (file_exists($cacheFile)) {
-        $cache = json_decode(file_get_contents($cacheFile), true) ?: [];
+    if (!function_exists('curl_init')) return ['code' => 0, 'body' => null]; // PHP cURL extension not enabled
+    $verifySSL = getenv('APP_ENV') !== 'local';
+    $ch = curl_init($url);
+    $opts = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => $verifySSL,
+        CURLOPT_SSL_VERIFYHOST => $verifySSL ? 2 : 0,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTPHEADER => hltbHeaders($extraHeaders),
+    ];
+    if ($postBody !== null) {
+        $opts[CURLOPT_POST] = true;
+        $opts[CURLOPT_POSTFIELDS] = $postBody;
     }
-    $cacheKey = strtolower(trim($gameName));
-    if (isset($cache[$cacheKey]) && (time() - ($cache[$cacheKey]['ts'] ?? 0)) < 86400 * 30) {
-        return $cache[$cacheKey]['data'];
+    curl_setopt_array($ch, $opts);
+    $body = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ['code' => $code, 'body' => $body === false ? null : $body];
+}
+
+/**
+ * HLTB moves its private search endpoint every few months (/api/search ->
+ * /api/s -> /api/bleed -> /api/search/site ...). Instead of hardcoding it,
+ * read it from the site's own JS bundles — the same approach the maintained
+ * howlongtobeatpy library uses. Result is cached for 24h.
+ */
+function hltbDiscoverSearchPath()
+{
+    $home = hltbRequest('https://howlongtobeat.com/');
+    if ($home['code'] !== 200 || !$home['body']) return null;
+
+    preg_match_all('#src="(/_next/static/chunks/[^"]+\.js)"#', $home['body'], $m);
+    foreach (array_unique($m[1]) as $chunk) {
+        $js = hltbRequest('https://howlongtobeat.com' . $chunk, null, [], 6);
+        if ($js['code'] !== 200 || !$js['body']) continue;
+        // e.g. fetch("/api/search/site",{method:"POST",headers:{...,"x-auth-token":t}
+        if (preg_match('#fetch\(\s*["\'`]/api/([a-zA-Z0-9_/]+)["\'`]\s*,\s*\{\s*method:\s*["\']POST["\'][^}]{0,200}x-auth-token#', $js['body'], $hit)) {
+            return trim($hit[1], '/');
+        }
     }
+    return null;
+}
 
-    // 2. Init handshake
-    $timestamp = round(microtime(true) * 1000);
-    $initJson = hltbGet("https://howlongtobeat.com/api/bleed/init?t={$timestamp}");
-    if (!$initJson) return null;
-    $initData = json_decode($initJson, true);
-    if (!$initData || !isset($initData['token'], $initData['hpKey'], $initData['hpVal'])) return null;
+/**
+ * GET <path>/init -> {token, [hpKey, hpVal]}. Older HLTB versions also
+ * returned a honeypot key/value pair that had to be echoed back; pick those
+ * up if present so the same code keeps working if they return.
+ */
+function hltbInit($path)
+{
+    $ms = (int)round(microtime(true) * 1000);
+    $res = hltbRequest("https://howlongtobeat.com/api/{$path}/init?t={$ms}");
+    if ($res['code'] !== 200 || !$res['body']) return ['code' => $res['code'], 'auth' => null];
+    $json = json_decode($res['body'], true);
+    if (!is_array($json) || empty($json['token'])) return ['code' => $res['code'], 'auth' => null];
 
-    $token = $initData['token'];
-    $hpKey = $initData['hpKey'];
-    $hpVal = $initData['hpVal'];
+    $auth = ['token' => $json['token'], 'hpKey' => null, 'hpVal' => null];
+    foreach ($json as $k => $v) {
+        if ($k === 'token' || !is_string($v)) continue;
+        if (stripos($k, 'key') !== false) $auth['hpKey'] = $v;
+        elseif (stripos($k, 'val') !== false) $auth['hpVal'] = $v;
+    }
+    return ['code' => 200, 'auth' => $auth];
+}
 
-    // 3. POST search request
-    $payloadArray = [
+function hltbSearchRequest($path, $auth, $gameName)
+{
+    $include = ['mode' => 'include', 'values' => []];
+    $payload = [
         'searchType' => 'games',
-        'searchTerms' => explode(' ', $gameName),
+        'searchTerms' => preg_split('/\s+/', trim($gameName)),
         'searchPage' => 1,
         'size' => 5,
         'searchOptions' => [
             'games' => [
                 'userId' => 0,
-                'platform' => '',
+                'platform' => $include,
                 'sortCategory' => 'popular',
                 'rangeCategory' => 'main',
                 'rangeTime' => ['min' => null, 'max' => null],
-                'gameplay' => ['perspective' => '', 'flow' => '', 'genre' => '', 'difficulty' => ''],
-                'rangeYear' => ['min' => '', 'max' => ''],
+                'gameplay' => ['perspective' => $include, 'flow' => $include, 'genre' => $include],
+                'year' => $include,
                 'modifier' => '',
             ],
             'users' => ['sortCategory' => 'postcount'],
@@ -280,42 +314,75 @@ function searchHltb($gameName)
         ],
         'useCache' => true,
     ];
-    // Add honeypot key/val
-    $payloadArray[$hpKey] = $hpVal;
-    
-    $payload = json_encode($payloadArray);
+    $headers = ['Content-Type: application/json', "x-auth-token: {$auth['token']}"];
+    if ($auth['hpKey'] && $auth['hpVal']) {
+        $payload[$auth['hpKey']] = $auth['hpVal'];
+        $headers[] = "x-hp-key: {$auth['hpKey']}";
+        $headers[] = "x-hp-val: {$auth['hpVal']}";
+    }
+    return hltbRequest("https://howlongtobeat.com/api/{$path}", json_encode($payload), $headers, 10);
+}
 
-    $verifySSL = getenv('APP_ENV') !== 'local';
-    $ch = curl_init('https://howlongtobeat.com/api/bleed');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $payload,
-        CURLOPT_SSL_VERIFYPEER => $verifySSL,
-        CURLOPT_SSL_VERIFYHOST => $verifySSL ? 2 : false,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_HTTPHEADER => [
-            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-            'Content-Type: application/json',
-            'Accept: */*',
-            'Referer: https://howlongtobeat.com/',
-            "x-auth-token: {$token}",
-            "x-hp-key: {$hpKey}",
-            "x-hp-val: {$hpVal}"
-        ],
-    ]);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+function searchHltb($gameName)
+{
+    global $dataDir;
 
-    if ($response === false || $httpCode !== 200) return null;
+    $cacheFile = $dataDir . '/hltb_cache.json';
+    $cache = [];
+    if (file_exists($cacheFile)) {
+        $cache = json_decode(@file_get_contents($cacheFile), true) ?: [];
+    }
+    $saveCache = function () use (&$cache, $cacheFile) {
+        if (count($cache) > 500) {
+            uasort($cache, function ($a, $b) { return ($a['ts'] ?? 0) - ($b['ts'] ?? 0); });
+            $cache = array_slice($cache, -400, null, true);
+        }
+        @file_put_contents($cacheFile, json_encode($cache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+    };
 
-    $data = json_decode($response, true);
+    // 1. Result cache (30 days)
+    $cacheKey = strtolower(trim($gameName));
+    if (isset($cache[$cacheKey]['data']) && (time() - ($cache[$cacheKey]['ts'] ?? 0)) < 86400 * 30) {
+        return $cache[$cacheKey]['data'];
+    }
+
+    // 2. Endpoint path: cached 24h, rediscovered when stale or when HLTB rejects it
+    $fresh = isset($cache['_endpoint']['path']) && (time() - ($cache['_endpoint']['ts'] ?? 0)) < 86400;
+    $path = $fresh ? $cache['_endpoint']['path'] : null;
+    $discovered = false;
+
+    for ($attempt = 0; $attempt < 2; $attempt++) {
+        if (!$path) {
+            $path = hltbDiscoverSearchPath() ?: 'search/site';
+            $discovered = true;
+            $cache['_endpoint'] = ['ts' => time(), 'path' => $path];
+            $saveCache();
+        }
+
+        $init = hltbInit($path);
+        if (!$init['auth']) {
+            // 404 = endpoint moved: rediscover once
+            if (!$discovered) { $path = null; continue; }
+            return null;
+        }
+
+        $res = hltbSearchRequest($path, $init['auth'], $gameName);
+        if ($res['code'] === 200) break;
+        // 403 = token rejected, 404 = endpoint moved: retry once with fresh discovery + token
+        if (in_array($res['code'], [403, 404], true) && !$discovered) { $path = null; continue; }
+        return null;
+    }
+    if (!isset($res) || $res['code'] !== 200) return null;
+
+    $data = json_decode($res['body'], true);
     if (!$data || empty($data['data'])) return null;
 
-    // 4. Pick the best match (first result)
+    // 3. Pick the best match: exact title if present, otherwise the most popular hit
     $game = $data['data'][0];
-    // comp_main is in seconds, convert to hours (rounded to nearest 0.5)
+    foreach ($data['data'] as $g) {
+        if (strcasecmp(trim($g['game_name'] ?? ''), trim($gameName)) === 0) { $game = $g; break; }
+    }
+    // comp_main is in seconds -> hours, rounded to nearest 0.5
     $mainSeconds = $game['comp_main'] ?? 0;
     $mainHours = $mainSeconds > 0 ? round($mainSeconds / 3600 * 2) / 2 : 0;
 
@@ -324,13 +391,9 @@ function searchHltb($gameName)
         'game_name' => $game['game_name'] ?? '',
     ];
 
-    // 5. Cache the result
+    // 4. Cache the result
     $cache[$cacheKey] = ['ts' => time(), 'data' => $result];
-    if (count($cache) > 500) {
-        uasort($cache, function ($a, $b) { return ($a['ts'] ?? 0) - ($b['ts'] ?? 0); });
-        $cache = array_slice($cache, -400, null, true);
-    }
-    file_put_contents($cacheFile, json_encode($cache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    $saveCache();
 
     return $result;
 }

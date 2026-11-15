@@ -70,12 +70,21 @@ async function compressToMaxSize(canvas, maxBytes = MAX_EXPORT_BYTES) {
 
 function logClassification(action) {
     try {
+        // Manual entries have no catalogue ID — key them by title so different works don't merge.
+        // Searchable types with no selected item (placeholder card) are not logged at all.
+        let contentId = state.meta.id ? String(state.meta.id) : '';
+        if (!contentId && state.type === 'manual') {
+            const t = (state.meta.title || '').trim().toLowerCase();
+            if (t && t !== 'اكتب العنوان هنا') contentId = `manual:${t}`;
+        }
+        if (!contentId) return;
+
         const reviewerInput = document.getElementById('reviewer-name-input');
         fetch('proxy.php?type=log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                content_id: state.meta.id || null,
+                content_id: contentId,
                 content_type: state.type,
                 title: state.meta.title,
                 ratings: state.ratings,

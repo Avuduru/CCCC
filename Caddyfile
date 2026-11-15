@@ -1,0 +1,32 @@
+{
+	admin off
+	persist_config off
+	auto_https off
+
+	{$CADDY_GLOBAL_OPTIONS}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+:{$PORT:80} {
+	root * /app
+	encode zstd br gzip
+
+	route {
+		# Never serve VCS metadata, dotfiles (.git, .env, .htaccess...), raw data,
+		# docs, legacy pages, or build/server config. .htaccess is NOT read by
+		# Caddy/FrankenPHP, so these rules replace its <FilesMatch> blocks.
+		@private path_regexp private (^|/)\.|^/(data|Docs|archive|Demo)(/|$)|^/(README\.md|composer\.(json|lock)|railpack\.json|Caddyfile|php\.ini.*|cacert\.pem|local-router\.php|test_proxy\.php|demo(\.html)?)$
+		respond @private 404
+
+		{$CADDY_SERVER_EXTRA_DIRECTIVES}
+
+		# Serves static files; anything else falls through to index.php,
+		# which maps clean URLs (/guide) to their .html files.
+		php_server
+	}
+}

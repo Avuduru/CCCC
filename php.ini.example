@@ -1,0 +1,16 @@
+; Local development PHP settings.
+; Copy to php.ini (gitignored), then start the server with:
+;   php -c php.ini -S localhost:8080
+;
+; extension_dir must point at the folder holding the extension binaries
+; (php_curl.dll on Windows, curl.so on Linux/macOS). On Windows this is
+; usually the "ext" folder inside your PHP install. On Linux/macOS distro
+; packages, delete the extension_dir line and install php-curl / php-mysql.
+extension_dir = "ext"
+
+; Required: all outbound API calls (search, covers, HLTB, image proxy)
+extension=curl
+extension=openssl
+
+; Required only if DB_* is set in .env (classification storage)
+extension=pdo_mysql

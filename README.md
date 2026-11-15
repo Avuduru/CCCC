@@ -48,20 +48,24 @@ RAWG_KEY=your_rawg_key_here
 ```
 
 ### 3. Server Requirements
-- PHP 7.4 or higher
-- PHP cURL extension enabled
+- PHP 8.4 or higher (production version is pinned in `railpack.json`)
+- PHP extensions: `curl` and `openssl` (all API calls), `pdo_mysql` (only when `DB_*` is set)
 
 ---
 
 ## Local Development & Testing
 
-1.  **Run a Local PHP Server**:
+1.  **Enable the required PHP extensions**:
     ```bash
-    php -S localhost:8080
+    cp php.ini.example php.ini
     ```
-    **then use this for the search function**
+    Edit `extension_dir` in `php.ini` if your PHP install keeps extensions elsewhere (see comments in the file).
+2.  **Run a Local PHP Server**:
+    ```bash
     php -c php.ini -S localhost:8080
-2.  **Open the Application**:
+    ```
+    Without the `curl`/`openssl` extensions the page loads, but every search and cover request fails.
+3.  **Open the Application**:
     Navigate to `http://localhost:8080` in your browser.
 
 The application is configured to use `proxy.php` as the `WORKER_URL` in `js/config.js` by default.

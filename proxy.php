@@ -207,6 +207,7 @@ function applySmartSort($data, $type, $query)
 
 function hltbGet($url)
 {
+    if (!function_exists('curl_init')) return null; // PHP cURL extension not enabled
     $verifySSL = getenv('APP_ENV') !== 'local';
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -284,6 +285,7 @@ function searchHltb($gameName)
     
     $payload = json_encode($payloadArray);
 
+    $verifySSL = getenv('APP_ENV') !== 'local';
     $ch = curl_init('https://howlongtobeat.com/api/bleed');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -527,6 +529,11 @@ switch ($type) {
         }
 
         // Fetch the image
+        if (!function_exists('curl_init')) {
+            http_response_code(500);
+            echo json_encode(['error' => 'PHP cURL extension is not enabled']);
+            exit;
+        }
         $verifySSL = getenv('APP_ENV') !== 'local';
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -950,7 +957,8 @@ function fetchAniListFallback($query, $type) {
     if (isset($anilistData['data']['Page']['media'])) {
         foreach ($anilistData['data']['Page']['media'] as $item) {
             $jikanFormat['data'][] = [
-                'mal_id' => $item['id'], 
+                'mal_id' => $item['id'], // NOTE: this is an AniList ID, not a MAL ID — see id_source
+                'id_source' => 'anilist',
                 'title' => !empty($item['title']['english']) ? $item['title']['english'] : (!empty($item['title']['romaji']) ? $item['title']['romaji'] : 'Unknown Title'),
                 'title_english' => $item['title']['english'] ?? '',
                 'images' => [
@@ -1001,6 +1009,8 @@ if (isset($data) && $data && !isset($data['error'])) {
         $data = filterAnimeFromTMDB($data);
     } else if ($type === 'game') {
         $data = filterNSFWFromRAWG($data);
+        // RAWG pagination URLs embed our API key (?key=...) — never pass them to the client
+        unset($data['next'], $data['previous']);
     }
     
     // 2. Apply Smart Sort (Applies to ALL 6 types)

@@ -605,7 +605,8 @@ export function showSearchResults(data, type) {
     } else {
         results.slice(0, 5).forEach(item => {
             const title = item.title || item.name || item.title_english || (item.volumeInfo ? item.volumeInfo.title : 'No Title');
-            let poster = 'assets/placeholder.png';
+            // Neutral 2:3 tile for results without artwork
+            let poster = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='69'%3E%3Crect width='46' height='69' fill='%23262a33'/%3E%3C/svg%3E";
 
             if (item.poster_path) poster = `https://image.tmdb.org/t/p/w92${item.poster_path}`;
             else if (item.background_image) poster = item.background_image; // RAWG
@@ -651,7 +652,14 @@ export function showSearchResults(data, type) {
 }
 
 function selectItem(item, type) {
-    state.meta.id = item.slug || item.mal_id || item.id || '';
+    if (type === 'anime' || type === 'manga') {
+        // AniList (primary) and Jikan/MAL (fallback) use different ID spaces — namespace them
+        state.meta.id = item.mal_id ? `${item.id_source || 'mal'}:${item.mal_id}` : '';
+    } else if (type === 'book') {
+        state.meta.id = item.key || ''; // Open Library work key, e.g. /works/OL893414W
+    } else {
+        state.meta.id = item.slug || item.id || '';
+    }
     state.meta.title = item.title || item.name || item.title_english || (item.volumeInfo ? item.volumeInfo.title : 'No Title');
     state.meta.score = '';
     state.meta.stats = '';

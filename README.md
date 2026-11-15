@@ -60,12 +60,15 @@ RAWG_KEY=your_rawg_key_here
     cp php.ini.example php.ini
     ```
     Edit `extension_dir` in `php.ini` if your PHP install keeps extensions elsewhere (see comments in the file).
-2.  **Run a Local PHP Server**:
+2.  **Switch `.env` to local mode**: set `APP_ENV=local` in `.env`.
+    Windows PHP ships without a CA certificate bundle, so with the default `APP_ENV=production` every API call fails with
+    `SSL certificate problem: unable to get local issuer certificate`. Local mode skips certificate checks — never use it in production.
+3.  **Run a Local PHP Server**:
     ```bash
     php -c php.ini -S localhost:8080
     ```
     Without the `curl`/`openssl` extensions the page loads, but every search and cover request fails.
-3.  **Open the Application**:
+4.  **Open the Application**:
     Navigate to `http://localhost:8080` in your browser.
 
 The application is configured to use `proxy.php` as the `WORKER_URL` in `js/config.js` by default.

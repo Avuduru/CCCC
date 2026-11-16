@@ -10,6 +10,7 @@ const JPEG_QUALITY = 92;
 // Manual-mode defaults that must never reach an exported image.
 const MANUAL_PLACEHOLDERS = ['التصنيف 1', 'التصنيف 2', 'التصنيف 3', 'المدة/عدد الحلقات'];
 const MANUAL_SYNOPSIS_PLACEHOLDER = 'اكتب النبذة هنا...';
+const MANUAL_TITLE_PLACEHOLDER = 'اكتب العنوان هنا';
 
 // The pills are rebuilt by fitCard from data-genres / data-stats, so the
 // placeholders are removed there; the synopsis keeps its full text in data-full.
@@ -26,6 +27,10 @@ function stripManualPlaceholders(clone) {
     const badge = clone.querySelector('#score-badge');
     const s = score ? score.textContent.trim() : '';
     if (badge && (!s || s === '0.0' || s === '0')) badge.classList.add('hidden');
+    const title = clone.querySelector('#title-text');
+    if (title && (title.dataset.full || title.textContent).trim() === MANUAL_TITLE_PLACEHOLDER) {
+        title.textContent = ''; title.dataset.full = '';
+    }
     const syn = clone.querySelector('#synopsis-text');
     if (syn && (syn.dataset.full || syn.textContent).trim() === MANUAL_SYNOPSIS_PLACEHOLDER) {
         syn.textContent = ''; syn.dataset.full = '';

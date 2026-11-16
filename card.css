@@ -86,7 +86,9 @@
     overflow-wrap: anywhere;
     unicode-bidi: plaintext;
 }
-.cd-h .cd-title { margin-top: 10px; }
+.cd-h .cd-title { margin-top: 10px; font-size: 156px; }   /* defaults before js/card.js fits it */
+.cd-wide .cd-title { font-size: 118px; }
+.cd-tall .cd-title { font-size: 124px; }
 .cd-h .cd-title.cd-one-line { margin-top: 18px; line-height: 0.92; }
 .cd-tall .cd-title { text-align: center; line-height: 1; }
 .cd-title[dir="ltr"] { text-align: right; }

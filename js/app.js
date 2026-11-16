@@ -9,6 +9,8 @@ import { setDragState } from './interact.js';
 function updateFooterDimensions() {
     const el = document.getElementById('footer-dim');
     if (el) el.textContent = state.orientation === 'vertical' ? '1200 × 1500 · JPG' : '1920 × 1080 · JPG';
+    const ratio = document.getElementById('ratio-meta');
+    if (ratio) ratio.textContent = (state.orientation === 'vertical' ? '4:5' : '16:9') + ' · جاهزة للتصدير';
 }
 
 function init() {

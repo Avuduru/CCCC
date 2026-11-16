@@ -81,7 +81,7 @@
 /* Title — size set by js/card.js fitTitle (one line large, two lines smaller, then "…") */
 .cd-title {
     margin: 0; flex: none;
-    font-weight: 800; line-height: 0.95;
+    font-weight: 700; line-height: 0.95;   /* site's own Handjet-Bold: Arabic at 800 (Google copy) broke letter joins on iOS */
     color: #f2f4ee;
     overflow-wrap: anywhere;
     unicode-bidi: plaintext;

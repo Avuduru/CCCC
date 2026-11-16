@@ -107,7 +107,7 @@ async function renderCanvas(originalCanvas) {
         // the faces are applied to a new off-screen node, so load each one used.
         await document.fonts.ready;
         await Promise.all([
-            '800 120px Handjet', '600 36px Handjet', '400 40px Handjet',
+            '700 120px Handjet', '600 36px Handjet', '400 40px Handjet',
             '400 28px Silkscreen', '700 22px "JetBrains Mono"',
         ].map(f => document.fonts.load(f).catch(() => {})));
         // Two rAF passes guarantee a full layout+paint cycle on the off-screen clone.

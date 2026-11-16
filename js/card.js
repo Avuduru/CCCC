@@ -11,11 +11,11 @@ export const CARD_SIZE = { h: { w: 1920, h: 1080 }, v: { w: 1200, h: 1500 } };
 // fits in two lines (down to `min`), then a word-boundary "…".
 const TITLE = {
     h:    { one: 156, two: 104, min: 80 },   // C-H / CH-stress
-    wide: { one: 118, two: 84,  min: 64 },   // CV-wide / CV-stress
+    wide: { one: 118, two: 84,  min: 64, tight: 96 },   // CV-wide / CV-stress; tight = one line when stickers wrap
     tall: { one: 124, two: 84,  min: 64 },   // A-V / CVside
 };
 const SYNOPSIS = { min: 26, max: 52 };
-const STICKER = { gap: 16, groupGap: 28, one: 190, two: { h: 140, wide: 150, tall: 150 } };
+const STICKER = { gap: 16, groupGap: 28, one: 190, two: { h: 140, wide: 120, tall: 150 } };
 
 const $ = (sel, root) => (root || document).querySelector(sel);
 export const cardEl = () => document.getElementById('preview-canvas');
@@ -210,6 +210,22 @@ function fitTitle(card, L) {
     const cfg = TITLE[L];
     if (!isFocused(t) && t.dataset.full !== undefined) t.textContent = t.dataset.full;
     t.classList.add('cd-one-line');
+    // Wide-image vertical with two sticker rows: the title keeps to one line,
+    // starting smaller (cfg.tight, shrinking to cfg.min, then "…") so the synopsis keeps a few lines.
+    if (L === 'wide' && card.querySelectorAll('.cd-sticker').length > 6) {
+        let one = cfg.tight;
+        t.style.fontSize = one + 'px';
+        while (lineCount(t) > 1 && one > cfg.min) {
+            one -= 4;
+            t.style.fontSize = one + 'px';
+        }
+        if (!isFocused(t) && lineCount(t) > 1) {
+            // glyphs overhang the 0.95 line-height a little, so allow up to 1.5 lines of height
+            const maxH = lineHeightPx(t) * 1.5;
+            truncateToFit(t, () => t.scrollHeight <= maxH);
+        }
+        return;
+    }
     t.style.fontSize = cfg.one + 'px';
     if (lineCount(t) <= 1) return;
     t.classList.remove('cd-one-line');
@@ -322,6 +338,11 @@ export function fitCard(card = cardEl()) {
     fitTitle(card, L);
     fitPills(card);
     fitStickers(card, L);
+    // Poster layout with no synopsis: centre the poster instead of leaving half
+    // the row empty. The (empty) synopsis stays clickable underneath so it can be typed into.
+    const syn = $('#synopsis-text', card);
+    const synText = isFocused(syn) ? syn.innerText : (syn.dataset.full ?? syn.textContent);
+    card.classList.toggle('cd-no-syn', L === 'tall' && !(synText || '').trim());
     fitTallPoster(card, L);
     fitSynopsis(card);
     fitClassifier(card, L);

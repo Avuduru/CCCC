@@ -112,6 +112,11 @@
 /* No box-shadow: html2canvas paints shadows over the image, which greys out the poster */
 .cd-tall-poster { display: none; flex: none; border-radius: 10px; position: relative; }
 .cd-tall .cd-tall-poster { display: block; }
+.cd-tall .cd-row { position: relative; }
+.cd-tall .cd-tall-poster { z-index: 1; }
+.cd-tall.cd-no-syn .cd-row { justify-content: center; }
+.cd-tall.cd-no-syn .cd-synopsis { position: absolute; inset: 0; }
+.cd-tall.cd-no-syn .cd-synopsis-text { height: 100%; cursor: text; }
 .cd-synopsis { flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
 .cd-synopsis-text {
     margin: 0; outline: none;

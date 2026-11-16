@@ -15,10 +15,23 @@
 
     <link rel="icon" type="image/png" href="assets/favicon.png?v=3">
     <link rel="stylesheet" href="style.v3.css?v=5">
-    <link rel="stylesheet" href="card.css?v=1">
+    <link rel="stylesheet" href="card.css?v=2">
 
     <!-- html2canvas for export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- App: start fetching every module at once instead of one after another -->
+    <script type="module" src="js/app.js?v=5"></script>
+    <link rel="modulepreload" href="js/ui.js">
+    <link rel="modulepreload" href="js/card.js?v=1">
+    <link rel="modulepreload" href="js/state.js">
+    <link rel="modulepreload" href="js/constants.js">
+    <link rel="modulepreload" href="js/translations.js">
+    <link rel="modulepreload" href="js/utils.js">
+    <link rel="modulepreload" href="js/api.js">
+    <link rel="modulepreload" href="js/config.js">
+    <link rel="modulepreload" href="js/interact.js">
+    <link rel="modulepreload" href="js/export.js?v=card_v4">
 
     <!-- Dynamic Desktop Scaling -->
     <script>
@@ -219,7 +232,7 @@
                                 </div>
                             </div>
                             <div class="cd-stickers-wrap">
-                                <div class="cd-stickers" id="cd-stickers">
+                                <div class="cd-stickers hidden" id="cd-stickers">
                                     <div class="cd-group" id="cd-group-warn"><span class="cd-group-label">يحتوي على</span><div class="cd-grid" id="active-stickers"></div></div>
                                     <div class="cd-divider" id="cd-divider"></div>
                                     <div class="cd-group" id="cd-group-free"><span class="cd-group-label">يخلو من</span><div class="cd-grid" id="free-stickers"></div></div>
@@ -235,6 +248,16 @@
                         </div>
                     </section>
                     </div>
+                    <script>
+                        // Show the card immediately at the right size; js/card.js keeps it in sync afterwards.
+                        (function () {
+                            var c = document.getElementById('preview-canvas'), s = c && c.parentElement;
+                            var w = s && s.clientWidth; if (!w) return;
+                            var k = w / 1920;
+                            s.style.height = Math.round(1080 * k) + 'px';
+                            c.style.transform = 'scale(' + k + ')';
+                        })();
+                    </script>
                 </div>
 
                 <!-- Export Footer -->
@@ -429,7 +452,6 @@
     </div>
 
     <!-- App JS (provided separately by the user) -->
-    <script type="module" src="js/app.js?v=5"></script>
 
 
 

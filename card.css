@@ -116,7 +116,8 @@
     margin: 0; outline: none;
     line-height: 1.24; color: #d7dad2;
     white-space: pre-wrap; overflow-wrap: break-word;
-    unicode-bidi: plaintext; text-align: start;
+    /* Arabic paragraphs stay right-aligned even when one starts with an English name */
+    direction: rtl; text-align: right;
 }
 .cd-wide .cd-synopsis-text { line-height: 1.25; }
 .cd-tall .cd-synopsis-text { line-height: 1.25; color: #e6e8e1; }

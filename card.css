@@ -169,8 +169,11 @@
 }
 .cd-card .manual-mode { cursor: pointer; }
 
-/* Controls: classifier name + rating side by side */
-.classifier-inputs { display: flex; gap: 8px; flex: 1; min-width: 0; }
+/* Controls: label on its own line, then classifier name + rating side by side
+   at the panel's full width (beside the label, the name box was ~23px wide) */
+.classifier-row { gap: 8px; }
+.classifier-row .control-label { flex-basis: 100%; }
+.classifier-inputs { display: flex; gap: 8px; flex: 1 1 100%; min-width: 0; }
 .classifier-inputs .search-wrapper:first-child { flex: 1; min-width: 0; }
 .classifier-inputs .rating-input { flex: none; width: 118px; }
 #reviewer-rating-input {
@@ -180,7 +183,7 @@
     text-align: center;
 }
 #reviewer-rating-input::placeholder { color: var(--text-3); }
-.classifier-inputs .rating-input .search-hint { margin-right: 0; }
+.classifier-inputs .rating-input .search-hint { margin-right: 0; direction: ltr; unicode-bidi: isolate; }   /* "/10", not "10/" */
 
 /* Share button inside the phone export popup */
 .share-btn {

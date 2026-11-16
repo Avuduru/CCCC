@@ -85,6 +85,7 @@
     color: #f2f4ee;
     overflow-wrap: anywhere;
     unicode-bidi: plaintext;
+    text-wrap: balance;   /* two-line titles split evenly, never one word alone */
 }
 .cd-h .cd-title { margin-top: 10px; font-size: 156px; }   /* defaults before js/card.js fits it */
 .cd-wide .cd-title { font-size: 118px; }

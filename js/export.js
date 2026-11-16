@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { adjustVerticalPositions, fitGenreRow } from './ui.js';
+import { fitCard, CARD_SIZE } from './card.js?v=1';
 
 // Exported cards are full-colour (4:4:4) baseline JPEGs at this quality.
 // X/Twitter passes such JPEGs through untouched, while it re-saves PNGs at
@@ -11,90 +11,25 @@ const JPEG_QUALITY = 92;
 const MANUAL_PLACEHOLDERS = ['التصنيف 1', 'التصنيف 2', 'التصنيف 3', 'المدة/عدد الحلقات'];
 const MANUAL_SYNOPSIS_PLACEHOLDER = 'اكتب النبذة هنا...';
 
-function lineHeightOf(el) {
-    const cs = getComputedStyle(el);
-    const lh = parseFloat(cs.lineHeight);
-    return isNaN(lh) ? parseFloat(cs.fontSize) * 1.15 : lh;
-}
-
-// Shorten `el`'s text until fits() is true, cutting at a word boundary and
-// adding "…". Falls back to a character cut when a single word is too long.
-function truncateToFit(el, fits) {
-    if (fits()) return;
-    const original = el.innerText;
-    const parts = original.split(/(\s+)/);          // words and the spaces between them
-    const setWords = (n) => { el.innerText = parts.slice(0, n).join('').trimEnd() + '…'; };
-    let lo = 0, hi = parts.length;
-    while (hi - lo > 1) {
-        const mid = (lo + hi) >> 1;
-        setWords(mid);
-        if (fits()) lo = mid; else hi = mid;
-    }
-    if (lo > 0) { setWords(lo); return; }
-    // Not even the first word fits: cut by characters.
-    let clo = 0, chi = original.length;
-    while (chi - clo > 1) {
-        const mid = (clo + chi) >> 1;
-        el.innerText = original.slice(0, mid) + '…';
-        if (fits()) clo = mid; else chi = mid;
-    }
-    el.innerText = original.slice(0, clo) + '…';
-}
-
-// The preview decides title size at preview scale; re-decide at export scale.
-function fitTitleInClone(clone) {
-    const h2 = clone.querySelector('#title-text');
-    if (!h2 || !h2.innerText.trim()) return;
-    const twoLineClass = clone.classList.contains('vertical') ? 'has-2-line-title' : 'horizontal-has-2-line-title';
-    clone.classList.remove('has-2-line-title', 'horizontal-has-2-line-title');
-    h2.classList.remove('title-scale-1', 'title-scale-2', 'title-scale-3');
-    if (h2.scrollHeight > lineHeightOf(h2) * 1.5) clone.classList.add(twoLineClass);
-    // Max two lines (export CSS: max-height 2.2em); cut at a word with "…".
-    const maxH = parseFloat(getComputedStyle(h2).fontSize) * 2.2;
-    truncateToFit(h2, () => h2.scrollHeight <= maxH + 1);
-}
-
-function fitSynopsisInClone(clone) {
-    const el = clone.querySelector('#synopsis-text');
-    const wrapper = el ? el.parentElement : null;
-    if (!el || !wrapper || !el.innerText.trim()) return;
-    const vertical = clone.classList.contains('vertical');
-    const manual = !vertical && state.synopsisSize && state.synopsisSize !== 'auto';
-    if (!manual) {
-        el.classList.remove('scale-medium', 'scale-heavy', 'scale-extreme', 'manual-size-sm', 'manual-size-md', 'manual-size-lg', 'manual-size-xl');
-        for (const cls of ['scale-medium', 'scale-heavy', 'scale-extreme']) {
-            if (el.scrollHeight <= wrapper.clientHeight) break;
-            el.classList.remove('scale-medium', 'scale-heavy', 'scale-extreme');
-            el.classList.add(cls);
-        }
-    }
-    // Still too long: end on the last whole word that fits, with "…".
-    truncateToFit(el, () => el.scrollHeight <= wrapper.clientHeight + 1);
-}
-
-// The classifier pill may never be wider than the poster above it.
-function fitWatermarkInClone(clone) {
-    const vertical = clone.classList.contains('vertical');
-    const wm = clone.querySelector(vertical ? '.modern-watermark.vertical-only' : '.modern-watermark.horizontal-only');
-    const poster = clone.querySelector('.poster-container');
-    if (!wm || wm.classList.contains('hidden') || !poster) return;
-    const name = wm.querySelector('.name-span');
-    const maxW = poster.getBoundingClientRect().width;
-    if (name) truncateToFit(name, () => wm.getBoundingClientRect().width <= maxW + 1);
-}
-
+// The pills are rebuilt by fitCard from data-genres / data-stats, so the
+// placeholders are removed there; the synopsis keeps its full text in data-full.
 function stripManualPlaceholders(clone) {
     clone.querySelectorAll('.upload-overlay').forEach(el => el.remove());
     if (state.type !== 'manual') return;
-    clone.querySelectorAll('#genre-text .genre-pill').forEach(p => {
-        if (MANUAL_PLACEHOLDERS.includes(p.innerText.trim())) p.remove();
-    });
+    const g = clone.querySelector('#genre-text');
+    if (g) {
+        const keep = (list) => list.filter(t => !MANUAL_PLACEHOLDERS.includes(t.trim()));
+        g.dataset.genres = JSON.stringify(keep(JSON.parse(g.dataset.genres || '[]')));
+        g.dataset.stats = JSON.stringify(keep(JSON.parse(g.dataset.stats || '[]')));
+    }
     const score = clone.querySelector('#score-text');
     const badge = clone.querySelector('#score-badge');
-    const s = score ? score.innerText.trim() : '';
+    const s = score ? score.textContent.trim() : '';
     if (badge && (!s || s === '0.0' || s === '0')) badge.classList.add('hidden');
     const syn = clone.querySelector('#synopsis-text');
-    if (syn && syn.innerText.trim() === MANUAL_SYNOPSIS_PLACEHOLDER) syn.innerText = '';
+    if (syn && (syn.dataset.full || syn.textContent).trim() === MANUAL_SYNOPSIS_PLACEHOLDER) {
+        syn.textContent = ''; syn.dataset.full = '';
+    }
 }
 
 function logClassification(action) {
@@ -108,7 +43,6 @@ function logClassification(action) {
         }
         if (!contentId) return;
 
-        const reviewerInput = document.getElementById('reviewer-name-input');
         fetch('proxy.php?type=log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -118,7 +52,7 @@ function logClassification(action) {
                 title: state.meta.title,
                 ratings: state.ratings,
                 badges: state.badges,
-                classifier: reviewerInput ? reviewerInput.value : '',
+                classifier: state.classifier.name || '',
                 orientation: state.orientation,
                 action: action
             })
@@ -142,53 +76,42 @@ function downloadLink(url, filename) {
     setTimeout(() => { if (document.body.contains(link)) document.body.removeChild(link); }, 2000);
 }
 
-// Shared render pipeline: clone → wait for fonts → fit at export size → html2canvas.
-// Resolves to the full-size canvas (1920×1080 or 1200×1500); never downscaled.
+// Shared render pipeline: the card is already laid out at export size, so the
+// clone only drops the preview's scale transform, re-runs the same fits, and
+// is drawn by html2canvas at 1:1 (1920×1080 or 1200×1500, never downscaled).
 async function renderCanvas(originalCanvas) {
-    const isVertical = originalCanvas.classList.contains('vertical');
-    const exportWidth = isVertical ? 1200 : 1920;
+    const size = originalCanvas.dataset.layout === 'h' ? CARD_SIZE.h : CARD_SIZE.v;
 
     const clone = originalCanvas.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.style.transform = 'none';
+    clone.style.left = '0px';
+    clone.style.top = '0px';
     const exportContainer = document.createElement('div');
     exportContainer.style.cssText =
-        `position:fixed;left:-9999px;top:0;z-index:-1;width:${exportWidth}px`;
-    clone.classList.add('export-mode');
+        `position:fixed;left:-10000px;top:0;z-index:-1;width:${size.w}px;height:${size.h}px;overflow:hidden`;
     exportContainer.appendChild(clone);
     document.body.appendChild(exportContainer);
 
     try {
-        // Copy canvas bitmap (cloneNode does not copy <canvas> pixel data)
-        const originalBg = originalCanvas.querySelector('#poster-bg');
-        const clonedBg   = clone.querySelector('#poster-bg');
-        if (originalBg && clonedBg) {
-            clonedBg.width  = originalBg.width;
-            clonedBg.height = originalBg.height;
-            clonedBg.getContext('2d').drawImage(originalBg, 0, 0);
-        }
-
         // Remove contenteditable: iOS uses a different rendering path for editable
         // elements that can break Arabic contextual letter shaping in html2canvas.
         clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
 
-        // Wait for CSS font loading API to settle
+        // Wait for fonts. On iOS, document.fonts.ready can resolve from cache before
+        // the faces are applied to a new off-screen node, so load each one used.
         await document.fonts.ready;
-        // Force-load the exact Handjet weight/size instances used in card text.
-        // On iOS, document.fonts.ready resolves immediately from cache but the
-        // font hasn't been applied+shaped in the newly created off-screen clone yet.
-        await document.fonts.load('900 106px Handjet');
-        await document.fonts.load('400 40px Handjet');
+        await Promise.all([
+            '800 120px Handjet', '600 36px Handjet', '400 40px Handjet',
+            '400 28px Silkscreen', '700 22px "JetBrains Mono"',
+        ].map(f => document.fonts.load(f).catch(() => {})));
         // Two rAF passes guarantee a full layout+paint cycle on the off-screen clone.
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
         // Extra buffer for slower iOS devices
         await new Promise(r => setTimeout(r, 300));
 
         stripManualPlaceholders(clone);
-        fitTitleInClone(clone);
-        const row = clone.querySelector('.genre-row');
-        if (isVertical && row) fitGenreRow(row);
-        fitSynopsisInClone(clone);
-        fitWatermarkInClone(clone);
-        adjustVerticalPositions(clone);
+        fitCard(clone);
 
         // iOS: WebKit returns phantom extra rects from Range.getClientRects() for
         // Arabic text at non-zero offsets within a text node. html2canvas treats
@@ -199,14 +122,14 @@ async function renderCanvas(originalCanvas) {
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
         return await html2canvas(clone, {
-            backgroundColor: null,
+            backgroundColor: '#0e1014',
             scale: 1,
             useCORS: true,
             allowTaint: true,
             logging: false,
-            width: exportWidth,
-            height: clone.offsetHeight,
-            windowWidth: exportWidth,
+            width: size.w,
+            height: size.h,
+            windowWidth: size.w,
             onclone: isIOS ? (_doc) => {
                 const FrameRange = _doc.defaultView && _doc.defaultView.Range;
                 if (!FrameRange) return;

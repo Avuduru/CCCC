@@ -1,6 +1,6 @@
-import { initUI, updatePreview, renderControls, drawBlurredBackground, updateDisplayedInfo, adjustTitleSize, reAdjustLayout, preloadStickers } from './ui.js';
+import { initUI, updatePreview, renderControls, updateDisplayedInfo, reAdjustLayout, preloadStickers } from './ui.js';
 import { handleSearch } from './api.js';
-import { handleExport, handleCopyToClipboard } from './export.js?v=export_jpeg_1';
+import { handleExport, handleCopyToClipboard } from './export.js?v=card_v4';
 import { debounce } from './utils.js';
 import { state } from './state.js';
 import { config } from './config.js';
@@ -28,7 +28,6 @@ function setupDesignSettings() {
     if (d.horizontal) {
         if (d.horizontal.titleSize) root.style.setProperty('--canvas-title-size', d.horizontal.titleSize);
         if (d.horizontal.genreSize) root.style.setProperty('--canvas-genre-size', d.horizontal.genreSize);
-        if (d.horizontal.synopsisSize) root.style.setProperty('--canvas-synopsis-size', d.horizontal.synopsisSize);
     }
 
     if (d.vertical) {
@@ -117,12 +116,10 @@ function setupEventListeners() {
                 };
             }
 
-            // Manual Mode UI Toggles
-            const uploadHint = document.getElementById('upload-hint');
+            // Manual Mode UI Toggles (upload hints are handled by card.js)
             const titleText = document.getElementById('title-text');
             const genreText = document.getElementById('genre-text');
             const scoreText = document.getElementById('score-text');
-            const posterImg = document.getElementById('poster-img');
 
             // Clear the previous type's query and results so they can't be
             // re-opened and selected under the new type (e.g. a game saved as a book)
@@ -133,20 +130,11 @@ function setupEventListeners() {
             searchQuery.value = '';
 
             if (state.type === 'manual') {
-                posterImg.classList.add('manual-mode');
-                posterImg.classList.add('empty-poster');
-
-                uploadHint.classList.remove('hidden');
-
                 // Enable editing
                 titleText.contentEditable = "true";
                 genreText.contentEditable = "true";
                 if (scoreText) scoreText.contentEditable = "true";
             } else {
-                posterImg.classList.remove('manual-mode');
-                posterImg.classList.remove('empty-poster'); // Clear empty state
-                uploadHint.classList.add('hidden');
-
                 // Disable editing
                 titleText.contentEditable = "false";
                 genreText.contentEditable = "false";
@@ -166,64 +154,17 @@ function setupEventListeners() {
             orientButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            // 1. SURGICAL LAYOUT CLEANUP (Before switching)
-            const canvas = document.getElementById('preview-canvas');
-
-            // Clean Title leaks
-            canvas.classList.remove('has-2-line-title', 'horizontal-has-2-line-title');
-
-            // Clean Genre leaks
-            const genreRow = document.getElementById('genre-text').parentElement;
-            if (genreRow) genreRow.classList.remove('genre-scale-1', 'genre-scale-2', 'genre-scale-3');
-
-            // Clean Vertical Position leaks
-            const poster = document.querySelector('.poster-container');
-            if (poster) poster.style.top = '';
-            const synopsis = document.querySelector('.synopsis-wrapper');
-            if (synopsis) synopsis.style.top = '';
-            const watermark = document.querySelector('.modern-watermark.vertical-only');
-            if (watermark) watermark.style.marginTop = '';
-
-            // Clean Sticker sizing overrides
-            const stickersGrid = document.querySelector('.stickers-grid-canvas');
-            if (stickersGrid) {
-                stickersGrid.style.height = '';
-                stickersGrid.style.removeProperty('padding-left');
-                stickersGrid.style.removeProperty('padding-right');
-                stickersGrid.style.rowGap = '';
-                stickersGrid.classList.remove('two-rows');
-                Array.from(stickersGrid.children).forEach(item => {
-                    item.style.width = '';
-                    item.style.height = '';
-                });
-            }
-
+            // The card re-renders and re-measures every block for the new layout
             state.orientation = btn.dataset.value;
             updateFooterDimensions();
             renderControls();
             updatePreview();
-            updateDisplayedInfo();
-
-            // Re-run layout measurements after the browser has had a full render
-            // cycle in the new orientation — fixes timing issues with container
-            // query recalculation when switching between orientations.
             requestAnimationFrame(() => requestAnimationFrame(() => reAdjustLayout()));
 
             // Enable/Disable Drag based on orientation
             // User requested to remove ability to move elements in vertical mode (Step 721)
             // But keep text adjusting (contentEditable) which is handled in Manual Mode logic.
             setDragState(false);
-        });
-    });
-
-    // Synopsis Size Controls
-    const sizeButtons = document.querySelectorAll('.size-btn');
-    sizeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            sizeButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            state.synopsisSize = btn.dataset.size;
-            updatePreview();
         });
     });
 
@@ -278,35 +219,33 @@ function setupEventListeners() {
         updateDisplayedInfo();
     });
 
-    // Manual Mode - File Upload
+    // Manual Mode - File Upload (the cover, the vertical band and the tall poster all open it)
     const fileInput = document.getElementById('manual-cover-upload');
-    const posterImg = document.getElementById('poster-img');
-
-    // Trigger file input when clicking poster in manual mode
-    posterImg.addEventListener('click', () => {
-        if (state.type === 'manual') {
-            fileInput.click();
-        }
+    document.querySelectorAll('.cd-upload-target').forEach(target => {
+        target.addEventListener('click', () => {
+            if (state.type === 'manual') fileInput.click();
+        });
     });
 
-    // Handle File Selection
+    // Landscape uploads double as the wide art, so the vertical card gets the band layout
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                state.meta.poster = event.target.result;
-                // Update UI directly here as it's specific to this action
-                const pImg = document.getElementById('poster-img');
-                pImg.style.backgroundImage = `url(${state.meta.poster})`;
-                pImg.classList.remove('empty-poster');
-                // Use import from ui.js if needed, or just rely on updatePreview if it used meta.poster
-                // Update blurred background
-                drawBlurredBackground(state.meta.poster);
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const url = event.target.result;
+            const probe = new Image();
+            probe.onload = () => {
+                const landscape = probe.naturalWidth / probe.naturalHeight >= 1.3;
+                state.meta.poster = url;
+                state.meta.wide = landscape ? url : '';
                 updatePreview();
             };
-            reader.readAsDataURL(file);
-        }
+            probe.onerror = () => { state.meta.poster = url; state.meta.wide = ''; updatePreview(); };
+            probe.src = url;
+        };
+        reader.readAsDataURL(file);
+        fileInput.value = '';
     });
 
 }

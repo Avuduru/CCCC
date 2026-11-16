@@ -10,15 +10,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Handjet:wght@400;600;800&family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
         rel="stylesheet">
 
     <link rel="icon" type="image/png" href="assets/favicon.png?v=3">
     <link rel="stylesheet" href="style.v3.css?v=5">
+    <link rel="stylesheet" href="card.css?v=1">
 
     <!-- html2canvas for export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stackblur-canvas@2.7.0/dist/stackblur.min.js"></script>
 
     <!-- Dynamic Desktop Scaling -->
     <script>
@@ -132,22 +132,17 @@
                         </div>
                     </div>
 
-                    <div class="control-row horizontal-only" id="synopsis-controls">
-                        <span class="control-label">حجم النبذة</span>
-                        <div class="size-controls">
-                            <button class="size-btn active" data-size="auto">AUTO</button>
-                            <button class="size-btn" data-size="small">ص</button>
-                            <button class="size-btn" data-size="medium">م</button>
-                            <button class="size-btn" data-size="large">ك</button>
-                            <button class="size-btn" data-size="xlarge">ض</button>
-                        </div>
-                    </div>
-
                     <div class="control-row">
                         <span class="control-label">المُصنّف</span>
-                        <div class="search-wrapper compact">
-                            <span class="search-prompt">@</span>
-                            <input type="text" id="reviewer-name-input" placeholder="اسمك (اختياري)…">
+                        <div class="classifier-inputs">
+                            <div class="search-wrapper compact">
+                                <span class="search-prompt">@</span>
+                                <input type="text" id="reviewer-name-input" placeholder="اسمك (اختياري)…">
+                            </div>
+                            <div class="search-wrapper compact rating-input" title="تقييمك من 10 (اختياري)">
+                                <input type="text" id="reviewer-rating-input" inputmode="decimal" maxlength="5" placeholder="تقييمك" aria-label="تقييمك من 10">
+                                <span class="search-hint">/10</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -190,57 +185,56 @@
                 </div>
 
                 <div class="stage-frame">
-                    <!-- Info Panel / Canvas (kept html2canvas-safe) -->
-                    <section class="info-panel horizontal" id="preview-canvas">
-                        <div class="canvas-bg">
-                            <canvas id="poster-bg" class="bg-image"></canvas>
-                            <div class="bg-overlay"></div>
+                    <!-- Share card (v4): laid out at export size, scaled down for preview by js/card.js -->
+                    <div class="cd-scaler">
+                    <section class="cd-card cd-h" id="preview-canvas" dir="rtl" data-layout="h">
+                        <div class="cd-media">
+                            <div id="poster-img" class="cd-media-img cd-upload-target">
+                                <div class="upload-overlay hidden" id="upload-hint"><span>اضغط لرفع صورة</span></div>
+                            </div>
+                            <div class="cd-cl-wrap">
+                                <div class="cd-classifier hidden">
+                                    <span class="cd-cl-text"><span class="cd-cl-label">المُصنّف:</span> <span class="cd-cl-name"></span></span><span class="cd-cl-sep"></span><span class="cd-cl-rating" dir="ltr"><span class="cd-cl-num"></span><span class="cd-cl-den">/10</span></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="canvas-content">
-                            <div class="poster-column">
-                                <div class="poster-container">
-                                    <div id="poster-img" class="poster-div">
-                                        <div class="upload-overlay hidden" id="upload-hint">
-                                            <span>اضغط لرفع صورة</span>
-                                        </div>
-                                    </div>
-                                    <div class="modern-watermark vertical-only hidden">
-                                        <span class="watermark-label">المُصنّف:</span>
-                                        <span class="name-span"></span>
-                                    </div>
-                                </div>
 
-                                <div class="modern-watermark horizontal-only hidden">
-                                    <span class="watermark-label">المُصنّف:</span>
-                                    <span class="name-span"></span>
+                        <div class="cd-body">
+                            <div class="cd-brand">
+                                <img class="cd-brand-logo" src="assets/LOGO.png" alt="CCCC">
+                                <span class="cd-brand-label">التصنيف المحافظ للمحتوى الإبداعي</span>
+                                <span class="cd-brand-url" dir="ltr">MUHAFID.COM</span>
+                            </div>
+                            <h2 id="title-text" class="cd-title">عنوان العمل</h2>
+                            <div class="cd-pills">
+                                <span id="score-badge" class="cd-score hidden" dir="ltr">★ <span id="score-text"></span></span>
+                                <div id="genre-text" class="cd-genres"></div>
+                            </div>
+                            <div class="cd-row">
+                                <div id="cd-tall-poster" class="cd-tall-poster cd-upload-target">
+                                    <div class="upload-overlay hidden"><span>اضغط لرفع صورة</span></div>
+                                </div>
+                                <div class="cd-synopsis">
+                                    <div id="synopsis-text" class="cd-synopsis-text" contenteditable="true"></div>
                                 </div>
                             </div>
-
-                            <div class="info-content-right">
-
-                                <div class="header-info">
-                                    <div class="classification-label">التصنيف المحافظ للمحتوى الإبداعي · <span dir="ltr">Muhafid.com</span></div>
-                                    <h2 id="title-text">عنوان العمل</h2>
-                                    <div class="genre-row">
-                                        <div id="score-badge" class="score-badge hidden">
-                                            <span class="score-icon">★</span>
-                                            <span id="score-text"></span>
-                                        </div>
-                                        <div id="genre-text" class="genre-label">نوع العمل</div>
-                                    </div>
-                                </div>
-
-                                <div class="synopsis-wrapper">
-                                    <div id="synopsis-text" contenteditable="true"
-                                        placeholder="اكتب نبذة عن العمل أو تعليقك الخاص..."></div>
-                                </div>
-
-                                <div id="active-stickers" class="stickers-grid-canvas">
-                                    <!-- Icons injected here -->
+                            <div class="cd-stickers-wrap">
+                                <div class="cd-stickers" id="cd-stickers">
+                                    <div class="cd-group" id="cd-group-warn"><span class="cd-group-label">يحتوي على</span><div class="cd-grid" id="active-stickers"></div></div>
+                                    <div class="cd-divider" id="cd-divider"></div>
+                                    <div class="cd-group" id="cd-group-free"><span class="cd-group-label">يخلو من</span><div class="cd-grid" id="free-stickers"></div></div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="cd-footer">
+                            <div class="cd-classifier hidden">
+                                <span class="cd-cl-text"><span class="cd-cl-label">المُصنّف:</span> <span class="cd-cl-name"></span></span><span class="cd-cl-sep"></span><span class="cd-cl-rating" dir="ltr"><span class="cd-cl-num"></span><span class="cd-cl-den">/10</span></span>
+                            </div>
+                            <div class="cd-footer-brand"><span dir="ltr">MUHAFID.COM</span><img src="assets/LOGO.png" alt="CCCC"></div>
                         </div>
                     </section>
+                    </div>
                 </div>
 
                 <!-- Export Footer -->

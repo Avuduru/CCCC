@@ -1,0 +1,188 @@
+/* ════════════════════════════════════════════════════════════════
+   CARD v4 — the exported card, laid out at its real export size.
+   Horizontal 1920×1080 (16:9) · Vertical 1200×1500 (4:5).
+   The on-page preview is this same element scaled with a CSS transform
+   (js/card.js scalePreview), so preview and export are identical.
+   Values match the approved design canvas (Direction C + A-style vertical).
+   html2canvas-safe: no filters, no blend modes, images as backgrounds.
+   ════════════════════════════════════════════════════════════════ */
+
+.cd-scaler { position: relative; width: 100%; overflow: hidden; }
+
+.cd-card {
+    position: absolute; top: 0; left: 0;
+    transform-origin: top left;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #0e1014;
+    color: #f2f4ee;
+    font-family: 'Handjet', 'JetBrains Mono', monospace;
+    direction: rtl;
+    text-align: right;
+    letter-spacing: normal;
+}
+.cd-card *, .cd-card *::before, .cd-card *::after { box-sizing: border-box; }
+.cd-card .hidden { display: none !important; }
+
+.cd-h { width: 1920px; height: 1080px; display: flex; flex-direction: row; }
+.cd-v { width: 1200px; height: 1500px; display: flex; flex-direction: column; }
+
+/* ── Media: H = full-height cover, V-wide = wide band, V-tall = not shown ── */
+.cd-media { position: relative; flex: none; background: #161a21; }
+.cd-h .cd-media { width: 760px; height: 1080px; }
+.cd-wide .cd-media { width: 1200px; height: 680px; }
+.cd-tall .cd-media { display: none; }
+.cd-media-img, .cd-tall-poster {
+    background-color: #161a21;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.cd-media-img { position: absolute; inset: 0; }
+
+/* Classifier pill on the cover / band */
+.cd-classifier {
+    display: inline-flex; align-items: center; gap: 14px;
+    font-size: 34px; font-weight: 600; white-space: nowrap; line-height: 1.2;
+}
+.cd-classifier .cd-cl-label { color: #c8ff5e; }
+.cd-wide .cd-media .cd-classifier { background: rgba(10, 11, 14, 0.88); }
+.cd-classifier .cd-cl-sep { width: 2px; height: 30px; background: rgba(255, 255, 255, 0.2); flex: none; }
+.cd-classifier .cd-cl-rating { font-family: 'Silkscreen', monospace; font-size: 30px; color: #c8ff5e; white-space: nowrap; direction: ltr; }
+.cd-classifier .cd-cl-den { font-size: 20px; }
+.cd-media .cd-cl-wrap { position: absolute; display: flex; justify-content: center; }
+.cd-h .cd-media .cd-cl-wrap { left: 40px; right: 40px; bottom: 40px; }
+.cd-wide .cd-media .cd-cl-wrap { left: 64px; right: 64px; bottom: 32px; }
+.cd-media .cd-classifier {
+    background: rgba(10, 11, 14, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 10px 34px 14px;
+    max-width: 100%;
+}
+
+/* ── Body ── */
+.cd-body { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.cd-h .cd-body { flex: 1; padding: 64px 80px 64px 72px; gap: 20px; }
+.cd-wide .cd-body { flex: 1; padding: 40px 64px 44px; gap: 18px; }
+.cd-tall .cd-body { flex: 1; padding: 56px 64px 0; gap: 20px; }
+
+/* Brand row: logo · label · MUHAFID.COM (H + V-wide); label only, centred (V-tall) */
+.cd-brand { display: flex; align-items: center; gap: 18px; flex: none; }
+.cd-wide .cd-brand { gap: 16px; }
+.cd-brand-logo { height: 38px; width: auto; display: block; }
+.cd-wide .cd-brand-logo { height: 34px; }
+.cd-brand-label { font-size: 30px; font-weight: 600; color: #9aa093; }
+.cd-brand-url { margin-right: auto; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; letter-spacing: 0.1em; color: #9aa093; direction: ltr; }
+.cd-wide .cd-brand-url { font-size: 20px; }
+.cd-tall .cd-brand { justify-content: center; height: 36px; }
+.cd-tall .cd-brand-logo, .cd-tall .cd-brand-url { display: none; }
+
+/* Title — size set by js/card.js fitTitle (one line large, two lines smaller, then "…") */
+.cd-title {
+    margin: 0; flex: none;
+    font-weight: 800; line-height: 0.95;
+    color: #f2f4ee;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+}
+.cd-h .cd-title { margin-top: 10px; }
+.cd-h .cd-title.cd-one-line { margin-top: 18px; line-height: 0.92; }
+.cd-tall .cd-title { text-align: center; line-height: 1; }
+.cd-title[dir="ltr"] { text-align: right; }
+.cd-tall .cd-title[dir="ltr"] { text-align: center; }
+
+/* Pills — one row; js/card.js fitPills turns overflow into "+N" */
+.cd-pills { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; height: 56px; overflow: hidden; flex: none; }
+.cd-tall .cd-pills { justify-content: center; }
+.cd-genres { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; flex: none; outline: none; }
+.cd-score {
+    font-family: 'Silkscreen', monospace; font-size: 28px; line-height: 1.2;
+    color: #0e1014; background: #f5c827; border-radius: 8px; padding: 6px 12px;
+    white-space: nowrap; direction: ltr; flex: none;
+}
+.cd-tall .cd-score { font-size: 26px; }
+.cd-pill { font-size: 36px; font-weight: 600; line-height: 1.2; border-radius: 8px; white-space: nowrap; flex: none; }
+.cd-pill-stat { color: #0e1014; background: #6fb4ff; padding: 2px 14px 6px; }
+.cd-pill-genre { color: #c8ff5e; border: 2px solid rgba(200, 255, 94, 0.7); padding: 0 14px 4px; }
+
+/* Row: synopsis (all layouts) + tall poster (V-tall) */
+.cd-row { display: flex; gap: 40px; min-height: 0; flex: 1; }
+.cd-tall .cd-row { padding-top: 8px; }
+.cd-tall-poster { display: none; flex: none; border-radius: 10px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); position: relative; }
+.cd-tall .cd-tall-poster { display: block; }
+.cd-synopsis { flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.cd-synopsis-text {
+    margin: 0; outline: none;
+    line-height: 1.24; color: #d7dad2;
+    white-space: pre-wrap; overflow-wrap: break-word;
+    unicode-bidi: plaintext; text-align: start;
+}
+.cd-wide .cd-synopsis-text { line-height: 1.25; }
+.cd-tall .cd-synopsis-text { line-height: 1.25; color: #e6e8e1; }
+.cd-h .cd-synopsis { margin-top: 2px; }
+
+/* Stickers panel: warnings ("يحتوي على") and exceptions ("يخلو من"),
+   each label attached to its own group; sizes set by js/card.js fitStickers */
+.cd-stickers {
+    flex: none; display: flex; justify-content: center; align-items: flex-start; gap: 28px;
+    background: #161a21; border-radius: 18px; padding: 22px 28px 26px;
+}
+.cd-wide .cd-stickers { padding: 22px 28px; }
+.cd-tall .cd-stickers { padding: 20px 28px 24px; }
+.cd-tall .cd-stickers-wrap { padding: 8px 0 0; }
+.cd-group { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.cd-tall .cd-group, .cd-wide .cd-group { gap: 10px; }
+.cd-group-label { font-size: 28px; font-weight: 600; color: #9aa093; line-height: 1.2; }
+.cd-grid { display: flex; flex-wrap: wrap; gap: 16px; }
+.cd-sticker { display: block; width: 150px; height: 150px; }
+.cd-divider { width: 2px; align-self: stretch; background: rgba(255, 255, 255, 0.12); flex: none; }
+
+/* Footer band (V-tall only): classifier + MUHAFID.COM + logo */
+.cd-footer { display: none; }
+.cd-tall .cd-footer {
+    display: flex; flex: none; margin-top: 28px; height: 96px;
+    padding: 0 64px; align-items: center; justify-content: space-between;
+    background: #161a21; border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.cd-tall .cd-media .cd-cl-wrap { display: none; }
+.cd-footer-brand { display: flex; align-items: center; gap: 16px; }
+.cd-footer-brand span { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; letter-spacing: 0.08em; color: #d9dcd3; direction: ltr; }
+.cd-footer-brand img { height: 36px; width: auto; display: block; }
+
+/* Manual mode: click-to-upload hint (never exported) */
+.cd-card .upload-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 40px; font-weight: 600; color: rgba(242, 244, 238, 0.7);
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0 16px, transparent 16px 32px);
+    cursor: pointer;
+}
+.cd-card .manual-mode { cursor: pointer; }
+
+/* Controls: classifier name + rating side by side */
+.classifier-inputs { display: flex; gap: 8px; flex: 1; min-width: 0; }
+.classifier-inputs .search-wrapper:first-child { flex: 1; min-width: 0; }
+.classifier-inputs .rating-input { flex: none; width: 118px; }
+#reviewer-rating-input {
+    width: 100%; min-width: 0; flex: 1;
+    background: transparent; border: none; outline: none;
+    font-family: var(--font-ar); font-size: 16px; color: var(--text-0);
+    text-align: center;
+}
+#reviewer-rating-input::placeholder { color: var(--text-3); }
+.classifier-inputs .rating-input .search-hint { margin-right: 0; }
+
+/* Share button inside the phone export popup */
+.share-btn {
+    width: 100%;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--acc);
+    color: #0e1014;
+    font-family: var(--font-ar);
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.share-btn:active { transform: translateY(1px); }

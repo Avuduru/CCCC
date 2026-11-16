@@ -1,12 +1,18 @@
 import { initUI, updatePreview, renderControls, drawBlurredBackground, updateDisplayedInfo, adjustTitleSize, reAdjustLayout, preloadStickers } from './ui.js';
 import { handleSearch } from './api.js';
-import { handleExport, handleCopyToClipboard } from './export.js?v=log_ids_1';
+import { handleExport, handleCopyToClipboard } from './export.js?v=export_jpeg_1';
 import { debounce } from './utils.js';
 import { state } from './state.js';
 import { config } from './config.js';
 import { setDragState } from './interact.js';
 
+function updateFooterDimensions() {
+    const el = document.getElementById('footer-dim');
+    if (el) el.textContent = state.orientation === 'vertical' ? '1200 × 1500 · JPG' : '1920 × 1080 · JPG';
+}
+
 function init() {
+    updateFooterDimensions();
     setupDesignSettings();
     initUI();
     setupEventListeners();
@@ -182,6 +188,10 @@ function setupEventListeners() {
             const stickersGrid = document.querySelector('.stickers-grid-canvas');
             if (stickersGrid) {
                 stickersGrid.style.height = '';
+                stickersGrid.style.removeProperty('padding-left');
+                stickersGrid.style.removeProperty('padding-right');
+                stickersGrid.style.rowGap = '';
+                stickersGrid.classList.remove('two-rows');
                 Array.from(stickersGrid.children).forEach(item => {
                     item.style.width = '';
                     item.style.height = '';
@@ -189,6 +199,7 @@ function setupEventListeners() {
             }
 
             state.orientation = btn.dataset.value;
+            updateFooterDimensions();
             renderControls();
             updatePreview();
             updateDisplayedInfo();
@@ -248,6 +259,23 @@ function setupEventListeners() {
     titleText.addEventListener('input', () => {
         state.meta.title = titleText.innerText;
         reAdjustLayout();
+    });
+
+    // Manual genres: whatever was typed becomes pills again when editing ends.
+    // Length pills stay length pills; any other text is split on commas / new lines.
+    const genreTextEl = document.getElementById('genre-text');
+    genreTextEl.addEventListener('blur', () => {
+        if (state.type !== 'manual') return;
+        const stats = [], genres = [];
+        const split = (t) => t.split(/[،,\n]/).map(s => s.trim()).filter(Boolean);
+        genreTextEl.childNodes.forEach(node => {
+            const text = node.textContent || '';
+            if (node.nodeType === 1 && node.classList.contains('stats-pill')) stats.push(...split(text));
+            else if (!(node.nodeType === 1 && node.classList.contains('more-pill'))) genres.push(...split(text));
+        });
+        state.meta.stats = stats.join(' • ');
+        state.meta.genre = genres.join('، ');
+        updateDisplayedInfo();
     });
 
     // Manual Mode - File Upload

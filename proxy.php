@@ -679,6 +679,28 @@ switch ($type) {
         $url = "https://openlibrary.org/search.json?q=" . urlencode($query) . "&limit=20";
         break;
 
+    case 'book_details':
+        // Open Library work description. Query must be a work key like /works/OL893414W
+        if (!preg_match('#^/works/OL\d+W$#', $query)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid work key']);
+            exit;
+        }
+        $work = json_decode(fetchUrl('https://openlibrary.org' . $query . '.json'), true);
+        $desc = $work['description'] ?? '';
+        if (is_array($desc)) $desc = $desc['value'] ?? '';
+        if (is_string($desc) && $desc !== '') {
+            $desc = preg_split('/\n-{3,}/', $desc)[0];                 // drop "----------" source/footnote sections
+            $desc = preg_replace('/\[([^\]]+)\]\((?:[^)]+)\)/', '$1', $desc); // [text](url) -> text
+            $desc = preg_replace('/\[([^\]]+)\]\[\d+\]/', '$1', $desc);     // [text][1] -> text
+            $desc = preg_replace('/^\s*\[\d+\]:.*$/m', '', $desc);            // [1]: url lines
+            $desc = trim(preg_replace("/\n{3,}/", "\n\n", $desc));
+        } else {
+            $desc = '';
+        }
+        echo json_encode(['description' => $desc], JSON_UNESCAPED_UNICODE);
+        exit;
+
     case 'log':
         // Save classification data to MySQL (one vote per IP per work, UPSERT)
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

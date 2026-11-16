@@ -375,6 +375,13 @@ export function updatePreview() {
         stickerContainer.classList.remove('few-icons');
     }
 
+    // Horizontal: 9+ stickers wrap to two rows so they stay readable.
+    // (Vertical decides rows in adjustVerticalPositions, which knows the free height.)
+    if (state.orientation === 'horizontal') {
+        stickerContainer.classList.toggle('two-rows', activeItems.length >= 9);
+        stickerContainer.style.setProperty('--per-row', String(Math.ceil(activeItems.length / 2)));
+    }
+
     // Render Stickers
     activeItems.forEach(item => {
         const div = document.createElement('div');
@@ -420,20 +427,9 @@ export function adjustVerticalPositions(container) {
     const posterTop = poster.offsetTop;
     const gap = contentH * 0.015; // 1.5% breathing room
 
-    console.log('[DEBUG] adjustVerticalPositions values:', {
-        contentH,
-        headerOffsetTop: header.offsetTop,
-        headerHeight: header.offsetHeight,
-        headerBottom,
-        posterTop,
-        gap,
-        overflows: headerBottom > posterTop - gap
-    });
-
     // Only intervene if header bottom is too close to or past poster top
     if (headerBottom > posterTop - gap) {
         const newTopPx = headerBottom + gap;
-        console.log('[DEBUG] Setting new top:', newTopPx + 'px');
         poster.style.setProperty('top', newTopPx + 'px', 'important');
         synopsis.style.setProperty('top', newTopPx + 'px', 'important');
     }
@@ -461,7 +457,7 @@ export function adjustVerticalPositions(container) {
         const maxStickerH = container.offsetWidth * 0.21; 
         
         const availableForStickers = remaining - requiredPillSpace;
-        
+
         let finalStickerH;
         let finalPadding;
 
@@ -482,21 +478,38 @@ export function adjustVerticalPositions(container) {
         // Modern browsers scale aspect-ratio perfectly, but html2canvas leaves the height stretched, warping them.
         // Fix: Mathematically calculate the absolute maximum width allowed, and explicitly set width AND height.
         const numStickers = stickersGrid.children.length;
+        stickersGrid.classList.remove('two-rows');
+        stickersGrid.style.rowGap = '';
         if (numStickers > 0) {
             // Is it export mode? We can tell if contentH is exactly 1500px, or we can just calculate safely.
             const isExport = container.classList.contains('export-mode') || contentH >= 1500;
             const gap = isExport ? 18 : (container.offsetWidth * 0.015);
             const sidePadding = container.offsetWidth * 0.03; // 1.5% left + 1.5% right
             const availableWidth = container.offsetWidth - sidePadding;
-            const totalGapWidth = (numStickers - 1) * gap;
-            
-            // The maximum square size before flex-shrink would trigger
-            const maxAllowedSquare = (availableWidth - totalGapWidth) / numStickers;
-            
-            // The final size is the minimum of what the gap allows and what the width allows
-            const finalStickerSize = Math.min(finalStickerH, maxAllowedSquare);
-            
-            stickersGrid.style.setProperty('height', finalStickerSize + 'px', 'important');
+            const squareFor = (perRow) => (availableWidth - (perRow - 1) * gap) / perRow;
+
+            // One row: limited by the height budget and by the width.
+            const oneRow = Math.min(finalStickerH, squareFor(numStickers));
+            // Two rows: uses the full free height below the pill. Only worth it when
+            // stickers come out clearly bigger (8+ stickers, at least 20% larger).
+            const perRow2 = Math.ceil(numStickers / 2);
+            const twoRow = Math.min(maxStickerH, (Math.max(0, availableForStickers) - gap) / 2, squareFor(perRow2));
+            const useTwoRows = numStickers >= 8 && twoRow > oneRow * 1.2;
+
+            const finalStickerSize = Math.max(0, useTwoRows ? twoRow : oneRow);
+            const blockH = useTwoRows ? finalStickerSize * 2 + gap : finalStickerSize;
+            // Balance the rows (7 + 6, not 10 + 3): side padding makes each row wrap at perRow2.
+            const rowWidth = perRow2 * finalStickerSize + (perRow2 - 1) * gap;
+            const sidePad = useTwoRows ? Math.max(0, (stickersGrid.clientWidth - rowWidth) / 2 - 1) : 0;
+            stickersGrid.style.setProperty('padding-left', sidePad + 'px', 'important');
+            stickersGrid.style.setProperty('padding-right', sidePad + 'px', 'important');
+            if (useTwoRows) {
+                stickersGrid.classList.add('two-rows');
+                stickersGrid.style.rowGap = gap + 'px';
+                finalPadding = Math.max(minPadding, (remaining - pillH - blockH) / 2);
+            }
+
+            stickersGrid.style.setProperty('height', blockH + 'px', 'important');
             Array.from(stickersGrid.children).forEach(item => {
                 item.style.setProperty('width', finalStickerSize + 'px', 'important');
                 item.style.setProperty('height', finalStickerSize + 'px', 'important');
@@ -521,8 +534,8 @@ function fitSynopsisToContainer() {
     // 1. Reset all size classes
     el.classList.remove('scale-medium', 'scale-heavy', 'scale-extreme', 'manual-size-sm', 'manual-size-md', 'manual-size-lg', 'manual-size-xl');
 
-    // 2. Check Manual Mode
-    if (state.synopsisSize && state.synopsisSize !== 'auto') {
+    // 2. Check Manual Mode (size buttons exist only in horizontal)
+    if (state.synopsisSize && state.synopsisSize !== 'auto' && state.orientation !== 'vertical') {
         if (state.synopsisSize === 'small') el.classList.add('manual-size-sm');
         else if (state.synopsisSize === 'medium') el.classList.add('manual-size-md');
         else if (state.synopsisSize === 'large') el.classList.add('manual-size-lg');
@@ -819,11 +832,12 @@ function selectItem(item, type) {
         const genreText = item.genres ? item.genres.map(g => g.name).join(', ') : '';
         state.meta.genre = translateGenres(genreText);
 
-        // Translate synopsis
-        state.meta.synopsis = 'جاري الترجمة...';
+        // Translate synopsis (without source credits like "(Source: Crunchyroll)")
+        const cleanSynopsis = cleanSourceNotes(item.synopsis || '');
+        state.meta.synopsis = cleanSynopsis ? 'جاري الترجمة...' : '';
         updateDisplayedInfo();
-        if (item.synopsis) {
-            translateText(item.synopsis).then(translated => {
+        if (cleanSynopsis) {
+            translateText(cleanSynopsis).then(translated => {
                 state.meta.synopsis = translated;
                 updateDisplayedInfo();
             });
@@ -835,19 +849,29 @@ function selectItem(item, type) {
         const rawPoster = item.cover_i ? `https://covers.openlibrary.org/b/id/${item.cover_i}-L.jpg` : (item.volumeInfo?.imageLinks?.thumbnail || '');
         state.meta.poster = rawPoster ? `proxy.php?query=${encodeURIComponent(rawPoster)}&type=image_proxy` : '';
 
-        // Get description
-        const description = item.first_sentence?.join(' ') || item.volumeInfo?.description || 'No description available';
+        // Genre pill: categories when present, otherwise the first publication year
+        const categories = item.volumeInfo?.categories?.join(', ');
+        state.meta.genre = categories ? translateGenres(categories)
+            : (item.first_publish_year ? `نُشر عام ${item.first_publish_year}` : translateGenres('Book'));
 
-        // Get and translate genre
-        const genreText = item.volumeInfo?.categories?.join(', ') || (item.first_publish_year ? `Published: ${item.first_publish_year}` : 'Book');
-        state.meta.genre = translateGenres(genreText);
-
-        // Translate description
-        state.meta.synopsis = 'جاري الترجمة...';
+        // Description: the Open Library work page has one for many books; search
+        // results only carry a first sentence. With neither, the synopsis stays empty.
+        const fallback = item.first_sentence?.join(' ') || item.volumeInfo?.description || '';
+        const selectedKey = item.key;
+        state.meta.synopsis = 'جاري التحميل...';
         updateDisplayedInfo();
-        translateText(description).then(translated => {
-            state.meta.synopsis = translated;
-            updateDisplayedInfo();
+        const detailsPromise = selectedKey
+            ? fetch(`proxy.php?query=${encodeURIComponent(selectedKey)}&type=book_details`).then(r => r.json()).catch(() => null)
+            : Promise.resolve(null);
+        detailsPromise.then(details => {
+            if (state.meta.id !== selectedKey) return; // user picked something else meanwhile
+            const description = (details && details.description) || fallback;
+            if (!description) { state.meta.synopsis = ''; updateDisplayedInfo(); return; }
+            translateText(description).then(translated => {
+                if (state.meta.id !== selectedKey) return;
+                state.meta.synopsis = translated;
+                updateDisplayedInfo();
+            });
         });
     }
 
@@ -938,7 +962,7 @@ function fitVerticalTitle(el) {
     el.classList.add(scales[scales.length - 1]);
 }
 
-function fitGenreRow(el) {
+export function fitGenreRow(el) {
     if (state.orientation !== 'vertical') return;
     const scales = ['genre-scale-1', 'genre-scale-2', 'genre-scale-3'];
     el.classList.remove(...scales);
@@ -971,30 +995,35 @@ export function updateDisplayedInfo() {
     const genreContainer = els.genreText();
     genreContainer.innerHTML = '';
 
-    if (state.meta.stats) {
-        const statsParts = state.meta.stats.split(' • ');
-        statsParts.forEach(stat => {
-            if (stat.trim()) {
-                const statPill = document.createElement('span');
-                statPill.className = 'genre-pill stats-pill';
-                statPill.innerText = stat.trim();
-                genreContainer.appendChild(statPill);
-            }
-        });
-    }
+    const statsParts = (state.meta.stats || '').split(' • ').map(s => s.trim()).filter(Boolean);
+    statsParts.forEach(stat => {
+        const statPill = document.createElement('span');
+        statPill.className = 'genre-pill stats-pill';
+        statPill.innerText = stat;
+        genreContainer.appendChild(statPill);
+    });
 
-    let rawGenres = state.meta.genre || '';
-    if (rawGenres) {
-        const parts = rawGenres.split(/،|,/);
-        parts.forEach(g => {
-            const text = g.trim();
-            if (text) {
-                const pill = document.createElement('span');
-                pill.className = 'genre-pill';
-                pill.innerText = text;
-                genreContainer.appendChild(pill);
-            }
-        });
+    // Vertical has one line for pills: at most 6 (length pills + genres), the last
+    // one becoming "+N" when genres don't fit. Horizontal wraps, so it shows all.
+    const genreParts = (state.meta.genre || '').split(/،|,/).map(g => g.trim()).filter(Boolean);
+    let shownGenres = genreParts, hiddenCount = 0;
+    const MAX_VERTICAL_PILLS = 6;
+    if (state.orientation === 'vertical' && statsParts.length + genreParts.length > MAX_VERTICAL_PILLS) {
+        const keep = Math.max(1, MAX_VERTICAL_PILLS - statsParts.length - 1);
+        shownGenres = genreParts.slice(0, keep);
+        hiddenCount = genreParts.length - keep;
+    }
+    shownGenres.forEach(text => {
+        const pill = document.createElement('span');
+        pill.className = 'genre-pill';
+        pill.innerText = text;
+        genreContainer.appendChild(pill);
+    });
+    if (hiddenCount > 0) {
+        const more = document.createElement('span');
+        more.className = 'genre-pill more-pill';
+        more.innerText = `+${hiddenCount}`;
+        genreContainer.appendChild(more);
     }
 
     if (state.meta.score) {
@@ -1029,6 +1058,15 @@ export function updateDisplayedInfo() {
         fitGenreRow(els.genreText().parentElement);
     }
     adjustTitleSize();
+}
+
+// Remove source credits that AniList/MAL append to synopses, e.g.
+// "(Source: Crunchyroll)", "[Written by MAL Rewrite]", "(Source: Square Enix)".
+function cleanSourceNotes(text) {
+    return text
+        .replace(/[(\[]\s*(?:source|written by|via)\b[^)\]]*[)\]]/gi, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
 }
 
 // Arabic Plural Rules Helper

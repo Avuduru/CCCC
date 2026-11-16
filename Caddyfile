@@ -27,6 +27,11 @@
 		@private path_regexp private (^|/)\.|^/(data|Docs|archive|Demo)(/|$)|^/(README\.md|composer\.(json|lock)|railpack\.json|Caddyfile|php\.ini.*|cacert\.pem|local-router\.php|test_proxy\.php|demo(\.html)?)$
 		respond @private 404
 
+		# Browsers must revalidate pages, styles and scripts on each visit (cheap 304s),
+		# so an updated JS module is never mixed with stale cached ones.
+		@revalidate path / /guide *.html *.css *.js
+		header @revalidate Cache-Control "no-cache"
+
 		{$CADDY_SERVER_EXTRA_DIRECTIVES}
 
 		# Serves static files; anything else falls through to index.php,

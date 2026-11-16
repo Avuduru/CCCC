@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { fitCard, CARD_SIZE } from './card.js?v=1';
+import { fitCard, CARD_SIZE } from './card.js';
 
 // Exported cards are full-colour (4:4:4) baseline JPEGs at this quality.
 // X/Twitter passes such JPEGs through untouched, while it re-saves PNGs at

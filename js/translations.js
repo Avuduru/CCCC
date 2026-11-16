@@ -126,6 +126,16 @@ export const genreTranslations = {
     'Family': 'عائلي',
     'Movie': 'فيلم',
     'TV Series': 'مسلسل',
+
+    // TMDB TV genres
+    'Action & Adventure': 'أكشن ومغامرة',
+    'Sci-Fi & Fantasy': 'خيال علمي وفانتازيا',
+    'War & Politics': 'حرب وسياسة',
+    'News': 'أخبار',
+    'Reality': 'واقع',
+    'Soap': 'دراما يومية',
+    'Talk': 'برامج حوارية',
+    'TV Movie': 'فيلم تلفزيوني',
     'Game': 'لعبة'
 };
 

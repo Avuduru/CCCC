@@ -1062,6 +1062,7 @@ body {
     direction: auto;
     unicode-bidi: isolate;
     color: #fff;
+    overflow-wrap: anywhere; /* very long single words wrap instead of running off the card */
 }
 /* 70% multiplier for 2-line horizontal titles */
 .horizontal-has-2-line-title .header-info h2 { 
@@ -1166,14 +1167,7 @@ body {
 
 #synopsis-text.scale-medium  { font-size: calc(var(--canvas-synopsis-size) * 0.85) !important; }
 #synopsis-text.scale-heavy   { font-size: calc(var(--canvas-synopsis-size) * 0.75) !important; }
-#synopsis-text.scale-extreme {
-    font-size: calc(var(--canvas-synopsis-size) * 0.65) !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 3 !important;
-    line-clamp: 3 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-}
+#synopsis-text.scale-extreme { font-size: calc(var(--canvas-synopsis-size) * 0.65) !important; }
 
 #synopsis-text.manual-size-sm { font-size: calc(var(--canvas-synopsis-size) * 0.7) !important; }
 #synopsis-text.manual-size-md { font-size: calc(var(--canvas-synopsis-size) * 0.85) !important; }
@@ -1296,6 +1290,10 @@ body {
     text-shadow: 0 2px 6px rgba(0,0,0,0.8);
     text-align: start !important;
 }
+/* Auto-shrink steps for vertical (the rule above would otherwise override them) */
+.vertical #synopsis-text.scale-medium  { font-size: calc(var(--canvas-synopsis-size) * 0.8 * 0.85) !important; }
+.vertical #synopsis-text.scale-heavy   { font-size: calc(var(--canvas-synopsis-size) * 0.8 * 0.75) !important; }
+.vertical #synopsis-text.scale-extreme { font-size: calc(var(--canvas-synopsis-size) * 0.8 * 0.65) !important; }
 .vertical .genre-row {
     margin-top: 1cqw !important;
     margin-bottom: 1cqw !important;
@@ -1316,13 +1314,28 @@ body {
     direction: rtl;
     opacity: 1;
     letter-spacing: normal !important;
+    /* Never wider than the poster above it; long names end with "…" */
+    display: flex;
+    align-items: baseline;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
 }
 .vertical .modern-watermark { font-size: 2.4cqw; padding: 5px 22px; }
 .modern-watermark .watermark-label {
     color: var(--acc);
     font-weight: 800;
     margin-left: 4px;
+    flex: none;
 }
+.modern-watermark .name-span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Export measures the natural width and truncates in JS (html2canvas has no text-overflow) */
+.export-mode .modern-watermark { max-width: none !important; }
+.export-mode .modern-watermark .name-span { overflow: visible !important; }
 .modern-watermark.hidden { display: none !important; }
 .horizontal .modern-watermark.vertical-only { display: none !important; }
 .vertical .modern-watermark.horizontal-only { display: none !important; }
@@ -1396,6 +1409,35 @@ body {
     min-width: 0;
 }
 .sticker-item img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Two sticker rows when one row would make them tiny (JS sets .two-rows and --per-row) */
+.stickers-grid-canvas.two-rows { flex-wrap: wrap !important; align-content: flex-end !important; row-gap: 0.4cqw; }
+.horizontal .stickers-grid-canvas.two-rows .sticker-item {
+    flex: 0 0 auto;
+    width: calc((100% - (var(--per-row, 7) - 1) * 0.4cqw) / var(--per-row, 7));
+    max-width: none;
+}
+.export-mode.horizontal .stickers-grid-canvas.two-rows { row-gap: 12px !important; }
+.export-mode.horizontal .stickers-grid-canvas.two-rows .sticker-item {
+    flex: 0 0 auto !important;
+    width: calc((100% - (var(--per-row, 7) - 1) * 12px) / var(--per-row, 7)) !important;
+}
+.export-mode.horizontal .stickers-container:has(.two-rows) { max-height: none !important; }
+
+/* Share button inside the phone export popup */
+.share-btn {
+    width: 100%;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--acc);
+    color: #0e1014;
+    font-family: var(--font-ar);
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.share-btn:active { transform: translateY(1px); }
 
 /* Demo sticker placeholders */
 .sticker-placeholder {
@@ -1903,6 +1945,8 @@ body {
     overflow: hidden !important;
     box-sizing: border-box !important;
 }
+
+.vertical .stickers-grid-canvas.two-rows { flex-wrap: wrap !important; align-content: flex-end !important; }
 
 /* Vertical stickers: Self-Regulating Flexbox tied to JS Allocator */
 .vertical .sticker-item {

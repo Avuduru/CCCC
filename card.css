@@ -191,7 +191,7 @@
     color: #0e1014;
     font-family: var(--font-ar);
     font-size: 20px;
-    font-weight: 800;
+    font-weight: 700;   /* the site's own Handjet-Bold; weight 800 broke Arabic joins on iOS Safari */
     cursor: pointer;
 }
 .share-btn:active { transform: translateY(1px); }

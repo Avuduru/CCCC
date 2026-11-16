@@ -9,10 +9,13 @@ export const CARD_SIZE = { h: { w: 1920, h: 1080 }, v: { w: 1200, h: 1500 } };
 
 // Title: one line at `one`px if it fits, else the largest size ≤ `two` that
 // fits in two lines (down to `min`), then a word-boundary "…".
+// Title: one line first — shrink from `one` down to `floor` until it fits.
+// Only a title too long for one line at `floor` uses two balanced lines
+// (from `two` down to `min`), and only past two lines does it end in "…".
 const TITLE = {
-    h:    { one: 156, two: 104, min: 80 },   // C-H / CH-stress
-    wide: { one: 118, two: 84,  min: 64, tight: 96 },   // CV-wide / CV-stress; tight = one line when stickers wrap
-    tall: { one: 124, two: 84,  min: 64 },   // A-V / CVside
+    h:    { one: 156, floor: 84, two: 104, min: 72 },   // C-H / CH-stress
+    wide: { one: 118, floor: 80, two: 84,  min: 60, tight: 96 },   // CV-wide; tight = one line only when stickers wrap
+    tall: { one: 124, floor: 80, two: 84,  min: 60 },   // A-V / CVside
 };
 const SYNOPSIS = { min: 26, max: 52 };
 const STICKER = { gap: 16, groupGap: 28, one: 190, two: { h: 140, wide: 120, tall: 150 } };
@@ -205,36 +208,47 @@ export function renderCard() {
 }
 
 // ── Fitting (measured) ───────────────────────────────────────────────────
+// Largest size in [lo, hi] (2px steps) at which `fits()` holds, or 0 if none.
+function largestFitting(el, lo, hi, fits) {
+    let best = 0;
+    lo = Math.ceil(lo / 2); hi = Math.floor(hi / 2);
+    while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        el.style.fontSize = mid * 2 + 'px';
+        if (fits()) { best = mid * 2; lo = mid + 1; } else hi = mid - 1;
+    }
+    return best;
+}
+
 function fitTitle(card, L) {
     const t = $('#title-text', card);
     const cfg = TITLE[L];
     if (!isFocused(t) && t.dataset.full !== undefined) t.textContent = t.dataset.full;
+    const oneLine = () => lineCount(t) <= 1;
+
+    // Wide-image vertical with two sticker rows: always one line (from cfg.tight), then "…"
+    const tight = L === 'wide' && card.querySelectorAll('.cd-sticker').length > 6;
+
+    // 1. One line, shrinking down to the floor
     t.classList.add('cd-one-line');
-    // Wide-image vertical with two sticker rows: the title keeps to one line,
-    // starting smaller (cfg.tight, shrinking to cfg.min, then "…") so the synopsis keeps a few lines.
-    if (L === 'wide' && card.querySelectorAll('.cd-sticker').length > 6) {
-        let one = cfg.tight;
-        t.style.fontSize = one + 'px';
-        while (lineCount(t) > 1 && one > cfg.min) {
-            one -= 4;
-            t.style.fontSize = one + 'px';
-        }
-        if (!isFocused(t) && lineCount(t) > 1) {
+    const one = largestFitting(t, tight ? cfg.min : cfg.floor, tight ? cfg.tight : cfg.one, oneLine);
+    if (one) { t.style.fontSize = one + 'px'; return; }
+    if (tight) {
+        t.style.fontSize = cfg.min + 'px';
+        if (!isFocused(t)) {
             // glyphs overhang the 0.95 line-height a little, so allow up to 1.5 lines of height
             const maxH = lineHeightPx(t) * 1.5;
             truncateToFit(t, () => t.scrollHeight <= maxH);
         }
         return;
     }
-    t.style.fontSize = cfg.one + 'px';
-    if (lineCount(t) <= 1) return;
+
+    // 2. Two balanced lines (CSS text-wrap: balance), shrinking down to min
     t.classList.remove('cd-one-line');
-    let size = cfg.two;
-    t.style.fontSize = size + 'px';
-    while (lineCount(t) > 2 && size > cfg.min) {
-        size -= 4;
-        t.style.fontSize = size + 'px';
-    }
+    const two = largestFitting(t, cfg.min, cfg.two, () => lineCount(t) <= 2);
+    t.style.fontSize = (two || cfg.min) + 'px';
+
+    // 3. Still longer: end the second line on a whole word with "…"
     if (!isFocused(t) && lineCount(t) > 2) {
         const maxH = lineHeightPx(t) * 2 + 2;
         truncateToFit(t, () => t.scrollHeight <= maxH);

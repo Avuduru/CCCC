@@ -7,13 +7,17 @@ export const state = {
     meta: {
         title: 'عنوان العمل',
         year: '2023',
-        poster: null,
+        poster: null,   // tall cover/poster (2:3)
+        wide: '',       // wide art (16:9) for the vertical band; '' → A-style vertical layout
         genre: 'نوع العمل',
         synopsis: '',
         score: '',
         stats: ''
     },
-    synopsisSize: 'auto' // 'auto' | 'small' | 'medium' | 'large' | 'xlarge'
+    classifier: {
+        name: '',
+        rating: ''      // classifier's own rating out of 10 (card only)
+    }
 };
 
 export function updateState(u) {

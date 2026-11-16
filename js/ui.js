@@ -3,6 +3,7 @@ import { state, updateState } from './state.js';
 import { handleSearch } from './api.js';
 import { translateGenres, translateText } from './translations.js';
 import { debounce } from './utils.js';
+import { initCard, renderCard, fitCard, scalePreview } from './card.js?v=1';
 
 // Cache for prefetched game covers
 const gameCoverCache = {};
@@ -14,7 +15,6 @@ const els = {
     activeStickers: () => document.getElementById('active-stickers'),
     typeButtons: () => document.querySelectorAll('.type-btn'),
     posterImg: () => document.getElementById('poster-img'),
-    posterBg: () => document.getElementById('poster-bg'),
     titleText: () => document.getElementById('title-text'),
     genreText: () => document.getElementById('genre-text'),
     scoreBadge: () => document.getElementById('score-badge'),
@@ -31,17 +31,13 @@ const els = {
 
 export function initUI() {
     renderControls();
-    updatePreview();
+    initCard();
     setupModal();
 
-    // Auto-scale synopsis on input (debounced)
+    // Re-fit the synopsis while the user types in it (debounced)
     const synText = els.synopsisText();
     if (synText) {
-        synText.addEventListener('input', debounce(() => {
-            if (state.synopsisSize === 'auto') {
-                fitSynopsisToContainer();
-            }
-        }, 300));
+        synText.addEventListener('input', debounce(() => fitCard(), 300));
     }
 }
 
@@ -50,13 +46,6 @@ export function renderControls() {
     const toggles = els.togglesList();
 
     if (!list || !toggles) return;
-
-    // Toggle Synopsis Controls Visibility
-    const synControls = document.getElementById('synopsis-controls');
-    if (synControls) {
-        if (state.orientation === 'vertical') synControls.classList.add('hidden');
-        else synControls.classList.remove('hidden');
-    }
 
     // Clear lists
     list.innerHTML = '';
@@ -236,33 +225,41 @@ function attachControlListeners() {
     });
 
     // --- Watermark Logic ---
+    // Classifier name + rating (out of 10) \u2192 shown on the card (bound once)
     const reviewerInput = document.getElementById('reviewer-name-input');
-    const watermarks = document.querySelectorAll('.modern-watermark');
-
-    if (reviewerInput && watermarks.length > 0) {
+    const ratingInput = document.getElementById('reviewer-rating-input');
+    if (reviewerInput && !reviewerInput.dataset.bound) {
+        reviewerInput.dataset.bound = '1';
         reviewerInput.addEventListener('input', (e) => {
-            const text = e.target.value.trim();
-            watermarks.forEach(watermark => {
-                const nameSpan = watermark.querySelector('.name-span');
-                if (text) {
-                    nameSpan.innerText = text;
-
-                    // Fix Direction for English Names (e.g. @ikureiji)
-                    if (/^[A-Za-z\u00C0-\u00FF@]/.test(text)) {
-                        nameSpan.style.direction = 'ltr';
-                        nameSpan.style.unicodeBidi = 'isolate';
-                    } else {
-                        nameSpan.style.direction = 'rtl';
-                        nameSpan.style.unicodeBidi = 'normal';
-                    }
-
-                    watermark.classList.remove('hidden');
-                } else {
-                    watermark.classList.add('hidden');
-                }
-            });
+            state.classifier.name = e.target.value.trim();
+            renderCard();
         });
     }
+    if (ratingInput && !ratingInput.dataset.bound) {
+        ratingInput.dataset.bound = '1';
+        ratingInput.addEventListener('input', (e) => {
+            state.classifier.rating = normalizeRating(e.target.value);
+            renderCard();
+        });
+        ratingInput.addEventListener('blur', () => {
+            ratingInput.value = state.classifier.rating;
+        });
+    }
+}
+
+// Accepts 0\u201310 with up to two decimals ("7.5", "6.25", Arabic digits or "\u066B");
+// anything else is dropped so the card never shows e.g. "11/10".
+export function normalizeRating(raw) {
+    let t = String(raw || '').trim()
+        .replace(/[\u0660-\u0669]/g, d => '\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669'.indexOf(d))
+        .replace(/[\u066B,]/g, '.');
+    if (!t) return '';
+    const m = t.match(/^\d{1,2}(\.\d{0,2})?/);
+    if (!m) return '';
+    let n = parseFloat(m[0]);
+    if (isNaN(n) || n < 0) return '';
+    if (n > 10) n = 10;
+    return String(Math.round(n * 100) / 100);
 }
 
 function setupModal() {
@@ -316,291 +313,12 @@ export function updateRatingUI(container, knob, level) {
 }
 
 export function updatePreview() {
-    const stickerContainer = els.activeStickers();
-    const canvas = els.previewCanvas();
-    if (!stickerContainer || !canvas) return;
-
-    // Update orientation class
-    canvas.classList.remove('horizontal', 'vertical');
-    canvas.classList.add(state.orientation);
-
-    stickerContainer.innerHTML = '';
-
-    const order = CATEGORIES.Mawjoodat.map(c => c.id);
-
-    // Collect all active stickers
-    const activeItems = [];
-
-    // 1. Mawjoodat
-    for (const key of order) {
-        const level = state.ratings[key];
-        if (level && level > 0) {
-            const cat = CATEGORIES.Mawjoodat.find(c => c.id === key);
-            if (cat) {
-                activeItems.push({
-                    icon: `${cat.icon}${level}`,
-                    label: cat.label,
-                    fallback: cat.icon
-                });
-            }
-        }
-    }
-
-    // 2. Mustathniyat
-    for (const key of Object.keys(state.badges)) {
-        if (state.badges[key]) {
-            const item = CATEGORIES.Mustathniyat.find(i => i.id === key);
-            if (item) {
-                activeItems.push({
-                    icon: `${item.icon}0`,
-                    label: item.label
-                });
-            }
-        }
-    }
-
-    const canvasContent = document.querySelector('.canvas-content');
-    if (canvasContent) {
-        if (activeItems.length <= 5) {
-            canvasContent.classList.add('single-row');
-        } else {
-            canvasContent.classList.remove('single-row');
-        }
-    }
-
-    // Conditionally center icons if 4 or less
-    if (activeItems.length <= 4) {
-        stickerContainer.classList.add('few-icons');
-    } else {
-        stickerContainer.classList.remove('few-icons');
-    }
-
-    // Horizontal: 9+ stickers wrap to two rows so they stay readable.
-    // (Vertical decides rows in adjustVerticalPositions, which knows the free height.)
-    if (state.orientation === 'horizontal') {
-        stickerContainer.classList.toggle('two-rows', activeItems.length >= 9);
-        stickerContainer.style.setProperty('--per-row', String(Math.ceil(activeItems.length / 2)));
-    }
-
-    // Render Stickers
-    activeItems.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'sticker-item';
-        div.innerHTML = `<img src="assets/icons/${item.icon}.png?v=2" alt="${item.label}" onerror="if(this.dataset.fallback) this.src='assets/icons/'+this.dataset.fallback+'.png?v=2'" data-fallback="${item.fallback || ''}">`;
-        stickerContainer.appendChild(div);
-    });
-
-    // DYNAMIC SYNOPSIS SCALING (Overflow/Fit-to-Box)
-    // We defer this slightly to allow DOM reflow
-    requestAnimationFrame(() => {
-        adjustTitleSize();
-        fitSynopsisToContainer();
-        adjustVerticalPositions();
-    });
+    renderCard();
 }
 
 export function reAdjustLayout() {
-    adjustTitleSize();
-    fitSynopsisToContainer();
-    adjustVerticalPositions();
-}
-
-// Safety net: if the header (title + pills) overflows past the poster/synopsis
-// start position, push them down dynamically. Only activates for vertical layout
-// when the header actually exceeds the CSS-defined budget.
-export function adjustVerticalPositions(container) {
-    if (!container) container = document.getElementById('preview-canvas');
-    if (!container || !container.classList.contains('vertical')) return;
-
-    const header = container.querySelector('.header-info');
-    const poster = container.querySelector('.poster-container');
-    const synopsis = container.querySelector('.synopsis-wrapper');
-    if (!header || !poster || !synopsis) return;
-
-    // Reset to CSS defaults so we measure the true CSS top
-    poster.style.top = '';
-    synopsis.style.top = '';
-
-    const contentEl = container.querySelector('.canvas-content');
-    const contentH = contentEl ? contentEl.offsetHeight : container.offsetHeight;
-    const headerBottom = header.offsetTop + header.offsetHeight;
-    const posterTop = poster.offsetTop;
-    const gap = contentH * 0.015; // 1.5% breathing room
-
-    // Only intervene if header bottom is too close to or past poster top
-    if (headerBottom > posterTop - gap) {
-        const newTopPx = headerBottom + gap;
-        poster.style.setProperty('top', newTopPx + 'px', 'important');
-        synopsis.style.setProperty('top', newTopPx + 'px', 'important');
-    }
-
-    // --- Dynamic Layout Allocator: Gap, Pill, and Stickers ---
-    const watermark = container.querySelector('.modern-watermark.vertical-only');
-    const stickersGrid = container.querySelector('.stickers-grid-canvas');
-    if (watermark && stickersGrid) {
-        // Reset inline overrides to measure natural layout bounds
-        watermark.style.marginTop = '';
-        stickersGrid.style.height = '';
-
-        const posterBottom = poster.offsetTop + poster.offsetHeight;
-        // canvasBottom is the container height minus the 1.5% padding reserve
-        const canvasBottom = contentH - (contentH * 0.015);
-        const remaining = canvasBottom - posterBottom;
-        
-        const pillH = watermark.offsetHeight;
-        // Strict minimum padding above and below the pill (e.g. 2.5% of canvas height)
-        const minPadding = contentH * 0.025; 
-        const requiredPillSpace = pillH + (minPadding * 2);
-        
-        // Max ideal height for stickers (e.g., 21% of canvas width)
-        // Preview: 800 * 0.21 = 168px. Export: 1200 * 0.21 = 252px.
-        const maxStickerH = container.offsetWidth * 0.21; 
-        
-        const availableForStickers = remaining - requiredPillSpace;
-
-        let finalStickerH;
-        let finalPadding;
-
-        if (availableForStickers >= maxStickerH) {
-            // SCENARIO 1: Plenty of room.
-            // Use maximum sticker height, evenly distribute extra space as padding.
-            finalStickerH = maxStickerH;
-            finalPadding = (remaining - pillH - finalStickerH) / 2;
-        } else {
-            // SCENARIO 2: Cramped (e.g. 2-line title).
-            // Mandate minimum padding, force stickers to shrink to remaining space.
-            finalPadding = minPadding;
-            finalStickerH = availableForStickers;
-            if (finalStickerH < 0) finalStickerH = 0; // Safety floor
-        }
-        // --- html2canvas Flexbox Bug Fix ---
-        // If there are many stickers (e.g. 7), flex-shrink compresses their width.
-        // Modern browsers scale aspect-ratio perfectly, but html2canvas leaves the height stretched, warping them.
-        // Fix: Mathematically calculate the absolute maximum width allowed, and explicitly set width AND height.
-        const numStickers = stickersGrid.children.length;
-        stickersGrid.classList.remove('two-rows');
-        stickersGrid.style.rowGap = '';
-        if (numStickers > 0) {
-            // Is it export mode? We can tell if contentH is exactly 1500px, or we can just calculate safely.
-            const isExport = container.classList.contains('export-mode') || contentH >= 1500;
-            const gap = isExport ? 18 : (container.offsetWidth * 0.015);
-            const sidePadding = container.offsetWidth * 0.03; // 1.5% left + 1.5% right
-            const availableWidth = container.offsetWidth - sidePadding;
-            const squareFor = (perRow) => (availableWidth - (perRow - 1) * gap) / perRow;
-
-            // One row: limited by the height budget and by the width.
-            const oneRow = Math.min(finalStickerH, squareFor(numStickers));
-            // Two rows: uses the full free height below the pill. Only worth it when
-            // stickers come out clearly bigger (8+ stickers, at least 20% larger).
-            const perRow2 = Math.ceil(numStickers / 2);
-            const twoRow = Math.min(maxStickerH, (Math.max(0, availableForStickers) - gap) / 2, squareFor(perRow2));
-            const useTwoRows = numStickers >= 8 && twoRow > oneRow * 1.2;
-
-            const finalStickerSize = Math.max(0, useTwoRows ? twoRow : oneRow);
-            const blockH = useTwoRows ? finalStickerSize * 2 + gap : finalStickerSize;
-            // Balance the rows (7 + 6, not 10 + 3): side padding makes each row wrap at perRow2.
-            const rowWidth = perRow2 * finalStickerSize + (perRow2 - 1) * gap;
-            const sidePad = useTwoRows ? Math.max(0, (stickersGrid.clientWidth - rowWidth) / 2 - 1) : 0;
-            stickersGrid.style.setProperty('padding-left', sidePad + 'px', 'important');
-            stickersGrid.style.setProperty('padding-right', sidePad + 'px', 'important');
-            if (useTwoRows) {
-                stickersGrid.classList.add('two-rows');
-                stickersGrid.style.rowGap = gap + 'px';
-                finalPadding = Math.max(minPadding, (remaining - pillH - blockH) / 2);
-            }
-
-            stickersGrid.style.setProperty('height', blockH + 'px', 'important');
-            Array.from(stickersGrid.children).forEach(item => {
-                item.style.setProperty('width', finalStickerSize + 'px', 'important');
-                item.style.setProperty('height', finalStickerSize + 'px', 'important');
-            });
-        } else {
-            stickersGrid.style.setProperty('height', finalStickerH + 'px', 'important');
-        }
-        
-        // 2. Position the pill. (Origin is top:100% inside poster, so it starts at posterBottom - 2px border)
-        // We add 2px to ensure the visual gap matches the mathematical padding.
-        watermark.style.setProperty('margin-top', (finalPadding + 2) + 'px', 'important');
-    }
-}
-
-// New Helper: Shrink text until it fits container
-// New Helper: Shrink text until it fits container
-function fitSynopsisToContainer() {
-    const el = els.synopsisText();
-    const wrapper = el ? el.parentElement : null;
-    if (!el || !wrapper) return;
-
-    // 1. Reset all size classes
-    el.classList.remove('scale-medium', 'scale-heavy', 'scale-extreme', 'manual-size-sm', 'manual-size-md', 'manual-size-lg', 'manual-size-xl');
-
-    // 2. Check Manual Mode (size buttons exist only in horizontal)
-    if (state.synopsisSize && state.synopsisSize !== 'auto' && state.orientation !== 'vertical') {
-        if (state.synopsisSize === 'small') el.classList.add('manual-size-sm');
-        else if (state.synopsisSize === 'medium') el.classList.add('manual-size-md');
-        else if (state.synopsisSize === 'large') el.classList.add('manual-size-lg');
-        else if (state.synopsisSize === 'xlarge') el.classList.add('manual-size-xl');
-        return;
-    }
-
-    // 3. Auto Mode: Check Overflow & Apply Scaling iteratively
-    // We check if content height > container height
-
-    // Check 1: Base size overflow? -> Try Medium
-    if (el.scrollHeight > wrapper.clientHeight) {
-        el.classList.add('scale-medium');
-
-        // Check 2: Medium size overflow? -> Try Heavy
-        if (el.scrollHeight > wrapper.clientHeight) {
-            el.classList.remove('scale-medium');
-            el.classList.add('scale-heavy');
-
-            // Check 3: Heavy size overflow? -> Try Extreme
-            if (el.scrollHeight > wrapper.clientHeight) {
-                el.classList.remove('scale-heavy');
-                el.classList.add('scale-extreme');
-            }
-        }
-    }
-}
-
-
-
-export function drawBlurredBackground(url) {
-    const canvas = els.posterBg();
-    if (!canvas || !url) return;
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = () => {
-        // Remove any old fallback classes when a new image loads
-        canvas.classList.remove('fallback-css-blur');
-
-        // Set internal resolution based on display size
-        canvas.width = canvas.offsetWidth * 1.2; // Slightly larger for better quality
-        canvas.height = canvas.offsetHeight * 1.2;
-
-        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
-        const x = (canvas.width / 2) - (img.width / 2) * scale;
-        const y = (canvas.height / 2) - (img.height / 2) * scale;
-
-        // Draw the image sharp first
-        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-
-        // Apply StackBlur (Radius 25) directly to the canvas pixels for 100% cross-browser and html2canvas support
-        if (typeof StackBlur !== 'undefined') {
-            try {
-                StackBlur.canvasRGBA(canvas, 0, 0, canvas.width, canvas.height, 18);
-            } catch (e) {
-                console.warn('[Blur Engine] StackBlur blocked by browser security (e.g. Brave Shields). Falling back to CSS blur.');
-                canvas.classList.add('fallback-css-blur');
-            }
-        } else {
-            console.warn('[Blur Engine] StackBlur CDN was blocked. Falling back to CSS blur.');
-            canvas.classList.add('fallback-css-blur');
-        }
-    };
-    img.src = url;
+    fitCard();
+    scalePreview();
 }
 
 export function showSearchResults(data, type) {
@@ -676,13 +394,15 @@ function selectItem(item, type) {
     state.meta.title = item.title || item.name || item.title_english || (item.volumeInfo ? item.volumeInfo.title : 'No Title');
     state.meta.score = '';
     state.meta.stats = '';
+    state.meta.wide = '';
+    const proxied = (u) => u ? `proxy.php?query=${encodeURIComponent(u)}&type=image_proxy` : '';
 
 
     if (type === 'movie' || type === 'tv') {
         if (item.vote_average) state.meta.score = parseFloat(item.vote_average).toFixed(1);
-        const rawPoster = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
-        // Use proxy to ensure CORS headers for Canvas processing
-        state.meta.poster = `proxy.php?query=${encodeURIComponent(rawPoster)}&type=image_proxy`;
+        // Proxied so the export canvas isn't tainted (CORS). w780 poster, w1280 backdrop.
+        state.meta.poster = item.poster_path ? proxied(`https://image.tmdb.org/t/p/w780${item.poster_path}`) : '';
+        state.meta.wide = item.backdrop_path ? proxied(`https://image.tmdb.org/t/p/w1280${item.backdrop_path}`) : '';
 
         // Default fallback genre while fetching
         state.meta.genre = translateGenres(type === 'movie' ? 'Movie' : 'TV Series');
@@ -717,7 +437,8 @@ function selectItem(item, type) {
     } else if (type === 'game') {
         if (item.metacritic) state.meta.score = item.metacritic;
         // RAWG format - fetch full game details for description
-        state.meta.poster = ''; // Start empty, will be filled by SteamGridDB
+        state.meta.poster = ''; // Start empty, will be filled by SteamGridDB (600×900)
+        state.meta.wide = proxied(item.background_image); // RAWG key art (16:9)
         const genreText = item.genres ? item.genres.map(g => g.name).join(', ') : 'Game';
         state.meta.genre = translateGenres(genreText);
 
@@ -880,184 +601,8 @@ function selectItem(item, type) {
     els.searchQuery().value = state.meta.title;
 }
 
-// Export for use in app.js
-export function adjustTitleSize() {
-    const el = els.titleText();
-    if (!el) return;
-    const isVertical = state.orientation === 'vertical';
-
-    // Reset all scaling
-    el.removeAttribute('data-length');
-    el.classList.remove('title-scale-1', 'title-scale-2', 'title-scale-3');
-
-    if (isVertical) {
-        fitVerticalTitle(el);
-    } else {
-        fitHorizontalTitle(el);
-    }
-}
-
-function fitHorizontalTitle(el) {
-    const canvas = document.getElementById('preview-canvas');
-
-    // 1. Temporarily strip class to measure true 100% base size safely
-    const was2Line = canvas.classList.contains('horizontal-has-2-line-title');
-    canvas.classList.remove('horizontal-has-2-line-title');
-    void el.offsetHeight; // Force browser reflow to apply 100% size instantly
-
-    // 2. Measure if it naturally wrapped to 2 lines at 100% size
-    const computed = window.getComputedStyle(el);
-    let lh = parseFloat(computed.lineHeight);
-    if (isNaN(lh)) {
-        lh = parseFloat(computed.fontSize) * 1.15; // Fallback if line-height is 'normal'
-    }
-
-    if (el.scrollHeight > lh * 1.5) {
-        canvas.classList.add('horizontal-has-2-line-title');
-    }
-
-    // Force reflow again so CSS updates
-    void el.offsetHeight;
-}
-
-function fitVerticalTitle(el) {
-    const scales = ['title-scale-1', 'title-scale-2', 'title-scale-3'];
-    const canvas = document.getElementById('preview-canvas');
-
-    // 1. Temporarily strip all scaling classes to measure true 100% base size safely
-    const was2Line = canvas.classList.contains('has-2-line-title');
-    canvas.classList.remove('has-2-line-title');
-    void el.offsetHeight; // Force browser reflow to apply 100% size instantly
-
-    // 2. Measure if it naturally wrapped to 2 lines at 100% size
-    const computed = window.getComputedStyle(el);
-    let lh = parseFloat(computed.lineHeight);
-    if (isNaN(lh)) {
-        lh = parseFloat(computed.fontSize) * 1.15; // Fallback if line-height is 'normal'
-    }
-
-    if (el.scrollHeight > lh * 1.5) {
-        canvas.classList.add('has-2-line-title');
-    }
-    // Note: We don't need an 'else', it stays removed if it fits on 1 line.
-
-    // Force reflow again so scaling logic reads the new actual font size (e.g. 50%)
-    void el.offsetHeight;
-
-    function fitsTwoLines() {
-        return el.scrollHeight <= el.clientHeight + 2; // +2 for sub-pixel tolerance
-    }
-
-    // Check at current enforced size
-    if (fitsTwoLines()) return;
-
-    // Try each progressively smaller scale (usually bypassed if .has-2-line-title enforced 50%)
-    for (const scale of scales) {
-        el.classList.add(scale);
-        if (fitsTwoLines()) return;
-        el.classList.remove(scale);
-    }
-
-    // Still doesn't fit — keep smallest scale, CSS -webkit-line-clamp: 2 clips the rest
-    el.classList.add(scales[scales.length - 1]);
-}
-
-export function fitGenreRow(el) {
-    if (state.orientation !== 'vertical') return;
-    const scales = ['genre-scale-1', 'genre-scale-2', 'genre-scale-3'];
-    el.classList.remove(...scales);
-    
-    if (el.scrollWidth <= el.clientWidth + 2) return; // Fits naturally
-    
-    for (const scale of scales) {
-        el.classList.add(scale);
-        if (el.scrollWidth <= el.clientWidth + 2) return;
-        el.classList.remove(scale);
-    }
-    // Keep smallest scale if it still doesn't fit
-    el.classList.add(scales[scales.length - 1]);
-}
-
 export function updateDisplayedInfo() {
-    const title = state.meta.title || '';
-    els.titleText().innerText = title;
-
-    // Fix Title Direction for English Text (e.g. Haikyuu!!)
-    // If starts with Latin character, force LTR
-    if (/^[A-Za-z\u00C0-\u00FF]/.test(title)) {
-        els.titleText().style.direction = 'ltr';
-        els.titleText().style.unicodeBidi = 'isolate';
-    } else {
-        els.titleText().style.direction = 'rtl';
-        els.titleText().style.unicodeBidi = 'normal';
-    }
-
-    const genreContainer = els.genreText();
-    genreContainer.innerHTML = '';
-
-    const statsParts = (state.meta.stats || '').split(' • ').map(s => s.trim()).filter(Boolean);
-    statsParts.forEach(stat => {
-        const statPill = document.createElement('span');
-        statPill.className = 'genre-pill stats-pill';
-        statPill.innerText = stat;
-        genreContainer.appendChild(statPill);
-    });
-
-    // Vertical has one line for pills: at most 6 (length pills + genres), the last
-    // one becoming "+N" when genres don't fit. Horizontal wraps, so it shows all.
-    const genreParts = (state.meta.genre || '').split(/،|,/).map(g => g.trim()).filter(Boolean);
-    let shownGenres = genreParts, hiddenCount = 0;
-    const MAX_VERTICAL_PILLS = 6;
-    if (state.orientation === 'vertical' && statsParts.length + genreParts.length > MAX_VERTICAL_PILLS) {
-        const keep = Math.max(1, MAX_VERTICAL_PILLS - statsParts.length - 1);
-        shownGenres = genreParts.slice(0, keep);
-        hiddenCount = genreParts.length - keep;
-    }
-    shownGenres.forEach(text => {
-        const pill = document.createElement('span');
-        pill.className = 'genre-pill';
-        pill.innerText = text;
-        genreContainer.appendChild(pill);
-    });
-    if (hiddenCount > 0) {
-        const more = document.createElement('span');
-        more.className = 'genre-pill more-pill';
-        more.innerText = `+${hiddenCount}`;
-        genreContainer.appendChild(more);
-    }
-
-    if (state.meta.score) {
-        els.scoreText().innerText = state.meta.score;
-        els.scoreBadge().classList.remove('hidden');
-    } else {
-        els.scoreBadge().classList.add('hidden');
-    }
-
-    // Inject full synopsis text and let CSS/JS-scaling handle visual constraints
-    els.synopsisText().innerText = state.meta.synopsis || '';
-
-    // Trigger Fit-to-Box Scaling and Layout Adjustments
-    requestAnimationFrame(() => reAdjustLayout());
-
-    if (state.meta.poster) {
-        els.posterImg().style.backgroundImage = `url(${state.meta.poster})`;
-        drawBlurredBackground(state.meta.poster);
-    } else {
-        els.posterImg().style.backgroundImage = 'none';
-        const canvas = els.posterBg();
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-    }
-
-    // ROBUST Aspect Ratio Fix REMOVED to lock aspect ratio (per user request)
-    // This allows CSS (A4 or 2:3) to control the container size, cropping images if needed.
-
-    if (state.orientation === 'vertical') {
-        fitGenreRow(els.genreText().parentElement);
-    }
-    adjustTitleSize();
+    renderCard();
 }
 
 // Remove source credits that AniList/MAL append to synopses, e.g.

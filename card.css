@@ -115,6 +115,7 @@
 /* No box-shadow: html2canvas paints shadows over the image, which greys out the poster */
 .cd-tall-poster { display: none; flex: none; border-radius: 10px; position: relative; }
 .cd-tall .cd-tall-poster { display: block; }
+.cd-tall .cd-tall-poster.cd-no-img { display: none; }   /* no image: no empty box (js/card.js fitTallPoster) */
 .cd-tall .cd-row { position: relative; }
 .cd-tall .cd-tall-poster { z-index: 1; }
 .cd-tall.cd-no-syn .cd-row { justify-content: center; }
@@ -199,3 +200,51 @@
     cursor: pointer;
 }
 .share-btn:active { transform: translateY(1px); }
+
+/* ── Manual mode ── */
+/* Score scale on the card ("8.5/10"), smaller than the number */
+.cd-score-den { font-size: 0.7em; opacity: 0.75; }
+.cd-score-den:empty { display: none; }
+/* Preview-only hints in empty manual fields (removed from exports) */
+.cd-card .cd-ph { opacity: 0.38; }
+.cd-card .cd-score.cd-ph { opacity: 0.45; }
+/* Image position chosen in the manual form */
+.cd-card[data-img-pos="top"] .cd-media-img, .cd-card[data-img-pos="top"] .cd-tall-poster { background-position: center top; }
+.cd-card[data-img-pos="bottom"] .cd-media-img, .cd-card[data-img-pos="bottom"] .cd-tall-poster { background-position: center bottom; }
+
+/* Manual form in the side panel */
+.manual-panel { display: flex; flex-direction: column; gap: 12px; }
+.manual-panel.hidden { display: none; }
+.mf-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mf-label { font-family: var(--font-ar); font-size: 15px; font-weight: 600; color: var(--text-1); }
+.mf-label em { font-style: normal; font-weight: 400; font-size: 13px; color: var(--text-2); margin-right: 6px; }
+.mf-input {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    background: var(--ink-3); border: 1px solid var(--line-bright); border-radius: 4px;
+    color: var(--text-0); font-family: var(--font-ar); font-size: 16px;   /* 16px: iOS doesn't zoom in on focus */
+    height: 40px; padding: 0 12px; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mf-input::placeholder { color: var(--text-3); }
+.mf-input:focus { border-color: var(--acc-dim); box-shadow: 0 0 0 3px rgba(200, 255, 94, 0.08); }
+.mf-textarea { height: auto; min-height: 96px; padding: 10px 12px; line-height: 1.5; resize: vertical; }
+.mf-pair { display: flex; gap: 8px; }
+.mf-pair > .mf-field { flex: 1; }
+.mf-score-row { display: flex; gap: 6px; }
+.mf-score-row #mf-score { flex: 1; text-align: center; direction: ltr; }
+.mf-select { flex: none; width: 76px; padding: 0 6px; font-family: var(--font-mono); font-size: 14px; cursor: pointer; direction: ltr; }
+.mf-image-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mf-btn {
+    height: 36px; padding: 0 14px; border-radius: 4px; cursor: pointer;
+    font-family: var(--font-ar); font-size: 15px; font-weight: 600;
+    background: var(--ink-3); color: var(--acc); border: 1px solid var(--line-bright);
+}
+.mf-btn:hover { border-color: var(--acc-dim); }
+.mf-btn-quiet { color: var(--text-1); }
+.mf-btn.hidden, .mf-seg.hidden { display: none; }
+.mf-seg { display: inline-flex; background: var(--ink-3); border: 1px solid var(--line); border-radius: 4px; padding: 3px; gap: 2px; margin-right: auto; }
+.mf-seg button {
+    background: transparent; border: none; color: var(--text-1); cursor: pointer;
+    font-family: var(--font-ar); font-size: 14px; font-weight: 600; padding: 6px 10px; border-radius: 3px; line-height: 1;
+}
+.mf-seg button.active { background: var(--ink-1); color: var(--acc); box-shadow: inset 0 0 0 1px var(--line-bright); }

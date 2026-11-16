@@ -1,4 +1,4 @@
-import { initUI, updatePreview, renderControls, updateDisplayedInfo, reAdjustLayout, preloadStickers } from './ui.js';
+import { initUI, updatePreview, renderControls, updateDisplayedInfo, reAdjustLayout, preloadStickers, syncManualForm, normalizeScore } from './ui.js';
 import { handleSearch } from './api.js';
 import { handleExport, handleCopyToClipboard } from './export.js';
 import { debounce } from './utils.js';
@@ -93,17 +93,13 @@ function setupEventListeners() {
             state.ratings = {};
             state.badges = {};
 
-            // Allow manual mode specific text, otherwise defaults
+            // Manual starts empty (the card shows dimmed hints until filled in);
+            // a new type always starts fresh — nothing carries over between works.
             if (state.type === 'manual') {
                 state.meta = {
-                    id: '',
-                    title: 'اكتب العنوان هنا',
-                    year: '',
-                    poster: '',
-                    genre: 'التصنيف 1، التصنيف 2، التصنيف 3',
-                    synopsis: 'اكتب النبذة هنا...',
-                    score: '0.0',
-                    stats: 'المدة/عدد الحلقات'
+                    id: '', title: '', year: '', poster: '', wide: '',
+                    genre: '', synopsis: '', score: '', stats: '',
+                    scoreScale: '10', imgPos: 'center'
                 };
             } else {
                 state.meta = {
@@ -111,10 +107,13 @@ function setupEventListeners() {
                     title: 'عنوان العمل',
                     year: '2023',
                     poster: null,
+                    wide: '',
                     genre: 'نوع العمل',
                     synopsis: '',
                     score: '',
-                    stats: ''
+                    stats: '',
+                    scoreScale: '',
+                    imgPos: 'center'
                 };
             }
 
@@ -146,6 +145,7 @@ function setupEventListeners() {
             renderControls();
             updatePreview();
             updateDisplayedInfo();
+            syncManualForm();
         });
     });
 
@@ -204,21 +204,41 @@ function setupEventListeners() {
         reAdjustLayout();
     });
 
-    // Manual genres: whatever was typed becomes pills again when editing ends.
-    // Length pills stay length pills; any other text is split on commas / new lines.
+    // Manual genres on the card: editing shows the genres as plain text
+    // ("دراما، خيال"), and on blur the text becomes genre pills again. The length
+    // pill is edited in the side form, so select-all + typing can't turn genres
+    // into blue length pills.
     const genreTextEl = document.getElementById('genre-text');
+    genreTextEl.addEventListener('focus', () => {
+        if (state.type !== 'manual') return;
+        genreTextEl.classList.remove('cd-ph');
+        genreTextEl.textContent = state.meta.genre || '';
+    });
     genreTextEl.addEventListener('blur', () => {
         if (state.type !== 'manual') return;
-        const stats = [], genres = [];
-        const split = (t) => t.split(/[،,\n]/).map(s => s.trim()).filter(Boolean);
-        genreTextEl.childNodes.forEach(node => {
-            const text = node.textContent || '';
-            if (node.nodeType === 1 && node.classList.contains('stats-pill')) stats.push(...split(text));
-            else if (!(node.nodeType === 1 && node.classList.contains('more-pill'))) genres.push(...split(text));
-        });
-        state.meta.stats = stats.join(' • ');
+        const genres = genreTextEl.innerText.split(/[،,\n]/).map(s => s.trim()).filter(Boolean);
         state.meta.genre = genres.join('، ');
         updateDisplayedInfo();
+        syncManualForm();
+    });
+
+    // Manual: tapping a dimmed hint on the card clears it, so typing replaces it
+    // instead of landing in the middle of "اكتب العنوان هنا".
+    const card = document.getElementById('preview-canvas');
+    card.addEventListener('focusin', (e) => {
+        if (state.type !== 'manual') return;
+        const el = e.target;
+        if (el.id === 'score-text' && el.parentElement.classList.contains('cd-ph')) {
+            el.textContent = ''; el.parentElement.classList.remove('cd-ph');
+        } else if ((el.id === 'title-text' || el.id === 'synopsis-text') && el.classList.contains('cd-ph')) {
+            el.textContent = ''; el.dataset.full = ''; el.classList.remove('cd-ph');
+        }
+    });
+    // Leaving a field: re-render (an emptied field gets its hint back) and update the form
+    card.addEventListener('focusout', (e) => {
+        if (state.type !== 'manual') return;
+        if (e.target.id === 'score-text') state.meta.score = normalizeScore(e.target.innerText, state.meta.scoreScale);
+        setTimeout(() => { updateDisplayedInfo(); syncManualForm(); }, 0);
     });
 
     // Manual Mode - File Upload (the cover, the vertical band and the tall poster all open it)
@@ -241,9 +261,9 @@ function setupEventListeners() {
                 const landscape = probe.naturalWidth / probe.naturalHeight >= 1.3;
                 state.meta.poster = url;
                 state.meta.wide = landscape ? url : '';
-                updatePreview();
+                updatePreview(); syncManualForm();
             };
-            probe.onerror = () => { state.meta.poster = url; state.meta.wide = ''; updatePreview(); };
+            probe.onerror = () => { state.meta.poster = url; state.meta.wide = ''; updatePreview(); syncManualForm(); };
             probe.src = url;
         };
         reader.readAsDataURL(file);

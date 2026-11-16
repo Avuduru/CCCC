@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { fitCard, CARD_SIZE } from './card.js';
+import { fitCard, CARD_SIZE, MANUAL_PH } from './card.js';
 
 // Exported cards are full-colour (4:4:4) baseline JPEGs at this quality.
 // X/Twitter passes such JPEGs through untouched, while it re-saves PNGs at
@@ -8,9 +8,7 @@ import { fitCard, CARD_SIZE } from './card.js';
 const JPEG_QUALITY = 92;
 
 // Manual-mode defaults that must never reach an exported image.
-const MANUAL_PLACEHOLDERS = ['التصنيف 1', 'التصنيف 2', 'التصنيف 3', 'المدة/عدد الحلقات'];
-const MANUAL_SYNOPSIS_PLACEHOLDER = 'اكتب النبذة هنا...';
-const MANUAL_TITLE_PLACEHOLDER = 'اكتب العنوان هنا';
+const MANUAL_PLACEHOLDERS = [...MANUAL_PH.genres, MANUAL_PH.stats];
 
 // Placeholders js/ui.js shows while a synopsis is still being fetched or translated.
 const SYNOPSIS_LOADING = ['جاري التحميل...', 'جاري الترجمة...'];
@@ -39,24 +37,25 @@ function stripLoadingText(clone) {
 function stripManualPlaceholders(clone) {
     clone.querySelectorAll('.upload-overlay').forEach(el => el.remove());
     if (state.type !== 'manual') return;
+    // Empty fields carry a dimmed hint (class cd-ph, set by js/card.js renderCard)
     const g = clone.querySelector('#genre-text');
     if (g) {
-        const keep = (list) => list.filter(t => !MANUAL_PLACEHOLDERS.includes(t.trim()));
+        const keep = (list) => g.classList.contains('cd-ph') ? [] : list.filter(t => !MANUAL_PLACEHOLDERS.includes(t.trim()));
         g.dataset.genres = JSON.stringify(keep(JSON.parse(g.dataset.genres || '[]')));
         g.dataset.stats = JSON.stringify(keep(JSON.parse(g.dataset.stats || '[]')));
     }
     const score = clone.querySelector('#score-text');
     const badge = clone.querySelector('#score-badge');
     const s = score ? score.textContent.trim() : '';
-    if (badge && (!s || s === '0.0' || s === '0')) badge.classList.add('hidden');
-    const title = clone.querySelector('#title-text');
-    if (title && (title.dataset.full || title.textContent).trim() === MANUAL_TITLE_PLACEHOLDER) {
-        title.textContent = ''; title.dataset.full = '';
-    }
-    const syn = clone.querySelector('#synopsis-text');
-    if (syn && (syn.dataset.full || syn.textContent).trim() === MANUAL_SYNOPSIS_PLACEHOLDER) {
-        syn.textContent = ''; syn.dataset.full = '';
-    }
+    if (badge && (badge.classList.contains('cd-ph') || !s)) badge.classList.add('hidden');
+    ['#title-text', '#synopsis-text'].forEach(sel => {
+        const el = clone.querySelector(sel);
+        if (!el) return;
+        const text = (el.dataset.full || el.textContent).trim();
+        if (el.classList.contains('cd-ph') || text === MANUAL_PH.title || text === MANUAL_PH.synopsis) {
+            el.textContent = ''; el.dataset.full = '';
+        }
+    });
 }
 
 function logClassification(action) {

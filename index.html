@@ -136,7 +136,7 @@
                         <span class="kicker"><span class="kicker-dot"></span>المحتوى</span>
                     </div>
 
-                    <div class="control-row">
+                    <div class="control-row" id="search-row">
                         <div class="search-wrapper">
                             <span class="search-prompt">⌕</span>
                             <input type="text" id="search-query" placeholder="ابحث عن عمل…">
@@ -155,6 +155,60 @@
                             <div class="search-wrapper compact rating-input" title="تقييمك من 10 (اختياري)">
                                 <input type="text" id="reviewer-rating-input" inputmode="decimal" maxlength="5" placeholder="تقييمك" aria-label="تقييمك من 10">
                                 <span class="search-hint">/10</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual mode: the card's fields as a form (shown only for "يدوي") -->
+                <div class="panel-section manual-panel hidden" id="manual-panel">
+                    <div class="section-head">
+                        <span class="kicker"><span class="kicker-dot"></span>بيانات العمل</span>
+                    </div>
+
+                    <label class="mf-field">
+                        <span class="mf-label">العنوان</span>
+                        <input type="text" id="mf-title" class="mf-input" placeholder="اكتب العنوان هنا" maxlength="120">
+                    </label>
+
+                    <label class="mf-field">
+                        <span class="mf-label">التصنيفات <em>افصل بفاصلة</em></span>
+                        <input type="text" id="mf-genres" class="mf-input" placeholder="دراما، خيال، مغامرة">
+                    </label>
+
+                    <div class="mf-pair">
+                        <label class="mf-field">
+                            <span class="mf-label">المدة</span>
+                            <input type="text" id="mf-stats" class="mf-input" placeholder="12 حلقة">
+                        </label>
+                        <div class="mf-field mf-score">
+                            <span class="mf-label">التقييم</span>
+                            <div class="mf-score-row">
+                                <input type="text" id="mf-score" class="mf-input" inputmode="decimal" maxlength="6" placeholder="8.5" aria-label="التقييم">
+                                <select id="mf-scale" class="mf-input mf-select" aria-label="مقياس التقييم">
+                                    <option value="10">/10</option>
+                                    <option value="100">/100</option>
+                                    <option value="5">/5</option>
+                                    <option value="">بدون</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label class="mf-field">
+                        <span class="mf-label">النبذة</span>
+                        <textarea id="mf-synopsis" class="mf-input mf-textarea" rows="4" placeholder="اكتب النبذة هنا..."></textarea>
+                    </label>
+
+                    <div class="mf-field">
+                        <span class="mf-label">الصورة</span>
+                        <div class="mf-image-row">
+                            <button type="button" id="mf-upload" class="mf-btn">رفع صورة</button>
+                            <button type="button" id="mf-remove" class="mf-btn mf-btn-quiet hidden">إزالة</button>
+                            <div class="mf-seg hidden" id="mf-pos" role="group" aria-label="موضع الصورة">
+                                <button type="button" data-pos="top">أعلى</button>
+                                <button type="button" data-pos="center" class="active">وسط</button>
+                                <button type="button" data-pos="bottom">أسفل</button>
                             </div>
                         </div>
                     </div>
@@ -220,7 +274,7 @@
                             </div>
                             <h2 id="title-text" class="cd-title">عنوان العمل</h2>
                             <div class="cd-pills">
-                                <span id="score-badge" class="cd-score hidden" dir="ltr">★ <span id="score-text"></span></span>
+                                <span id="score-badge" class="cd-score hidden" dir="ltr">★ <span id="score-text"></span><span class="cd-score-den" id="score-den"></span></span>
                                 <div id="genre-text" class="cd-genres"></div>
                             </div>
                             <div class="cd-row">

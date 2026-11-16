@@ -20,6 +20,15 @@ const TITLE = {
 const SYNOPSIS = { min: 26, max: 52 };
 const STICKER = { gap: 16, groupGap: 28, one: 190, two: { h: 140, wide: 120, tall: 150 } };
 
+// Hints shown in empty manual-mode fields (preview only, never exported)
+export const MANUAL_PH = {
+    title: 'اكتب العنوان هنا',
+    synopsis: 'اكتب النبذة هنا...',
+    score: '0.0',
+    stats: 'المدة/عدد الحلقات',
+    genres: ['التصنيف 1', 'التصنيف 2', 'التصنيف 3'],
+};
+
 const $ = (sel, root) => (root || document).querySelector(sel);
 export const cardEl = () => document.getElementById('preview-canvas');
 
@@ -175,22 +184,37 @@ export function renderCard() {
         if (hint) hint.classList.toggle('hidden', !(manual && !tall));
     });
 
+    card.dataset.imgPos = manual ? (m.imgPos || 'center') : 'center';
+
+    // Empty manual fields show a dimmed hint in the preview (class cd-ph);
+    // js/export.js removes every hint from the exported image.
     const t = $('#title-text', card);
     if (!isFocused(t)) {
-        t.textContent = m.title || '';
-        t.dataset.full = m.title || '';
-        t.dir = startsLatin(m.title) ? 'ltr' : 'rtl';
+        const ph = manual && !(m.title || '').trim();
+        const text = ph ? MANUAL_PH.title : (m.title || '');
+        t.textContent = text;
+        t.dataset.full = text;
+        t.classList.toggle('cd-ph', ph);
+        t.dir = startsLatin(text) ? 'ltr' : 'rtl';
     }
 
     const score = (m.score ?? '').toString().trim();
     const st = $('#score-text', card);
-    if (!isFocused(st)) st.textContent = score;
-    $('#score-badge', card).classList.toggle('hidden', !score && state.type !== 'manual');
+    const badge = $('#score-badge', card);
+    if (!isFocused(st)) {
+        st.textContent = score || (manual ? MANUAL_PH.score : '');
+        badge.classList.toggle('cd-ph', manual && !score);
+    }
+    $('#score-den', card).textContent = manual && score && m.scoreScale ? '/' + m.scoreScale : '';
+    badge.classList.toggle('hidden', !score && !manual);
 
     const g = $('#genre-text', card);
     if (!isFocused(g)) {
-        const stats = (m.stats || '').split(' • ').map(s => s.trim()).filter(Boolean);
-        const genres = (m.genre || '').split(/،|,/).map(s => s.trim()).filter(Boolean);
+        let stats = (m.stats || '').split(' • ').map(s => s.trim()).filter(Boolean);
+        let genres = (m.genre || '').split(/،|,/).map(s => s.trim()).filter(Boolean);
+        const ph = manual && !stats.length && !genres.length;
+        if (ph) { stats = [MANUAL_PH.stats]; genres = MANUAL_PH.genres.slice(); }
+        g.classList.toggle('cd-ph', ph);
         g.dataset.stats = JSON.stringify(stats);
         g.dataset.genres = JSON.stringify(genres);
         renderPills(g, stats, genres, genres.length);
@@ -198,8 +222,11 @@ export function renderCard() {
 
     const syn = $('#synopsis-text', card);
     if (!isFocused(syn)) {
-        syn.textContent = m.synopsis || '';
-        syn.dataset.full = m.synopsis || '';
+        const ph = manual && !(m.synopsis || '').trim();
+        const text = ph ? MANUAL_PH.synopsis : (m.synopsis || '');
+        syn.textContent = text;
+        syn.dataset.full = text;
+        syn.classList.toggle('cd-ph', ph);
     }
 
     renderStickers(card);
@@ -301,6 +328,10 @@ function fitStickers(card, L) {
 // V-tall: the poster takes the row's full height at 2:3, so no space is left unused.
 function fitTallPoster(card, L) {
     const poster = $('#cd-tall-poster', card);
+    // No image: drop the empty box so the synopsis gets the whole row. Manual mode
+    // keeps it in the preview (it's the upload target), never in the export clone.
+    const empty = poster.classList.contains('empty-poster');
+    poster.classList.toggle('cd-no-img', empty && (state.type !== 'manual' || card !== cardEl()));
     if (L !== 'tall') { poster.style.width = ''; poster.style.height = ''; return; }
     const row = $('.cd-row', card);
     const cs = getComputedStyle(row);

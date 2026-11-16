@@ -33,6 +33,8 @@ export function initUI() {
     renderControls();
     initCard();
     setupModal();
+    setupManualForm();
+    syncManualForm();
 
     // Re-fit the synopsis while the user types in it (debounced)
     const synText = els.synopsisText();
@@ -260,6 +262,76 @@ export function normalizeRating(raw) {
     if (isNaN(n) || n < 0) return '';
     if (n > 10) n = 10;
     return String(Math.round(n * 100) / 100);
+}
+
+// Manual score: Western/Arabic digits, "٫" or "," as the decimal point, up to two
+// decimals, clamped to the chosen scale (no scale: any number up to 999).
+export function normalizeScore(raw, scale) {
+    const t = String(raw || '').trim()
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[٫,]/g, '.');
+    const m = t.match(/^\d{1,3}(\.\d{0,2})?/);
+    if (!m) return '';
+    let n = parseFloat(m[0]);
+    if (isNaN(n)) return '';
+    const max = parseFloat(scale);
+    if (max && n > max) n = max;
+    return String(Math.round(n * 100) / 100);
+}
+
+// ── Manual mode form (side panel) ─────────────────────────────────────────
+// Every card field as a normal input, so manual cards can be made on a phone,
+// where the scaled-down card is too small to edit. Editing on the card still works;
+// both write to state.meta, and syncManualForm copies state back into the form.
+const mf = (id) => document.getElementById(id);
+const splitList = (t) => String(t || '').split(/[،,\n•]/).map(s => s.trim()).filter(Boolean);
+
+export function syncManualForm() {
+    const manual = state.type === 'manual';
+    const panel = mf('manual-panel');
+    if (!panel) return;
+    panel.classList.toggle('hidden', !manual);
+    const search = mf('search-row');
+    if (search) search.classList.toggle('hidden', manual);   // nothing to search in manual mode
+    if (!manual) return;
+    const m = state.meta;
+    const set = (id, v) => { const el = mf(id); if (el && document.activeElement !== el) el.value = v; };
+    set('mf-title', m.title || '');
+    set('mf-genres', splitList(m.genre).join('، '));
+    set('mf-stats', splitList(m.stats).join('، '));
+    set('mf-score', m.score || '');
+    set('mf-scale', m.scoreScale ?? '10');
+    set('mf-synopsis', m.synopsis || '');
+    const hasImage = !!(m.poster || m.wide);
+    mf('mf-upload').textContent = hasImage ? 'تغيير الصورة' : 'رفع صورة';
+    mf('mf-remove').classList.toggle('hidden', !hasImage);
+    mf('mf-pos').classList.toggle('hidden', !hasImage);
+    mf('mf-pos').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.pos === (m.imgPos || 'center')));
+}
+
+function setupManualForm() {
+    if (!mf('manual-panel')) return;
+    const on = (id, ev, fn) => mf(id).addEventListener(ev, fn);
+    const changed = () => renderCard();
+
+    on('mf-title', 'input', e => { state.meta.title = e.target.value; changed(); });
+    on('mf-genres', 'input', e => { state.meta.genre = e.target.value; changed(); });
+    on('mf-genres', 'blur', () => { state.meta.genre = splitList(state.meta.genre).join('، '); syncManualForm(); });
+    on('mf-stats', 'input', e => { state.meta.stats = splitList(e.target.value).join(' • '); changed(); });
+    on('mf-score', 'input', e => { state.meta.score = normalizeScore(e.target.value, state.meta.scoreScale); changed(); });
+    on('mf-score', 'blur', () => syncManualForm());
+    on('mf-scale', 'change', e => {
+        state.meta.scoreScale = e.target.value;
+        state.meta.score = normalizeScore(state.meta.score, state.meta.scoreScale);
+        mf('mf-score').value = state.meta.score;   // e.g. 85 → 5 on "/5", shown in the box too
+        changed(); syncManualForm();
+    });
+    on('mf-synopsis', 'input', e => { state.meta.synopsis = e.target.value; changed(); });
+    on('mf-upload', 'click', () => mf('manual-cover-upload').click());
+    on('mf-remove', 'click', () => { state.meta.poster = ''; state.meta.wide = ''; changed(); syncManualForm(); });
+    mf('mf-pos').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.meta.imgPos = b.dataset.pos; changed(); syncManualForm();
+    }));
 }
 
 function setupModal() {

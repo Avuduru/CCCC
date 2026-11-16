@@ -292,7 +292,14 @@ function showExportModal(url, file) {
     document.body.appendChild(overlay);
 }
 
+// A tap while an export/copy is still running (e.g. waiting for the synopsis)
+// is ignored, so a double tap doesn't produce the card twice.
+let exporting = false;
+let copying = false;
+
 export function handleExport() {
+    if (exporting) return;
+    exporting = true;
     const originalCanvas = document.getElementById('preview-canvas');
     const exportBtn = document.getElementById('export-btn');
     exportBtn.innerText = 'جاري التصدير...';
@@ -326,6 +333,7 @@ export function handleExport() {
             exportBtn.innerText = 'ERROR';
         })
         .finally(() => {
+            exporting = false;
             setTimeout(() => { exportBtn.innerText = 'تصديـر'; }, 2000);
         });
 }
@@ -333,7 +341,8 @@ export function handleExport() {
 export function handleCopyToClipboard() {
     const originalCanvas = document.getElementById('preview-canvas');
     const copyBtn = document.getElementById('copy-btn');
-    if (!copyBtn) return;
+    if (!copyBtn || copying) return;
+    copying = true;
 
     const originalText = copyBtn.innerText;
     copyBtn.innerText = 'جاري النسخ...';
@@ -358,6 +367,7 @@ export function handleCopyToClipboard() {
         copyBtn.innerText = 'فشل النسخ';
     })
     .finally(() => {
+        copying = false;
         setTimeout(() => { copyBtn.innerText = originalText; }, 2000);
     });
 }

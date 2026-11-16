@@ -12,6 +12,28 @@ const MANUAL_PLACEHOLDERS = ['التصنيف 1', 'التصنيف 2', 'التصن
 const MANUAL_SYNOPSIS_PLACEHOLDER = 'اكتب النبذة هنا...';
 const MANUAL_TITLE_PLACEHOLDER = 'اكتب العنوان هنا';
 
+// Placeholders js/ui.js shows while a synopsis is still being fetched or translated.
+const SYNOPSIS_LOADING = ['جاري التحميل...', 'جاري الترجمة...'];
+const SYNOPSIS_WAIT_MS = 8000;
+const isSynopsisLoading = () => SYNOPSIS_LOADING.includes((state.meta.synopsis || '').trim());
+
+// Export pressed before the synopsis arrived: wait for it (up to 8s), so the
+// image gets the real text rather than "جاري التحميل...".
+async function waitForSynopsis() {
+    const start = Date.now();
+    while (isSynopsisLoading() && Date.now() - start < SYNOPSIS_WAIT_MS) {
+        await new Promise(r => setTimeout(r, 150));
+    }
+}
+
+// If it still hasn't arrived, the card is exported without a synopsis.
+function stripLoadingText(clone) {
+    const syn = clone.querySelector('#synopsis-text');
+    if (syn && SYNOPSIS_LOADING.includes((syn.dataset.full || syn.textContent).trim())) {
+        syn.textContent = ''; syn.dataset.full = '';
+    }
+}
+
 // The pills are rebuilt by fitCard from data-genres / data-stats, so the
 // placeholders are removed there; the synopsis keeps its full text in data-full.
 function stripManualPlaceholders(clone) {
@@ -85,6 +107,8 @@ function downloadLink(url, filename) {
 // clone only drops the preview's scale transform, re-runs the same fits, and
 // is drawn by html2canvas at 1:1 (1920×1080 or 1200×1500, never downscaled).
 async function renderCanvas(originalCanvas) {
+    await waitForSynopsis();
+    // Read the layout after the wait: the card may have re-rendered meanwhile.
     const size = originalCanvas.dataset.layout === 'h' ? CARD_SIZE.h : CARD_SIZE.v;
 
     const clone = originalCanvas.cloneNode(true);
@@ -116,6 +140,7 @@ async function renderCanvas(originalCanvas) {
         await new Promise(r => setTimeout(r, 300));
 
         stripManualPlaceholders(clone);
+        stripLoadingText(clone);
         fitCard(clone);
 
         // iOS: WebKit returns phantom extra rects from Range.getClientRects() for

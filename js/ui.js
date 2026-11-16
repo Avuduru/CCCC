@@ -3,7 +3,7 @@ import { state, updateState } from './state.js';
 import { handleSearch } from './api.js';
 import { translateGenres, translateText } from './translations.js';
 import { debounce } from './utils.js';
-import { initCard, renderCard, fitCard, scalePreview } from './card.js?v=1';
+import { initCard, renderCard, fitCard, scalePreview } from './card.js';
 
 // Cache for prefetched game covers
 const gameCoverCache = {};

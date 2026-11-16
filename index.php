@@ -21,16 +21,33 @@ if (file_exists($file . '.html')) {
     http_response_code(200);
     $html = file_get_contents($file . '.html');
 
-    // Dynamic CSS cache busting
-    if (file_exists('style.v3.css')) {
-        $cssTime = filemtime('style.v3.css');
-        $html = preg_replace('/href="style\.v3\.css(?:\?v=[^"]*)?"/', 'href="style.v3.css?v=' . $cssTime . '"', $html);
-    }
+    // Cache busting: every local file the page references gets ?v=<last modified>.
+    // Caddy lets browsers keep any ?v= URL for a year (see Caddyfile), so each
+    // deploy changes the URLs of exactly the files that changed.
+    $html = preg_replace_callback(
+        '/\b(href|src)="(?!https?:|\/\/|data:|#|mailto:)([^"?#]+\.(?:css|js|png|jpe?g|svg|ico|webp|gif|woff2?|ttf))(?:\?[^"]*)?"/',
+        function ($m) {
+            $path = ltrim($m[2], '/');
+            if (!is_file($path)) return $m[0];
+            return $m[1] . '="' . $m[2] . '?v=' . filemtime($path) . '"';
+        },
+        $html
+    );
 
-    // Dynamic JS cache busting
-    if (file_exists('js/app.js')) {
-        $jsTime = filemtime('js/app.js');
-        $html = preg_replace('/src="js\/app\.js(?:\?v=[^"]*)?"/', 'src="js/app.js?v=' . $jsTime . '"', $html);
+    // Modules import each other by plain path ('./ui.js'), which the rewrite above
+    // can't reach. An import map points each module path at its versioned URL.
+    if (strpos($html, '<script type="module"') !== false) {
+        $imports = [];
+        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator('js', FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $f) {
+            if ($f->isFile() && substr($f->getFilename(), -3) === '.js') {
+                $p = '/' . str_replace('\\', '/', $f->getPathname());
+                $imports[$p] = $p . '?v=' . $f->getMTime();
+            }
+        }
+        ksort($imports);
+        $map = '<script type="importmap">' . json_encode(['imports' => $imports], JSON_UNESCAPED_SLASHES) . '</script>';
+        $html = preg_replace('/<script type="module"/', $map . "\n    " . '<script type="module"', $html, 1);
     }
 
     echo $html;

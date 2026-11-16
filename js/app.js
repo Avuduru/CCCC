@@ -1,6 +1,6 @@
 import { initUI, updatePreview, renderControls, updateDisplayedInfo, reAdjustLayout, preloadStickers } from './ui.js';
 import { handleSearch } from './api.js';
-import { handleExport, handleCopyToClipboard } from './export.js?v=card_v4';
+import { handleExport, handleCopyToClipboard } from './export.js';
 import { debounce } from './utils.js';
 import { state } from './state.js';
 import { config } from './config.js';

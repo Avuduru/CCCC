@@ -27,9 +27,17 @@
 		@private path_regexp private (^|/)\.|^/(data|Docs|archive|Demo)(/|$)|^/(README\.md|composer\.(json|lock)|railpack\.json|Caddyfile|php\.ini.*|cacert\.pem|local-router\.php|test_proxy\.php|demo(\.html)?)$
 		respond @private 404
 
-		# Browsers must revalidate pages, styles and scripts on each visit (cheap 304s),
-		# so an updated JS module is never mixed with stale cached ones.
-		@revalidate path / /guide *.html *.css *.js
+		# Versioned URLs (?v=..., added by index.php from each file's modified time)
+		# never change content, so browsers may keep them for a year without asking.
+		@versioned query v=*
+		header @versioned Cache-Control "public, max-age=31536000, immutable"
+
+		# Everything else (the pages, unversioned styles/scripts) is revalidated on
+		# each visit (cheap 304s), so a deploy is picked up immediately.
+		@revalidate {
+			path / /guide *.html *.css *.js
+			not query v=*
+		}
 		header @revalidate Cache-Control "no-cache"
 
 		{$CADDY_SERVER_EXTRA_DIRECTIVES}

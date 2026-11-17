@@ -261,3 +261,56 @@
 .status-about { color: var(--acc); text-decoration: none; font-family: var(--font-ar); font-size: 14px; font-weight: 600; letter-spacing: normal; }
 .status-about:hover { text-decoration: underline; }
 .phone-about-link { display: none; }
+
+/* ── Start panel: the card before a work is picked (js/card.js isIntro) ──
+   The cover shows the logo over a faint field of the icons; the synopsis area
+   shows three steps; the stickers panel shows the level legend. */
+.cd-intro-art, .cd-intro-steps, .cd-intro-legend { display: none; }
+.cd-intro .cd-pills, .cd-intro .cd-synopsis-text, .cd-intro .cd-stickers { display: none !important; }
+.cd-intro .cd-intro-art {
+    display: flex; position: absolute; inset: 0; overflow: hidden; border-radius: inherit;
+    align-items: center; justify-content: center; background: #12151b;
+}
+.cd-intro-mosaic {
+    position: absolute; top: -8%; left: -18%; width: 136%;
+    display: flex; flex-wrap: wrap; gap: 18px; transform: rotate(-8deg); opacity: 0.16;
+}
+.cd-intro-mosaic img { width: 132px; height: 132px; display: block; }
+.cd-intro-art::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(62% 52% at 50% 50%, rgba(14, 16, 20, 0.94) 0%, rgba(14, 16, 20, 0.6) 62%, rgba(14, 16, 20, 0.2) 100%);
+}
+.cd-intro-brand { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center; padding: 0 24px; }
+.cd-intro-brand img { height: 130px; width: auto; display: block; }
+.cd-intro-brand span { font-size: 40px; font-weight: 600; line-height: 1.25; color: #c9cec2; }
+.cd-tall .cd-intro-brand { gap: 22px; }
+.cd-tall .cd-intro-brand img { height: 92px; }
+.cd-tall .cd-intro-brand span { font-size: 30px; }
+
+.cd-intro .cd-intro-steps { display: flex; flex-direction: column; gap: 36px; margin: 34px 0 0; padding: 0; list-style: none; }
+.cd-intro-steps li { display: flex; align-items: center; gap: 26px; }
+.cd-intro-num {
+    flex: none; width: 74px; height: 74px; border-radius: 16px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    background: #1b2029; border: 2px solid #c8ff5e; color: #c8ff5e;
+    font-family: 'Silkscreen', monospace; font-size: 30px; direction: ltr;
+}
+.cd-intro-steps b { display: block; font-size: 46px; font-weight: 700; line-height: 1.05; color: #f2f4ee; }
+.cd-intro-steps small { display: block; margin-top: 6px; font-size: 30px; font-weight: 600; color: #8a917f; }
+.cd-tall .cd-intro-steps { gap: 30px; margin-top: 10px; justify-content: center; height: 100%; }
+.cd-tall .cd-intro-steps li { gap: 20px; }
+.cd-tall .cd-intro-num { width: 60px; height: 60px; font-size: 24px; border-radius: 13px; }
+.cd-tall .cd-intro-steps b { font-size: 38px; }
+.cd-tall .cd-intro-steps small { font-size: 26px; }
+
+.cd-intro .cd-intro-legend {
+    display: flex; align-items: center; gap: 30px;
+    background: #161a21; border-radius: 18px; padding: 26px 32px;
+}
+.cd-tall.cd-intro .cd-intro-legend { justify-content: center; }
+.cd-intro-legend-label { font-size: 30px; font-weight: 600; color: #9aa093; }
+.cd-intro-lvl { display: inline-flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 700; }
+.cd-intro-lvl i { width: 26px; height: 26px; border-radius: 6px; display: inline-block; }
+.cd-intro-lvl.lvl-1 { color: #ff8a8a; } .cd-intro-lvl.lvl-1 i { background: #ff5a5a; }
+.cd-intro-lvl.lvl-2 { color: #ffb874; } .cd-intro-lvl.lvl-2 i { background: #ff9a3c; }
+.cd-intro-lvl.lvl-3 { color: #ffe68a; } .cd-intro-lvl.lvl-3 i { background: #ffd84a; }

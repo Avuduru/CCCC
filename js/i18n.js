@@ -40,6 +40,15 @@ const STRINGS = {
         'export_popup.or_hold_to_save': 'أو احفظ الصورة بالضغط عليها باستمرار',
         'guide.section_fallback': 'القسم {n}',
         'list.sep': '، ',
+        // Start panel: the card before a work is picked
+        'intro.title': 'ابدأ بعمل تعرفه',
+        'intro.tagline': 'صنّف الأعمال بحسب ما تحتويه<br>لا بحسب رقم عمري',
+        'intro.steps': [
+            ['اختر النوع وابحث عن العمل', 'أنمي · مانجا · فيلم · مسلسل · لعبة · كتاب'],
+            ['أضف ما يحتويه وحدّد درجته', 'وأشِر إلى ما يخلو منه'],
+            ['صدّر البطاقة وشاركها', 'بالعرض أو بالطول، باسمك وتقييمك'],
+        ],
+        'intro.levels': 'الدرجات:',
     },
     en: {
         'card.default.title': 'Title',
@@ -75,6 +84,14 @@ const STRINGS = {
         'export_popup.or_hold_to_save': 'Or press and hold the image to save it',
         'guide.section_fallback': 'Section {n}',
         'list.sep': ', ',
+        'intro.title': 'Start with a work you know',
+        'intro.tagline': 'Rate works by what they contain,<br>not by age',
+        'intro.steps': [
+            ['Pick a type and search for a title', 'Anime · Manga · Movie · TV · Game · Book'],
+            ['Add what it contains and set each level', "And mark what it's free of"],
+            ['Export the card and share it', 'Landscape or portrait, with your name and score'],
+        ],
+        'intro.levels': 'Levels:',
     },
 };
 

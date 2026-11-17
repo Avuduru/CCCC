@@ -22,3 +22,7 @@ DEBUG_GUIDE.md
 assets/fonts/PixelAE-*.ttf
 assets/fonts/handjet_tmp/
 archive/
+
+# Python bytecode (tools/)
+__pycache__/
+*.pyc

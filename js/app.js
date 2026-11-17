@@ -194,9 +194,10 @@ function setupEventListeners() {
         el.copyBtn.addEventListener('click', handleCopyToClipboard);
     }
 
-    // Synopsis
+    // Synopsis — editing it marks it as the classifier's own (stored on export)
     el.synopsisText.addEventListener('input', (e) => {
         state.meta.synopsis = e.target.innerText;
+        state.meta.synopsisEdited = true;
     });
 
     // Manual Title Resizing

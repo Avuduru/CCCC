@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { fitCard, CARD_SIZE, MANUAL_PH } from './card.js';
+import { t, allValues } from './i18n.js';
 
 // Exported cards are full-colour (4:4:4) baseline JPEGs at this quality.
 // X/Twitter passes such JPEGs through untouched, while it re-saves PNGs at
@@ -11,7 +12,7 @@ const JPEG_QUALITY = 92;
 const MANUAL_PLACEHOLDERS = [...MANUAL_PH.genres, MANUAL_PH.stats];
 
 // Placeholders js/ui.js shows while a synopsis is still being fetched or translated.
-const SYNOPSIS_LOADING = ['جاري التحميل...', 'جاري الترجمة...'];
+const SYNOPSIS_LOADING = [...allValues('card.loading'), ...allValues('card.translating')];
 const SYNOPSIS_WAIT_MS = 8000;
 const isSynopsisLoading = () => SYNOPSIS_LOADING.includes((state.meta.synopsis || '').trim());
 
@@ -65,7 +66,7 @@ function logClassification(action) {
         let contentId = state.meta.id ? String(state.meta.id) : '';
         if (!contentId && state.type === 'manual') {
             const t = (state.meta.title || '').trim().toLowerCase();
-            if (t && t !== 'اكتب العنوان هنا') contentId = `manual:${t}`;
+            if (t && !allValues('manual.ph.title').map(s => s.toLowerCase()).includes(t)) contentId = `manual:${t}`;
         }
         if (!contentId) return;
 
@@ -225,7 +226,7 @@ function showExportModal(url, file) {
 
     const titleWrap = document.createElement('div');
     titleWrap.className = 'modal-title-wrap';
-    titleWrap.innerHTML = `<span class="kicker"><span class="kicker-dot" style="background:#2ecc71"></span>تم</span><h2 style="font-size: 22px;">بطاقتك جاهزة للمشاركة</h2>`;
+    titleWrap.innerHTML = `<span class="kicker"><span class="kicker-dot" style="background:#2ecc71"></span>${t('export_popup.done')}</span><h2 style="font-size: 22px;">${t('export_popup.title')}</h2>`;
 
     const actions = document.createElement('div');
     actions.className = 'modal-header-actions';
@@ -255,7 +256,7 @@ function showExportModal(url, file) {
         const shareBtn = document.createElement('button');
         shareBtn.type = 'button';
         shareBtn.className = 'share-btn';
-        shareBtn.innerText = 'مشاركة';
+        shareBtn.innerText = t('export_popup.share');
         shareBtn.onclick = async () => {
             try {
                 await navigator.share({ files: [file], title: state.meta.title || 'CCCC' });
@@ -268,7 +269,7 @@ function showExportModal(url, file) {
     }
 
     const instructions = document.createElement('p');
-    instructions.innerText = canShare ? 'أو احفظ الصورة بالضغط عليها باستمرار' : 'لحفظ الصورة، اضغط عليها باستمرار';
+    instructions.innerText = canShare ? t('export_popup.or_hold_to_save') : t('export_popup.hold_to_save');
     instructions.style.color = 'var(--text-dim)';
     instructions.style.fontSize = '14px';
     instructions.style.margin = '0';
@@ -301,7 +302,7 @@ export function handleExport() {
     exporting = true;
     const originalCanvas = document.getElementById('preview-canvas');
     const exportBtn = document.getElementById('export-btn');
-    exportBtn.innerText = 'جاري التصدير...';
+    exportBtn.innerText = t('actions.exporting');
 
     // Truly robust check for any mobile or tablet device (catches modern iPads disguised as Macs)
     const isMobileOrTablet = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent) ||
@@ -310,7 +311,7 @@ export function handleExport() {
     renderCanvas(originalCanvas)
         .then(canvasToJpeg)
         .then(({ blob, ext }) => {
-            if (!blob) { exportBtn.innerText = 'تعذر التصدير'; return; }
+            if (!blob) { exportBtn.innerText = t('actions.error'); return; }
 
             const filename = getFilename(ext);
             const url = URL.createObjectURL(blob);
@@ -329,11 +330,11 @@ export function handleExport() {
         })
         .catch(err => {
             console.error('Export failed:', err);
-            exportBtn.innerText = 'تعذر التصدير';
+            exportBtn.innerText = t('actions.error');
         })
         .finally(() => {
             exporting = false;
-            setTimeout(() => { exportBtn.innerText = 'تصدير'; }, 2000);
+            setTimeout(() => { exportBtn.innerText = t('actions.export'); }, 2000);
         });
 }
 
@@ -344,7 +345,7 @@ export function handleCopyToClipboard() {
     copying = true;
 
     const originalText = copyBtn.innerText;
-    copyBtn.innerText = 'جاري النسخ...';
+    copyBtn.innerText = t('actions.copying');
 
     // iOS Safari requires navigator.clipboard.write() to be called SYNCHRONOUSLY
     // within a user gesture — if we await async work first, the gesture trust
@@ -359,11 +360,11 @@ export function handleCopyToClipboard() {
     ])
     .then(() => {
         logClassification('copy');
-        copyBtn.innerText = 'تم النسخ ✓';
+        copyBtn.innerText = t('actions.copied');
     })
     .catch(err => {
         console.error('Clipboard write failed:', err);
-        copyBtn.innerText = 'فشل النسخ';
+        copyBtn.innerText = t('actions.copy_failed');
     })
     .finally(() => {
         copying = false;

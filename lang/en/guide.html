@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<!-- Generated from ../../guide.html by tools/i18n/build_en.py. Edit the Arabic page and the
+     wording in that script, then run it again; changes made here are overwritten. -->
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rating guide — CCCC</title>
+    <link rel="alternate" hreflang="ar" href="https://muhafid.com/guide">
+    <link rel="alternate" hreflang="en" href="https://muhafid.com/en/guide">
+
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.v3.css">
+
+    <!-- Match main app topbar zoom -->
+    <script>
+        function updateAppScale() {
+            var scale = Math.min(window.innerWidth / 1700, window.innerHeight / 940);
+            scale = Math.max(0.75, Math.min(1.5, scale));
+            document.documentElement.style.setProperty('--app-zoom', scale);
+        }
+        window.addEventListener('resize', updateAppScale);
+        window.addEventListener('DOMContentLoaded', updateAppScale);
+        updateAppScale();
+    </script>
+
+    <style>
+        /* ============================================
+           GUIDE — CODEX / HUD REDESIGN
+           ============================================ */
+        :root {
+            --g-bg:        var(--bg, #0e1014);
+            --g-ink-0:     var(--ink-0, #14181f);
+            --g-ink-1:     var(--ink-1, #1a1f28);
+            --g-ink-2:     var(--ink-2, #232a35);
+            --g-line:      var(--line, rgba(255,255,255,0.09));
+            --g-line-2:    var(--line-2, rgba(255,255,255,0.15));
+            --g-text-0:    var(--text-0, #e9edf2);
+            --g-text-1:    var(--text-1, #a4adb8);
+            --g-text-2:    var(--text-2, #6a7280);
+            --g-acc:       var(--acc, #c8ff5e);
+            --g-acc-glow:  var(--acc-glow, rgba(200,255,94,0.55));
+            --g-purple:    var(--theme-purple, #b07cff);
+            --g-red:       var(--accent-red, #ff5a5a);
+            --g-teal:      var(--mech-teal, #34d0b8);
+            --g-grade-1:   var(--grade-red, #ff5a5a);
+            --g-grade-2:   var(--grade-orange, #ffa552);
+            --g-grade-3:   var(--grade-yellow, #ffd84a);
+            --font-pixel:  'Silkscreen', 'JetBrains Mono', monospace;
+        }
+
+        html, body { scroll-behavior: smooth; min-height: 100vh; }
+
+        /* ── Shell ─────────────────────────────── */
+        .guide-shell {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 18px 22px 64px;
+            max-width: 1680px;
+            margin: 0 auto;
+            position: relative;
+            zoom: var(--app-zoom, 1);
+        }
+        /* Faint global CRT scanlines */
+        .guide-shell::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent 0,
+                transparent 2px,
+                rgba(255,255,255,0.012) 2px,
+                rgba(255,255,255,0.012) 3px
+            );
+            z-index: 0;
+        }
+        .guide-shell > * { position: relative; z-index: 1; }
+
+        /* ── Topbar back link ── */
+        .guide-back {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--g-text-1);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .guide-back:hover { color: var(--g-acc); }
+        .guide-nav { display: flex; align-items: center; gap: 22px; }
+        .guide-back:hover .status-dot { box-shadow: 0 0 12px var(--g-acc-glow), 0 0 0 3px rgba(200,255,94,0.2); }
+
+        /* ============================================
+           PAGE HEADER
+           ============================================ */
+        .guide-page-header {
+            padding: 56px 0 36px;
+            border-bottom: 1px solid var(--g-line);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: end;
+            gap: 32px;
+        }
+        .guide-page-header .header-left .kicker {
+            display: inline-flex;
+            margin-bottom: 18px;
+        }
+        .guide-page-header h1 {
+            margin: 0;
+            font-size: 64px;
+            font-family: var(--font-ar);
+            font-weight: 700;
+            color: var(--g-text-0);
+            line-height: 0.95;
+            letter-spacing: -0.5px;
+        }
+        .header-bar-readout {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--g-text-2);
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            padding-bottom: 4px;
+        }
+        .header-bar-readout .pixel-bar {
+            display: inline-flex;
+            gap: 2px;
+        }
+        .header-bar-readout .pixel-bar span {
+            width: 8px;
+            height: 14px;
+            background: var(--g-acc);
+            box-shadow: 0 0 6px var(--g-acc-glow);
+        }
+        .header-bar-readout .pixel-bar span:nth-child(n+8) {
+            background: var(--g-line-2);
+            box-shadow: none;
+        }
+        .header-bar-readout .meta-row {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+        .header-bar-readout .meta-row .pulse {
+            width: 6px; height: 6px;
+            background: var(--g-acc);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--g-acc-glow);
+            animation: pulse 1.6s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        /* ============================================
+           SECTION CHROME
+           ============================================ */
+        .guide-section {
+            padding: 48px 0 56px;
+            border-bottom: 1px solid var(--g-line);
+            position: relative;
+        }
+        .guide-section:last-child { border-bottom: none; padding-bottom: 24px; }
+
+        .section-head-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            gap: 24px;
+        }
+        .section-title-block {
+            display: flex;
+            align-items: baseline;
+            gap: 18px;
+        }
+        .section-title-block .section-num {
+            font-family: var(--font-pixel);
+            font-size: 14px;
+            color: var(--g-acc);
+            letter-spacing: 2px;
+            padding: 6px 10px;
+            border: 1px solid var(--g-acc);
+            box-shadow: 0 0 12px rgba(200,255,94,0.18), inset 0 0 12px rgba(200,255,94,0.05);
+            line-height: 1;
+            border-radius: 0;
+        }
+        .section-title-block h3 {
+            margin: 0;
+            font-family: var(--font-ar);
+            font-size: 38px;
+            font-weight: 700;
+            color: var(--g-text-0);
+            line-height: 1;
+        }
+        .section-head-row .section-trail {
+            flex: 1;
+            height: 1px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--g-line-2) 0,
+                var(--g-line-2) 4px,
+                transparent 4px,
+                transparent 8px
+            );
+            margin: 0 16px;
+        }
+        .section-readout {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--g-text-2);
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .section-readout strong {
+            color: var(--g-text-1);
+            font-weight: 500;
+        }
+
+        /* ============================================
+           SECTION 01 — CODEX GRID
+           ============================================ */
+        .codex-legend {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .codex-legend .legend-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-ar);
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0;
+            padding: 10px 18px 10px 20px;
+            border-radius: 2px;
+            border: 1px solid;
+        }
+        .codex-legend .legend-chip::before {
+            content: '';
+            width: 7px; height: 7px;
+            border-radius: 50%;
+        }
+        .legend-chip.lc-theme  { color: var(--g-purple); background: rgba(176,124,255,0.07); border-color: rgba(176,124,255,0.30); }
+        .legend-chip.lc-theme::before  { background: var(--g-purple); box-shadow: 0 0 8px rgba(176,124,255,0.7); }
+        .legend-chip.lc-warning { color: var(--g-red); background: rgba(255,90,90,0.07); border-color: rgba(255,90,90,0.28); }
+        .legend-chip.lc-warning::before { background: var(--g-red); box-shadow: 0 0 8px rgba(255,90,90,0.65); }
+        .legend-chip.lc-mech   { color: var(--g-teal); background: rgba(52,208,184,0.07); border-color: rgba(52,208,184,0.28); }
+        .legend-chip.lc-mech::before   { background: var(--g-teal); box-shadow: 0 0 8px rgba(52,208,184,0.65); }
+        .legend-chip .count { color: var(--g-text-2); margin-left: 4px; font-weight: 400; }
+
+        .codex-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .codex-tile {
+            position: relative;
+            background: var(--g-ink-1);
+            border: 1px solid var(--g-line);
+            padding: 22px 26px 22px 22px;
+            display: grid;
+            grid-template-columns: 114px 1fr;
+            gap: 20px;
+            align-items: center;
+            transition: border-color 0.15s, transform 0.15s, background 0.15s;
+            overflow: hidden;
+        }
+        .codex-tile::before {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; left: 0;
+            width: 4px;
+            background: currentColor;
+            box-shadow: 0 0 16px currentColor;
+            opacity: 0.85;
+        }
+        .codex-tile::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 14px; height: 14px;
+            background: linear-gradient(225deg, var(--g-bg) 50%, transparent 50%);
+        }
+        .codex-tile:hover { background: var(--g-ink-2); transform: translateY(-1px); }
+        .codex-tile.cat-theme   { color: var(--g-purple); }
+        .codex-tile.cat-warning { color: var(--g-red); }
+        .codex-tile.cat-mech    { color: var(--g-teal); }
+        .codex-tile:hover.cat-theme   { border-color: rgba(176,124,255,0.40); }
+        .codex-tile:hover.cat-warning { border-color: rgba(255,90,90,0.40); }
+        .codex-tile:hover.cat-mech    { border-color: rgba(52,208,184,0.40); }
+
+        .codex-tile-icon {
+            width: 114px; height: 114px;
+            display: grid;
+            place-items: center;
+            position: relative;
+        }
+        .codex-tile-icon img { width: 94px; height: 94px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+
+        .codex-tile-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+        .codex-tile-text .tile-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: currentColor;
+            opacity: 0.85;
+        }
+        .codex-tile-text .tile-tag .tag-id { font-family: var(--font-pixel); color: var(--g-text-2); opacity: 0.7; }
+        .codex-tile-text strong {
+            font-family: var(--font-ar);
+            font-weight: 700;
+            font-size: 32px;
+            color: var(--g-text-0);
+            line-height: 1.05;
+            letter-spacing: -0.3px;
+        }
+        .codex-tile-text p {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--g-text-1);
+            font-family: var(--font-body);
+            font-weight: 400;
+        }
+
+        /* ============================================
+           SECTION 02 — STATUS MODIFIERS
+           ============================================ */
+        .exc-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+            background: var(--g-ink-1);
+            border: 1px solid var(--g-line);
+            padding: 40px 36px;
+            position: relative;
+        }
+        .exc-panel::before,
+        .exc-panel::after {
+            content: '';
+            position: absolute;
+            width: 14px; height: 14px;
+            border: 1px solid var(--g-acc);
+            opacity: 0.6;
+        }
+        .exc-panel::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .exc-panel::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+        .exc-text-side {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            width: 100%;
+            max-width: 760px;
+            text-align: center;
+        }
+        .exc-text-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: var(--g-acc);
+        }
+        .exc-text-label::before { content: '◢'; color: var(--g-acc); font-size: 9px; }
+        .exc-panel .exceptions-desc {
+            margin: 0;
+            font-family: var(--font-body);
+            font-size: 20px;
+            line-height: 1.8;
+            color: var(--g-text-0);
+            font-weight: 400;
+            letter-spacing: -0.1px;
+        }
+        .exc-panel .exceptions-desc strong { color: var(--g-acc); font-weight: 700; }
+
+        .exc-icons-side {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 48px;
+        }
+        .exc-modifier {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .exc-modifier img {
+            width: 140px; height: 140px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 14px rgba(200,255,94,0.22));
+        }
+
+        /* ============================================
+           SECTION 03 — TIER LADDER
+           ============================================ */
+        .ladder-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--g-text-2);
+            margin-bottom: 14px;
+        }
+        .ladder-meta .axis { display: flex; align-items: center; gap: 12px; }
+        .ladder-meta .axis .axis-bar {
+            display: inline-block;
+            width: 120px; height: 4px;
+            background: linear-gradient(to right, var(--g-grade-3) 0%, var(--g-grade-2) 50%, var(--g-grade-1) 100%);
+        }
+
+        .ladder {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .tier {
+            background: var(--g-ink-1);
+            border: 1px solid var(--g-line);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .tier::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: currentColor;
+            box-shadow: 0 0 14px currentColor;
+        }
+        .tier.tier-1 { color: var(--g-grade-1); }
+        .tier.tier-2 { color: var(--g-grade-2); }
+        .tier.tier-3 { color: var(--g-grade-3); }
+
+        .tier-head {
+            padding: 26px 28px 22px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            grid-template-rows: auto auto;
+            grid-template-areas: "badge title meta" "badge bars  bars";
+            gap: 4px 18px;
+            align-items: center;
+            border-bottom: 1px solid var(--g-line);
+        }
+        .tier-badge {
+            grid-area: badge;
+            width: 64px; height: 64px;
+            display: grid;
+            place-items: center;
+            font-family: var(--font-pixel);
+            font-size: 28px;
+            font-weight: 700;
+            position: relative;
+            box-shadow: 0 0 0 1px currentColor, 0 0 22px color-mix(in oklab, currentColor 60%, transparent);
+        }
+        .tier.tier-1 .tier-badge { background: var(--g-grade-1); color: #0e1014; }
+        .tier.tier-2 .tier-badge { background: var(--g-grade-2); color: #0e1014; }
+        .tier.tier-3 .tier-badge { background: var(--g-grade-3); color: #0e1014; }
+        .tier-badge::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            background:
+                linear-gradient(45deg,  transparent 6px, currentColor 6px, currentColor 7px, transparent 7px) top    left  / 8px 8px no-repeat,
+                linear-gradient(-45deg, transparent 6px, currentColor 6px, currentColor 7px, transparent 7px) top    right / 8px 8px no-repeat,
+                linear-gradient(135deg, transparent 6px, currentColor 6px, currentColor 7px, transparent 7px) bottom left  / 8px 8px no-repeat,
+                linear-gradient(-135deg,transparent 6px, currentColor 6px, currentColor 7px, transparent 7px) bottom right / 8px 8px no-repeat;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        .tier-title { grid-area: title; font-family: var(--font-ar); font-size: 26px; font-weight: 700; color: var(--g-text-0); line-height: 1; }
+        .tier-meta  { grid-area: meta; font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: currentColor; padding: 5px 10px; border: 1px solid currentColor; opacity: 0.9; }
+        .tier-bars  { grid-area: bars; display: inline-flex; gap: 3px; margin-top: 8px; }
+        .tier-bars span { width: 14px; height: 6px; background: var(--g-line-2); }
+        .tier-1 .tier-bars span:nth-child(-n+5) { background: var(--g-grade-1); box-shadow: 0 0 6px var(--g-grade-1); }
+        .tier-2 .tier-bars span:nth-child(-n+3) { background: var(--g-grade-2); box-shadow: 0 0 6px var(--g-grade-2); }
+        .tier-3 .tier-bars span:nth-child(-n+1) { background: var(--g-grade-3); box-shadow: 0 0 6px var(--g-grade-3); }
+
+        .tier-body { display: flex; flex-direction: column; flex: 1; }
+        .tier-row {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--g-line);
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px 20px;
+            align-items: start;
+        }
+        .tier-row:last-child { border-bottom: none; }
+        .tier-row-label {
+            font-family: var(--font-ar);
+            font-size: 17px;
+            letter-spacing: 0;
+            color: var(--g-text-2);
+            padding-top: 2px;
+            white-space: nowrap;
+        }
+        .tier-row-label::before { content: '//'; font-family: var(--font-mono); font-size: 13px; color: currentColor; margin-right: 8px; opacity: 0.7; }
+        .tier-row p { margin: 0; font-family: var(--font-body); font-size: 16px; line-height: 1.75; color: var(--g-text-1); font-weight: 400; }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .guide-footnote {
+            margin-top: 32px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--g-text-2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+        }
+        .guide-footnote .dot { width: 4px; height: 4px; background: var(--g-text-2); border-radius: 50%; }
+        .guide-footnote .term { color: var(--g-acc); }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 1280px) {
+            .codex-grid { grid-template-columns: repeat(2, 1fr); }
+            .ladder { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 980px) {
+            .exc-panel { grid-template-columns: 1fr; }
+            .exc-text-side { border-left: none; padding-left: 0; border-bottom: 1px dashed var(--g-line-2); padding-bottom: 18px; }
+        }
+        @media (max-width: 768px) {
+            .guide-shell { padding: 14px 16px 40px; }
+            .guide-page-header { grid-template-columns: 1fr; }
+            .header-bar-readout { align-items: flex-start; }
+            .guide-page-header h1 { font-size: 42px; }
+            .section-title-block h3 { font-size: 26px; }
+            .codex-grid { grid-template-columns: 1fr; }
+            .codex-tile { grid-template-columns: 88px 1fr; padding: 18px; }
+            .codex-tile-icon { width: 88px; height: 88px; }
+            .codex-tile-icon img { width: 70px; height: 70px; }
+            .tier-row { grid-template-columns: 1fr; gap: 6px; }
+        }
+    </style>
+    <link rel="stylesheet" href="/ltr.css">
+</head>
+
+<body>
+<div class="guide-shell">
+
+    <!-- ── TOPBAR (UNCHANGED) ── -->
+    <div class="guide-topbar-wrap">
+    <header class="topbar">
+        <div class="topbar-brand">
+            <a href="/en" style="display: inline-flex;"><img src="/assets/LOGO.png" alt="CCCC Logo" class="brand-logo" style="height: 32px; width: auto; object-fit: contain;"></a>
+            <div class="brand-meta">
+                <div class="brand-en" lang="ar" dir="rtl">التصنيف المحافظ للمحتوى الإبداعي</div>
+                <div class="brand-ar">Conservative Classification of Creative Content</div>
+            </div>
+        </div>
+        <div class="guide-nav">
+        <a class="guide-back guide-lang" href="/guide" lang="ar" hreflang="ar">العربية</a>
+        <a href="/en" class="guide-back">
+            <span class="status-dot"></span>
+            <span>Rating guide</span>
+            <span class="status-sep">/</span>
+            <span>← Back to the tool</span>
+            <span class="status-sep">/</span>
+            <span class="status-url">muhafid.com</span>
+        </a>
+        </div>
+    </header>
+    </div>
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="guide-page-header">
+        <div class="header-left">
+            <span class="kicker"><span class="kicker-dot"></span>Guide</span>
+            <h1>Rating guide</h1>
+            <p class="guide-intro" style="margin: 18px 0 0; max-width: 640px; font-family: var(--font-body); font-size: 17px; line-height: 1.7; color: var(--text-1);">CCCC is a tool for rating creative works by what they contain, not by age. <a href="/en/about" style="color: var(--acc); white-space: nowrap;">About the project</a></p>
+        </div>
+        <div class="header-bar-readout">
+            <div class="pixel-bar" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span>
+            </div>
+            <div class="meta-row">
+                <span class="pulse"></span>
+                <span>DOC // GUIDE.v1</span>
+                <span>·</span>
+                <span>3 SECTIONS</span>
+                <span>·</span>
+                <span>READY</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION 03: Levels ── -->
+    <section class="guide-section">
+        <div class="section-head-row">
+            <div class="section-title-block">
+                <h3>Levels</h3>
+            </div>
+            <div class="section-trail"></div>
+            <div class="section-readout">LEVEL SCALE <strong>·</strong> 03 LEVELS</div>
+        </div>
+
+        <div class="ladder-meta">
+            <span>Severity scale</span>
+            <span class="axis">
+                <span>Mild</span>
+                <span class="axis-bar"></span>
+                <span>Severe</span>
+            </span>
+        </div>
+
+        <div class="ladder grades-container">
+            <div class="tier tier-1 grade-card grade-red">
+                <div class="tier-head grade-header">
+                    <div class="tier-badge grade-badge red">1</div>
+                    <div class="tier-title grade-title">Level 1</div>
+                    <div class="tier-meta grade-meta">Severe</div>
+                    <div class="tier-bars" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="tier-body grade-body">
+                    <div class="tier-row grade-desc">
+                        <span class="tier-row-label grade-desc-label">In story-based media</span>
+                        <p>The content is central and appears frequently. Skipping it makes the overall story hard to follow.</p>
+                    </div>
+                    <div class="tier-row grade-desc">
+                        <span class="tier-row-label grade-desc-label">In games</span>
+                        <p>You cannot finish the game without encountering this content.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tier tier-2 grade-card grade-orange">
+                <div class="tier-head grade-header">
+                    <div class="tier-badge grade-badge orange">2</div>
+                    <div class="tier-title grade-title">Level 2</div>
+                    <div class="tier-meta grade-meta">Moderate</div>
+                    <div class="tier-bars" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="tier-body grade-body">
+                    <div class="tier-row grade-desc">
+                        <span class="tier-row-label grade-desc-label">In story-based media</span>
+                        <p>You can skip the content and still follow the story, but frequent skipping disrupts the experience.</p>
+                    </div>
+                    <div class="tier-row grade-desc">
+                        <span class="tier-row-label grade-desc-label">In games</span>
+                        <p>You can finish the game while avoiding this content, but doing so makes it harder and changes the experience.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tier tier-3 grade-card grade-yellow">
+                <div class="tier-head grade-header">
+                    <div class="tier-badge grade-badge yellow">3</div>
+                    <div class="tier-title grade-title">Level 3</div>
+                    <div class="tier-meta grade-meta">Mild</div>
+                    <div class="tier-bars" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="tier-body grade-body">
+                    <div class="tier-row grade-desc">
+                        <span class="tier-row-label grade-desc-label">In story-based media</span>
+                        <p>The content is rare and easy to skip without losing track of the story.</p>
+                    </div>
+                    <div class="tier-row grade-desc">
+                        <span class="tier-row-label grade-desc-label">In games</span>
+                        <p>You can ignore the content or take another route to finish the game.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── SECTION 01: Content flags ── -->
+    <section class="guide-section">
+        <div class="section-head-row">
+            <div class="section-title-block">
+                <h3>Content flags</h3>
+            </div>
+            <div class="section-trail"></div>
+            <div class="section-readout">10 CONTENT FLAGS <strong>·</strong> 3 GROUPS</div>
+        </div>
+
+        <div class="codex-legend">
+            <span class="legend-chip lc-theme"><span class="count">02</span>Belief and ideology</span>
+            <span class="legend-chip lc-warning"><span class="count">05</span>Moral and disturbing content</span>
+            <span class="legend-chip lc-mech"><span class="count">03</span>Spending and engagement</span>
+        </div>
+
+        <div class="codex-grid">
+            <div class="codex-tile cat-theme theme-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/كفريات.png?v=2" alt="Blasphemy">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[01]</span>Belief</span>
+                    <strong>Blasphemy</strong>
+                    <p>Content that promotes disbelief or atheism, mocks religion or God, or presents beliefs and philosophies that conflict with Islamic teachings positively or neutrally.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-theme theme-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/سحر.png?v=2" alt="Magic">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[02]</span>Belief</span>
+                    <strong>Magic</strong>
+                    <p>Powers, symbols and spells tied to sorcery, astrology and fortune-telling.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-warning warning-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/جنس.png?v=2" alt="Sexual content">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[03]</span>Moral</span>
+                    <strong>Sexual content</strong>
+                    <p>Suggestive or explicit sexual scenes.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-warning warning-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/تعري.png?v=2" alt="Nudity">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[04]</span>Moral</span>
+                    <strong>Nudity</strong>
+                    <p>Full or partial nudity.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-warning warning-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/شذوذ.png?v=2" alt="LGBTQ+ themes">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[05]</span>Moral</span>
+                    <strong>LGBTQ+ themes</strong>
+                    <p>Depictions or positive portrayals of LGBTQ+ themes, including same-sex relationships and transgender identities.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-warning warning-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/صادم.png?v=2" alt="Disturbing">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[06]</span>Moral</span>
+                    <strong>Disturbing</strong>
+                    <p>Potentially distressing content, including graphic violence, gore, rape, suicide, torture and intensely disturbing imagery.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-warning warning-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/مفاسد.png?v=2" alt="Vices">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[07]</span>Moral</span>
+                    <strong>Vices</strong>
+                    <p>Promoting or encouraging gambling or drug use, portraying them positively, or showing sensual scenes such as suggestive body shots or implied seduction.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-mech mechanic-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/إدمانيّات.png?v=2" alt="Addictive design">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[08]</span>Games only</span>
+                    <strong>Addictive design</strong>
+                    <p>(Games only) Mechanics that require regular daily returns to keep progressing, such as daily logins and streaks.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-mech mechanic-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/تبذير.png?v=2" alt="Pay-to-win">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[09]</span>Games only</span>
+                    <strong>Pay-to-win</strong>
+                    <p>(Games only) Progress is tied to money spent on in-game items.</p>
+                </div>
+            </div>
+            <div class="codex-tile cat-mech mechanic-card modal-item">
+                <div class="codex-tile-icon">
+                    <img src="/assets/icons/قمار.png?v=2" alt="Gambling">
+                </div>
+                <div class="codex-tile-text item-text">
+                    <span class="tile-tag"><span class="tag-id">[10]</span>Games only</span>
+                    <strong>Gambling</strong>
+                    <p>(Games only) Mechanics that encourage spending on loot boxes or gacha pulls with random rewards.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── SECTION 02: Exceptions ── -->
+    <section class="guide-section">
+        <div class="section-head-row">
+            <div class="section-title-block">
+                <h3>Exceptions</h3>
+            </div>
+            <div class="section-trail"></div>
+            <div class="section-readout">EXCEPTION BADGES <strong>·</strong> +03</div>
+        </div>
+
+        <div class="exc-panel exceptions-card">
+            <div class="exc-icons-side exceptions-icons">
+                <div class="exc-modifier">
+                    <img src="/assets/icons/en/nomusic.png" alt="No music">
+                </div>
+                <div class="exc-modifier">
+                    <img src="/assets/icons/en/noprofanity.png" alt="No profanity">
+                </div>
+                <div class="exc-modifier">
+                    <img src="/assets/icons/en/noaffairs.png" alt="No romantic relationships outside marriage">
+                </div>
+            </div>
+            <div class="exc-text-side">
+                <p class="exceptions-desc">For rating purposes, CCCC assumes a work contains music or songs, profanity, and romantic relationships outside marriage unless marked otherwise. Use each badge below only when the work is free of that content.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="guide-footnote">
+        <span>END OF DOCUMENT</span>
+        <span class="dot"></span>
+        <span class="term">muhafid.com</span>
+        <span class="dot"></span>
+        <span>GUIDE.v1 · CCCC</span>
+    </div>
+
+</div>
+</body>
+</html>

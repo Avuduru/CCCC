@@ -7,7 +7,7 @@
 **التصنيف المحافظ للمحتوى الإبداعي**<br>
 Conservative Classification of Creative Content (CCCC)
 
-[**muhafid.com**](https://muhafid.com) · [دليل التصنيف المحافظ](https://muhafid.com/guide) · [عن المشروع](https://muhafid.com/about)
+[**muhafid.com**](https://muhafid.com) · [دليل التصنيف المحافظ](https://muhafid.com/guide) · [عن المشروع](https://muhafid.com/about) · [English](https://muhafid.com/en)
 
 <p dir="ltr"><a href="#العربية">العربية</a> · <a href="#english">English</a> · <a href="#for-developers">For developers</a></p>
 
@@ -169,7 +169,7 @@ Anime · Manga · Movies · TV series · Games · Books — plus **manual mode**
 ### How it works
 
 1. Pick a content type and search for the title.
-2. The site fills in the cover, a synopsis translated to Arabic, genres, score, and length (episodes, runtime, hours to beat, or pages).
+2. The site fills in the cover, the synopsis, genres, score, and length (episodes, runtime, hours to beat, or pages). The Arabic site translates the synopsis and genres; the English site keeps them as the sources write them.
 3. Add the warnings that apply and set how strong each one is.
 4. Mark what the work is *free of*.
 5. Add your name and score as the classifier (optional), then export the card as an image or copy it — wide (1920×1080) or tall (1200×1500).
@@ -209,7 +209,7 @@ For rating purposes, CCCC assumes a work contains music or songs, profanity, and
 <img src="assets/icons/en/nomusic.png" alt="Contains no music" height="96"> <img src="assets/icons/en/noprofanity.png" alt="Contains no profanity" height="96"> <img src="assets/icons/en/noaffairs.png" alt="Contains no dating or affairs" height="96">
 </div>
 
-Full details: [rating guide](https://muhafid.com/guide) (Arabic). An English version of the site (`muhafid.com/en`) is in progress; the English icons above are already in the repo.
+Full details: [rating guide](https://muhafid.com/en/guide). The whole site is available in English at [muhafid.com/en](https://muhafid.com/en): the tool, the guide and the about page, laid out left to right, with English cards and icons.
 
 ### Privacy
 
@@ -264,16 +264,19 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `index.html` | The app |
 | `guide.html` | The rating guide (`/guide`) |
 | `about.html` | About the project (`/about`) |
-| `index.php` | Clean URLs (`/guide` → `guide.html`); adds `?v=<file time>` to every local CSS/JS/image link and an import map for the JS modules, so each deploy only refreshes the files that changed |
+| `index.php` | Clean URLs (`/guide` → `guide.html`, `/en/guide` → `lang/en/guide.html`); adds `?v=<file time>` to every local CSS/JS/image link and an import map for the JS modules, so each deploy only refreshes the files that changed |
+| `lang/en/` | The English pages (`/en`, `/en/guide`, `/en/about`), generated from the Arabic ones — don't edit them by hand (see below) |
+| `ltr.css` | Mirrors the layout left-to-right for the English pages (loaded only there) |
 | `proxy.php` | API proxy, HowLongToBeat lookup, translation, image proxy, classification storage and stats |
-| `js/` | Frontend modules: `app.js` (entry point), `card.js` (renders the card and fits every text block by measuring it), `export.js` (Export / Copy), `phone.js` (phone layout), `ui.js`, `api.js`… |
+| `js/` | Frontend modules: `app.js` (entry point), `card.js` (renders the card and fits every text block by measuring it), `export.js` (Export / Copy), `phone.js` (phone layout), `i18n.js` (every string the scripts show, in Arabic and English), `ui.js`, `api.js`… |
 | `js/vendor/jsquash-jpeg/` | MozJPEG encoder (WebAssembly), loaded on the first export |
 | `style.v3.css` · `card.css` · `phone.css` | Site styles · the card · the phone layout (≤ 640px) |
 | `assets/icons/` | Warning and badge icons; `assets/icons/en/` holds the English versions |
 | `assets/fonts/` | Handjet (served from the site; Google's copy broke Arabic letter joins on iOS) and PixelAE |
 | `tools/en-icons/` | Script that rebuilds the English icons from the Arabic ones (edit the labels, re-run) |
+| `tools/i18n/build_en.py` | Builds `lang/en/*.html` from the Arabic pages and holds their English wording |
 | `data/schema.sql` | Database schema |
-| `Caddyfile` | Web server config: blocks `.git`, dotfiles, `data/`, `tools/` and config files; redirects `www` to the bare domain; long cache for `?v=` files, revalidation for pages |
+| `Caddyfile` | Web server config: blocks `.git`, dotfiles, `data/`, `tools/`, `lang/` and config files; redirects `www` to the bare domain; long cache for `?v=` files, revalidation for pages |
 | `railpack.json` | Pins the PHP version for deployment |
 
 ### Run it locally
@@ -325,6 +328,7 @@ Run `data/schema.sql` once (phpMyAdmin, HeidiSQL, or the `mysql` CLI). It create
 
 - **`.htaccess` is not used in production.** The server is Caddy, so access rules and redirects live in the `Caddyfile`.
 - **HowLongToBeat has no official API.** `proxy.php` reads the current search endpoint from HowLongToBeat's own website code and caches it for 24 hours, so it keeps working when they move it. If they change the request format itself, `searchHltb()` needs an update.
-- **Caching:** files with `?v=` are cached for a year (their URL changes on every deploy that touches them); `/`, `/guide`, `/about` and unversioned CSS/JS are revalidated on each visit.
+- **Caching:** files with `?v=` are cached for a year (their URL changes on every deploy that touches them); `/`, `/guide`, `/about`, their `/en` versions and unversioned CSS/JS are revalidated on each visit.
+- **English site:** the Arabic pages are the source. After changing `index.html`, `guide.html` or `about.html`, run `python tools/i18n/build_en.py`: it rebuilds `lang/en/` and stops with the exact text it couldn't translate if the Arabic changed (add the English wording to the script, then run it again). `--check` only reports whether `lang/en/` is up to date. Text the scripts show (buttons, card placeholders, length pills) lives in `js/i18n.js`. On `/en` the genres and synopsis come straight from the sources, untranslated.
 - **English icons:** `python tools/en-icons/make_icons.py` (needs Playwright) repaints the label areas of the Arabic icons and writes `assets/icons/en/`. Change a word in `LABELS` and re-run.
 - **Saved IDs are namespaced:** anime/manga use `anilist:<id>` or `mal:<id>`, books use the Open Library key (`/works/OL…W`), games use the RAWG slug, movies/TV use the TMDB ID, and manual entries use `manual:<title>`.

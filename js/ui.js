@@ -1,4 +1,5 @@
-import { CATEGORIES } from './constants.js';
+import { CATEGORIES, iconSrc } from './constants.js';
+import { EN, t, formatCount } from './i18n.js';
 import { state, updateState } from './state.js';
 import { handleSearch } from './api.js';
 import { translateGenres, translateText } from './translations.js';
@@ -60,8 +61,8 @@ export function renderControls() {
             const title = document.querySelector('.ratings-title');
             // Manual has no type name to join ("محتوى اليدوي" is wrong Arabic), so it reads just "المحتوى"
             if (title) title.innerHTML = state.type === 'manual'
-                ? `<span class="label-white">المحتوى</span>`
-                : `<span class="label-white">محتوى</span> <span class="label-green">ال${item.textContent}</span>`;
+                ? t('ratings.title.manual')
+                : t('ratings.title.type', { type: item.textContent.trim() });
         }
     });
 
@@ -91,8 +92,8 @@ export function renderControls() {
                     <div class="bar-segment seg-red" data-val="1"></div>
                     <div class="rating-knob"></div>
                 </div>
-                <div class="level-btns" role="group" aria-label="درجة ${cat.label}">
-                    ${[[3, 'خفيف'], [2, 'متوسط'], [1, 'شديد']].map(([v, name]) =>
+                <div class="level-btns" role="group" aria-label="${t('ratings.level.group', { category: cat.label })}">
+                    ${[3, 2, 1].map(v => [v, t('level.' + v)]).map(([v, name]) =>
                         `<button type="button" class="level-btn lvl-${v}${currentLevel === v ? ' active' : ''}" data-id="${cat.id}" data-val="${v}" aria-pressed="${currentLevel === v}">${name}</button>`).join('')}
                 </div>
             `;
@@ -175,15 +176,15 @@ function attachControlListeners() {
             if (x < 0) x = 0;
             if (x > rect.width) x = rect.width;
 
-            // RTL Calculation: 0 is Right, 100% is Left
-            // percentFromLeft = x / width
-            // percentFromRight = 1 - (x / width)
-            const percentFromRight = 1 - (x / rect.width);
+            // The bar runs gray → yellow → orange → red from its start edge:
+            // the right on the Arabic site, the left on the English one.
+            const rtl = getComputedStyle(container).direction === 'rtl';
+            const fromStart = rtl ? 1 - (x / rect.width) : x / rect.width;
 
-            let level = 1; // Default Red (Left)
-            if (percentFromRight < 0.25) level = 0; // Right (Gray)
-            else if (percentFromRight < 0.50) level = 3; // Mid-Right (Yellow)
-            else if (percentFromRight < 0.75) level = 2; // Mid-Left (Orange)
+            let level = 1; // Red (end)
+            if (fromStart < 0.25) level = 0; // Gray (start)
+            else if (fromStart < 0.50) level = 3; // Yellow
+            else if (fromStart < 0.75) level = 2; // Orange
 
             // Only update if changed
             if (parseInt(state.ratings[id]) !== level) {
@@ -298,11 +299,11 @@ export function syncManualForm() {
     const m = state.meta;
     const set = (id, v) => { const el = mf(id); if (el && document.activeElement !== el) el.value = v; };
     set('mf-title', m.title || '');
-    set('mf-genres', splitList(m.genre).join('، '));
-    set('mf-stats', splitList(m.stats).join('، '));
+    set('mf-genres', splitList(m.genre).join(t('list.sep')));
+    set('mf-stats', splitList(m.stats).join(t('list.sep')));
     set('mf-synopsis', m.synopsis || '');
     const hasImage = !!(m.poster || m.wide);
-    mf('mf-upload').textContent = hasImage ? 'تغيير الصورة' : 'رفع صورة';
+    mf('mf-upload').textContent = hasImage ? t('manual.image.change') : t('manual.image.upload');
     mf('mf-remove').classList.toggle('hidden', !hasImage);
     mf('mf-pos').classList.toggle('hidden', !hasImage);
     mf('mf-pos').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.pos === (m.imgPos || 'center')));
@@ -315,7 +316,7 @@ function setupManualForm() {
 
     on('mf-title', 'input', e => { state.meta.title = e.target.value; changed(); });
     on('mf-genres', 'input', e => { state.meta.genre = e.target.value; changed(); });
-    on('mf-genres', 'blur', () => { state.meta.genre = splitList(state.meta.genre).join('، '); syncManualForm(); });
+    on('mf-genres', 'blur', () => { state.meta.genre = splitList(state.meta.genre).join(t('list.sep')); syncManualForm(); });
     on('mf-stats', 'input', e => { state.meta.stats = splitList(e.target.value).join(' • '); changed(); });
     on('mf-synopsis', 'input', e => { state.meta.synopsis = e.target.value; changed(); });
     on('mf-upload', 'click', () => mf('manual-cover-upload').click());
@@ -364,19 +365,16 @@ export function updateRatingUI(container, knob, level) {
     container.dataset.level = level;
     container.className = `rating-bar-container active-${level}`;
 
-    // 4 Segments: Gray(0), Yellow(3), Orange(2), Red(1)
-    // RTL layout:
-    // Level 0 (Gray): Rightmost -> 12.5% from right
-    // Level 3 (Yellow): Second -> 37.5% from right
-    // Level 2 (Orange): Third -> 62.5% from right
-    // Level 1 (Red): Leftmost -> 87.5% from right
-
+    // 4 Segments from the bar's start edge (right in Arabic, left in English):
+    // Gray(0) 12.5% · Yellow(3) 37.5% · Orange(2) 62.5% · Red(1) 87.5%
     let pos = '12.5%';
     if (level === 3) pos = '37.5%';
     if (level === 2) pos = '62.5%';
     if (level === 1) pos = '87.5%';
 
-    knob.style.right = pos;
+    // ltr.css positions the English knob from the left
+    if (getComputedStyle(container).direction === 'rtl') knob.style.right = pos;
+    else knob.style.left = pos;
 }
 
 export function updatePreview() {
@@ -399,7 +397,7 @@ export function showSearchResults(data, type) {
     container.innerHTML = '';
 
     if (!results.length) {
-        container.innerHTML = '<div class="search-result-item">لا توجد نتائج</div>';
+        container.innerHTML = `<div class="search-result-item">${t('search.no_results')}</div>`;
     } else {
         results.slice(0, 5).forEach(item => {
             const title = item.title || item.name || item.title_english || (item.volumeInfo ? item.volumeInfo.title : 'No Title');
@@ -494,7 +492,7 @@ function selectItem(item, type) {
 
         // Translate synopsis asynchronously
         if (item.overview) {
-            state.meta.synopsis = 'جاري الترجمة...';
+            state.meta.synopsis = t('card.translating');
             updateDisplayedInfo();
             translateText(item.overview).then(translated => {
                 state.meta.synopsis = translated;
@@ -510,7 +508,7 @@ function selectItem(item, type) {
         state.meta.genre = translateGenres(genreText);
 
         // Show loading message  
-        state.meta.synopsis = 'جاري التحميل...';
+        state.meta.synopsis = t('card.loading');
         updateDisplayedInfo();
 
         // Fetch full game details asynchronously
@@ -622,7 +620,7 @@ function selectItem(item, type) {
 
         // Translate synopsis (without source credits like "(Source: Crunchyroll)")
         const cleanSynopsis = cleanSourceNotes(item.synopsis || '');
-        state.meta.synopsis = cleanSynopsis ? 'جاري الترجمة...' : '';
+        state.meta.synopsis = cleanSynopsis ? t('card.translating') : '';
         updateDisplayedInfo();
         if (cleanSynopsis) {
             translateText(cleanSynopsis).then(translated => {
@@ -640,13 +638,13 @@ function selectItem(item, type) {
         // Genre pill: categories when present, otherwise the first publication year
         const categories = item.volumeInfo?.categories?.join(', ');
         state.meta.genre = categories ? translateGenres(categories)
-            : (item.first_publish_year ? `نُشر عام ${item.first_publish_year}` : translateGenres('Book'));
+            : (item.first_publish_year ? t('card.book_published', { year: item.first_publish_year }) : translateGenres('Book'));
 
         // Description: the Open Library work page has one for many books; search
         // results only carry a first sentence. With neither, the synopsis stays empty.
         const fallback = item.first_sentence?.join(' ') || item.volumeInfo?.description || '';
         const selectedKey = item.key;
-        state.meta.synopsis = 'جاري التحميل...';
+        state.meta.synopsis = t('card.loading');
         updateDisplayedInfo();
         const detailsPromise = selectedKey
             ? fetch(`proxy.php?query=${encodeURIComponent(selectedKey)}&type=book_details`).then(r => r.json()).catch(() => null)
@@ -681,31 +679,8 @@ function cleanSourceNotes(text) {
         .trim();
 }
 
-// Arabic Plural Rules Helper
-export function formatArabicPlural(count, type) {
-    const num = parseFloat(count);
-    if (!num || isNaN(num) || num === 0) return '';
-    
-    const words = {
-        episode: { s1: 'حلقة واحدة', s2: 'حلقتان', p3_10: 'حلقات', p11: 'حلقة' },
-        chapter: { s1: 'فصل واحد', s2: 'فصلان', p3_10: 'فصول', p11: 'فصل' },
-        volume:  { s1: 'مجلد واحد', s2: 'مجلدان', p3_10: 'مجلدات', p11: 'مجلد' },
-        minute:  { s1: 'دقيقة واحدة', s2: 'دقيقتان', p3_10: 'دقائق', p11: 'دقيقة' },
-        hour:    { s1: 'ساعة واحدة', s2: 'ساعتان', p3_10: 'ساعات', p11: 'ساعة' },
-        page:    { s1: 'صفحة واحدة', s2: 'صفحتان', p3_10: 'صفحات', p11: 'صفحة' }  
-    };
-
-    const w = words[type];
-    if (!w) return `${num}`;
-
-    if (num % 1 !== 0) return `${num} ${w.p11}`;
-    if (num === 1) return w.s1;
-    if (num === 2) return w.s2;
-
-    const lastTwo = num % 100;
-    if (lastTwo >= 3 && lastTwo <= 10) return `${num} ${w.p3_10}`;
-    return `${num} ${w.p11}`;
-}
+// Length pill text ("24 حلقة" / "24 episodes"); the rules live in js/i18n.js
+export const formatArabicPlural = formatCount;
 
 export function preloadStickers() {
     // Only preload once to save bandwidth
@@ -720,12 +695,12 @@ export function preloadStickers() {
     // Preload Mawjoodat (Severities 1, 2, 3)
     CATEGORIES.Mawjoodat.forEach(cat => {
         for (let i = 1; i <= 3; i++) {
-            cacheImage(`assets/icons/${cat.icon}${i}.png?v=2`);
+            cacheImage(iconSrc(cat, i));
         }
     });
 
     // Preload Mustathniyat (Exception Badges 0)
     CATEGORIES.Mustathniyat.forEach(item => {
-        cacheImage(`assets/icons/${item.icon}0.png?v=2`);
+        cacheImage(iconSrc(item, 0));
     });
 }

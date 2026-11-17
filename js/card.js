@@ -3,7 +3,8 @@
 // 1200×1500); the preview is the same element scaled down (scalePreview), so
 // what the user sees is exactly what is exported.
 import { state } from './state.js';
-import { CATEGORIES } from './constants.js';
+import { CATEGORIES, iconSrc } from './constants.js';
+import { EN, t as tr } from './i18n.js';
 
 export const CARD_SIZE = { h: { w: 1920, h: 1080 }, v: { w: 1200, h: 1500 } };
 
@@ -22,10 +23,10 @@ const STICKER = { gap: 16, groupGap: 28, one: 190, two: { h: 140, wide: 120, tal
 
 // Hints shown in empty manual-mode fields (preview only, never exported)
 export const MANUAL_PH = {
-    title: 'اكتب العنوان هنا',
-    synopsis: 'اكتب نبذة قصيرة…',
-    stats: 'المدة',
-    genres: ['النوع 1', 'النوع 2', 'النوع 3'],
+    title: tr('manual.ph.title'),
+    synopsis: tr('manual.ph.synopsis'),
+    stats: tr('manual.ph.stats'),
+    genres: tr('manual.ph.genres'),
 };
 
 const $ = (sel, root) => (root || document).querySelector(sel);
@@ -38,6 +39,10 @@ export function layoutOf() {
 
 const isFocused = (el) => el && document.activeElement === el;
 const startsLatin = (t) => /^[\sA-Za-z0-9À-ɏ@"'(]/.test(t || '') && /[A-Za-z]/.test((t || '').slice(0, 12));
+const startsArabic = (t) => /^[\s\d"'(]*[؀-ۿ]/.test(t || '');
+// Text direction for a title or name: the page's own direction unless the text
+// clearly starts in the other script (an English title on the Arabic site, or the reverse)
+const textDir = (t) => (EN ? (startsArabic(t) ? 'rtl' : 'ltr') : (startsLatin(t) ? 'ltr' : 'rtl'));
 
 // ── Text helpers ─────────────────────────────────────────────────────────
 // Shorten el's text until fits() is true, cutting at a word boundary with "…".
@@ -113,10 +118,10 @@ export function renderStickers(card = cardEl()) {
     const warn = [];
     for (const cat of CATEGORIES.Mawjoodat) {
         const lvl = parseInt(state.ratings[cat.id], 10);
-        if (lvl > 0) warn.push({ src: `assets/icons/${cat.icon}${lvl}.png?v=2`, alt: cat.label, fallback: `assets/icons/${cat.icon}.png?v=2` });
+        if (lvl > 0) warn.push({ src: iconSrc(cat, lvl), alt: cat.label, fallback: `/assets/icons/${cat.icon}.png?v=2` });
     }
     const free = CATEGORIES.Mustathniyat.filter(b => state.badges[b.id])
-        .map(b => ({ src: `assets/icons/${b.icon}0.png?v=2`, alt: b.label }));
+        .map(b => ({ src: iconSrc(b, 0), alt: b.label }));
 
     const fill = (grid, list) => {
         grid.textContent = '';
@@ -145,7 +150,7 @@ export function renderClassifier(card = cardEl()) {
         const n = $('.cd-cl-name', c);
         n.textContent = name;
         n.dataset.full = name;
-        n.dir = /^[A-Za-z@]/.test(name) ? 'ltr' : 'rtl';
+        n.dir = EN ? (startsArabic(name) ? 'rtl' : 'ltr') : (/^[A-Za-z@]/.test(name) ? 'ltr' : 'rtl');
         $('.cd-cl-num', c).textContent = rating;
         $('.cd-cl-text', c).classList.toggle('hidden', !name);
         $('.cd-cl-sep', c).classList.toggle('hidden', !(name && rating));
@@ -194,7 +199,7 @@ export function renderCard() {
         t.textContent = text;
         t.dataset.full = text;
         t.classList.toggle('cd-ph', ph);
-        t.dir = startsLatin(text) ? 'ltr' : 'rtl';
+        t.dir = textDir(text);
     }
 
     // Manual cards have no score pill: the classifier's own rating is their score

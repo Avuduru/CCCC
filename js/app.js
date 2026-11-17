@@ -6,12 +6,13 @@ import { debounce } from './utils.js';
 import { state } from './state.js';
 import { config } from './config.js';
 import { setDragState } from './interact.js';
+import { t } from './i18n.js';
 
 function updateFooterDimensions() {
     const el = document.getElementById('footer-dim');
     if (el) el.textContent = state.orientation === 'vertical' ? '1200 × 1500 · JPG' : '1920 × 1080 · JPG';
     const ratio = document.getElementById('ratio-meta');
-    if (ratio) ratio.textContent = (state.orientation === 'vertical' ? '4:5' : '16:9') + ' · جاهزة للتصدير';
+    if (ratio) ratio.textContent = t('preview.ready', { ratio: state.orientation === 'vertical' ? '4:5' : '16:9' });
     const bar = document.getElementById('preview-bar-meta');   // phones
     if (bar) bar.textContent = state.orientation === 'vertical' ? '4:5 · 1200 × 1500' : '16:9 · 1920 × 1080';
 }
@@ -108,11 +109,11 @@ function setupEventListeners() {
             } else {
                 state.meta = {
                     id: '',
-                    title: 'عنوان العمل',
+                    title: t('card.default.title'),
                     year: '2023',
                     poster: null,
                     wide: '',
-                    genre: 'نوع العمل',
+                    genre: t('card.default.genre'),
                     synopsis: '',
                     score: '',
                     stats: '',
@@ -218,7 +219,7 @@ function setupEventListeners() {
     genreTextEl.addEventListener('blur', () => {
         if (state.type !== 'manual') return;
         const genres = genreTextEl.innerText.split(/[،,\n]/).map(s => s.trim()).filter(Boolean);
-        state.meta.genre = genres.join('، ');
+        state.meta.genre = genres.join(t('list.sep'));
         updateDisplayedInfo();
         syncManualForm();
     });

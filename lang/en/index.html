@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<!-- Generated from ../../index.html by tools/i18n/build_en.py. Edit the Arabic page and the
+     wording in that script, then run it again; changes made here are overwritten. -->
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCCC — Conservative Classification</title>
+    <link rel="alternate" hreflang="ar" href="https://muhafid.com/">
+    <link rel="alternate" hreflang="en" href="https://muhafid.com/en">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="icon" type="image/png" href="/assets/favicon.png?v=3">
+    <link rel="stylesheet" href="/style.v3.css">
+    <link rel="stylesheet" href="/card.css">
+    <link rel="stylesheet" href="/phone.css">
+
+    <!-- html2canvas for export -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- App: start fetching every module at once instead of one after another -->
+    <script type="module" src="/js/app.js"></script>
+    <link rel="modulepreload" href="/js/ui.js">
+    <link rel="modulepreload" href="/js/card.js">
+    <link rel="modulepreload" href="/js/state.js">
+    <link rel="modulepreload" href="/js/constants.js">
+    <link rel="modulepreload" href="/js/translations.js">
+    <link rel="modulepreload" href="/js/utils.js">
+    <link rel="modulepreload" href="/js/api.js">
+    <link rel="modulepreload" href="/js/config.js">
+    <link rel="modulepreload" href="/js/interact.js">
+    <link rel="modulepreload" href="/js/export.js">
+    <link rel="modulepreload" href="/js/phone.js">
+
+    <!-- Dynamic Desktop Scaling -->
+    <script>
+        function updateAppScale() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // Base width is 1700px, base height is 940px (the ideal space needed for the layout to fit)
+            const scaleW = width / 1700;
+            const scaleH = height / 940;
+            
+            // Use the minimum scale to ensure it fits both horizontally and vertically
+            let scale = Math.min(scaleW, scaleH);
+            
+            // Constrain scale between 0.75x and 1.5x
+            scale = Math.max(0.75, Math.min(1.5, scale));
+
+            // Phones get their own layout at real size (phone.css), not a shrunk desktop
+            if (width <= 640) scale = 1;
+
+            document.documentElement.style.setProperty('--app-zoom', scale);
+        }
+        window.addEventListener('resize', updateAppScale);
+        window.addEventListener('DOMContentLoaded', updateAppScale);
+        updateAppScale(); // Run immediately
+    </script>
+    <style>
+        /* Apply the zoom to the app shell so it doesn't affect html2canvas exports on the body */
+        .app-shell {
+            zoom: var(--app-zoom, 1);
+        }
+    </style>
+    <link rel="stylesheet" href="/ltr.css">
+</head>
+
+<body>
+
+    <div class="app-shell">
+
+        <!-- ───────────────── TOPBAR ───────────────── -->
+        <header class="topbar">
+            <div class="topbar-brand">
+                <a href="/en" style="display: inline-flex;"><img src="/assets/LOGO.png" alt="CCCC Logo" class="brand-logo" style="height: 32px; width: auto; object-fit: contain;"></a>
+                <div class="brand-meta">
+                    <div class="brand-en" lang="ar" dir="rtl">التصنيف المحافظ للمحتوى الإبداعي</div>
+                    <div class="brand-ar">Conservative Classification of Creative Content</div>
+                </div>
+            </div>
+
+            <div class="topbar-status">
+                <a class="status-about" href="/" lang="ar" hreflang="ar">العربية</a>
+                <span class="status-sep">/</span>
+                <a class="status-about" href="/en/about">About</a>
+                <span class="status-sep">/</span>
+                <span class="status-dot"></span>
+                <span class="status-text">Version 1.0</span>
+                <span class="status-sep">/</span>
+                <span class="status-url">muhafid.com</span>
+            </div>
+        </header>
+
+        <main class="card-container" id="main-card">
+
+            <!-- ───────────────── CONTROL PANEL (RIGHT) ───────────────── -->
+            <aside class="top-controls">
+
+                <!-- Phones: the guide comes first (phone.css); desktop keeps the Note box below -->
+                <a href="#" class="guide-panel" id="open-guide-panel">
+                    <span class="guide-panel-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 3h4a2 2 0 0 1 2 2v8.5a1.5 1.5 0 0 0-1.5-1.5h-4.5zM13.5 3h-4a2 2 0 0 0-1.5.7M13.5 3v9h-4.5A1.5 1.5 0 0 0 8 13.5"/></svg></span>
+                    <span class="guide-panel-text">Rating guide</span>
+                    <svg class="guide-panel-chev" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+                </a>
+
+                <!-- Template / Orientation -->
+                <div class="panel-section">
+                    <div class="section-head">
+                        <span class="kicker"><span class="kicker-dot"></span>Template</span>
+                    </div>
+
+                    <div class="control-row">
+                        <span class="control-label">Card layout</span>
+                        <div class="orientation-selector">
+                            <button class="orient-btn active" data-value="horizontal">
+                                <span class="orient-icon orient-icon-h"></span>
+                                <span>Landscape</span>
+                            </button>
+                            <button class="orient-btn" data-value="vertical">
+                                <span class="orient-icon orient-icon-v"></span>
+                                <span>Portrait</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-row type-row">
+                        <span class="control-label">Content type</span>
+                        <!-- Phones: one tap per type (built by js/phone.js from the dropdown below) -->
+                        <div class="type-chips" id="type-chips" role="group" aria-label="Content type"></div>
+                        <div class="custom-dropdown" id="type-dropdown">
+                            <button class="dropdown-toggle" id="current-type">
+                                <span>Anime</span>
+                                <span class="chev">▾</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item active" data-value="anime">Anime</div>
+                                <div class="dropdown-item" data-value="manga">Manga</div>
+                                <div class="dropdown-item" data-value="movie">Movie</div>
+                                <div class="dropdown-item" data-value="tv">TV series</div>
+                                <div class="dropdown-item" data-value="game">Game</div>
+                                <div class="dropdown-item" data-value="book">Book</div>
+                                <div class="dropdown-item" data-value="manual">Manual</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content / Search -->
+                <div class="panel-section">
+                    <div class="section-head">
+                        <span class="kicker"><span class="kicker-dot"></span>Work</span>
+                    </div>
+
+                    <div class="control-row" id="search-row">
+                        <div class="search-wrapper">
+                            <span class="search-prompt">⌕</span>
+                            <input type="text" id="search-query" placeholder="Search for a title…">
+                            <span class="search-hint">Enter</span>
+                            <div id="search-results" class="hidden"></div>
+                        </div>
+                    </div>
+
+                    <div class="control-row classifier-row">
+                        <!-- Each box has its label above it ("your name", "your score"), so no
+                             separate heading is needed; the card itself still says "Rated by:" -->
+                        <div class="classifier-inputs">
+                            <label class="cl-field cl-name">
+                                <span class="cl-label">Your name <em>optional</em></span>
+                                <span class="search-wrapper compact">
+                                    <span class="search-prompt">@</span>
+                                    <input type="text" id="reviewer-name-input" placeholder="Name or @handle">
+                                </span>
+                            </label>
+                            <label class="cl-field cl-rating">
+                                <span class="cl-label">Your score <em>optional</em></span>
+                                <span class="search-wrapper compact rating-input" title="Your score out of 10 (optional)">
+                                    <input type="text" id="reviewer-rating-input" inputmode="decimal" maxlength="5" placeholder="—" aria-label="Your score out of 10">
+                                    <span class="search-hint">/10</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual mode: the card's fields as a form (shown only for "Manual") -->
+                <div class="panel-section manual-panel hidden" id="manual-panel">
+                    <div class="section-head">
+                        <span class="kicker"><span class="kicker-dot"></span>Work details</span>
+                    </div>
+
+                    <label class="mf-field">
+                        <span class="mf-label">Title</span>
+                        <input type="text" id="mf-title" class="mf-input" placeholder="Type the title" maxlength="120">
+                    </label>
+
+                    <label class="mf-field">
+                        <span class="mf-label">Genres <em>separate with commas</em></span>
+                        <input type="text" id="mf-genres" class="mf-input" placeholder="Drama, Fantasy, Adventure">
+                    </label>
+
+                    <!-- No score field: in manual mode the classifier's own rating (above) is the score -->
+                    <label class="mf-field">
+                        <span class="mf-label">Length <em>episodes, minutes, pages or hours</em></span>
+                        <input type="text" id="mf-stats" class="mf-input" placeholder="e.g. 24 episodes · 120 min · 300 pages · 40 hours">
+                    </label>
+
+                    <label class="mf-field">
+                        <span class="mf-label">Synopsis</span>
+                        <textarea id="mf-synopsis" class="mf-input mf-textarea" rows="4" placeholder="Write a short synopsis…"></textarea>
+                    </label>
+
+                    <div class="mf-field">
+                        <span class="mf-label">Image</span>
+                        <div class="mf-image-row">
+                            <button type="button" id="mf-upload" class="mf-btn">Upload image</button>
+                            <button type="button" id="mf-remove" class="mf-btn mf-btn-quiet hidden">Remove</button>
+                            <div class="mf-seg hidden" id="mf-pos" role="group" aria-label="Image position">
+                                <button type="button" data-pos="top">Top</button>
+                                <button type="button" data-pos="center" class="active">Center</button>
+                                <button type="button" data-pos="bottom">Bottom</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ratings -->
+                <div class="ratings-section">
+                    <div class="section-head ratings-head">
+                        <h2 class="ratings-title"><span class="label-green">Anime</span> <span class="label-white">content</span></h2>
+                        <span class="kicker"><span class="kicker-dot kicker-dot-warn"></span>Rating</span>
+                    </div>
+
+                    <div id="available-categories" class="tags-cloud">
+                        <!-- Available Tags injected by JS -->
+                    </div>
+
+                    <div id="ratings-list" class="ratings-grid">
+                        <!-- Rating Bars injected by JS -->
+                    </div>
+
+                    <div id="toggles-list" class="toggles-grid">
+                        <!-- Toggles injected by JS -->
+                    </div>
+
+                    <div class="warning-text">
+                        <span class="warn-prefix">Note</span>
+                        <br>
+                        Before you rate a work, read:
+                        <br>
+                        <a href="#" id="open-info-modal">Rating guide</a>
+                    </div>
+                </div>
+
+                <!-- Phones: the header has no room for this link (phone.css) -->
+                <div class="phone-links">
+                    <a class="phone-about-link" href="/en/about">About</a>
+                    <a class="phone-about-link" href="/" lang="ar" hreflang="ar">العربية</a>
+                </div>
+
+            </aside>
+
+            <!-- ───────────────── PREVIEW STAGE (LEFT) ───────────────── -->
+            <section class="stage">
+                <div class="stage-header">
+                    <span class="kicker"><span class="kicker-dot"></span>Card preview</span>
+                    <span class="kicker-meta" id="ratio-meta">16:9 · ready to export</span>
+                </div>
+
+                <div class="stage-frame">
+                    <!-- Share card (v4): laid out at export size, scaled down for preview by js/card.js -->
+                    <div class="cd-scaler">
+                    <section class="cd-card cd-h" id="preview-canvas" dir="ltr" data-layout="h">
+                        <div class="cd-media">
+                            <div id="poster-img" class="cd-media-img cd-upload-target">
+                                <div class="upload-overlay hidden" id="upload-hint"><span>Select an image to upload</span></div>
+                            </div>
+                            <div class="cd-cl-wrap">
+                                <div class="cd-classifier hidden">
+                                    <span class="cd-cl-text"><span class="cd-cl-label">Rated by:</span> <span class="cd-cl-name"></span></span><span class="cd-cl-sep"></span><span class="cd-cl-rating" dir="ltr"><span class="cd-cl-num"></span><span class="cd-cl-den">/10</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cd-body">
+                            <div class="cd-brand">
+                                <img class="cd-brand-logo" src="/assets/LOGO.png" alt="CCCC">
+                                <span class="cd-brand-label">Conservative Classification of Creative Content</span>
+                                <span class="cd-brand-url" dir="ltr">MUHAFID.COM</span>
+                            </div>
+                            <h2 id="title-text" class="cd-title">Title</h2>
+                            <div class="cd-pills">
+                                <span id="score-badge" class="cd-score hidden" dir="ltr">★ <span id="score-text"></span></span>
+                                <div id="genre-text" class="cd-genres"></div>
+                            </div>
+                            <div class="cd-row">
+                                <div id="cd-tall-poster" class="cd-tall-poster cd-upload-target">
+                                    <div class="upload-overlay hidden"><span>Select an image to upload</span></div>
+                                </div>
+                                <div class="cd-synopsis">
+                                    <div id="synopsis-text" class="cd-synopsis-text" contenteditable="true"></div>
+                                </div>
+                            </div>
+                            <div class="cd-stickers-wrap">
+                                <div class="cd-stickers hidden" id="cd-stickers">
+                                    <div class="cd-group" id="cd-group-warn"><span class="cd-group-label">Contains</span><div class="cd-grid" id="active-stickers"></div></div>
+                                    <div class="cd-divider" id="cd-divider"></div>
+                                    <div class="cd-group" id="cd-group-free"><span class="cd-group-label">Free of</span><div class="cd-grid" id="free-stickers"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cd-footer">
+                            <div class="cd-classifier hidden">
+                                <span class="cd-cl-text"><span class="cd-cl-label">Rated by:</span> <span class="cd-cl-name"></span></span><span class="cd-cl-sep"></span><span class="cd-cl-rating" dir="ltr"><span class="cd-cl-num"></span><span class="cd-cl-den">/10</span></span>
+                            </div>
+                            <div class="cd-footer-brand"><span dir="ltr">MUHAFID.COM</span><img src="/assets/LOGO.png" alt="CCCC"></div>
+                        </div>
+                    </section>
+                    </div>
+                    <script>
+                        // Show the card immediately at the right size; js/card.js keeps it in sync afterwards.
+                        (function () {
+                            var c = document.getElementById('preview-canvas'), s = c && c.parentElement;
+                            var w = s && s.clientWidth; if (!w) return;
+                            var k = w / 1920;
+                            s.style.height = Math.round(1080 * k) + 'px';
+                            c.style.transform = 'scale(' + k + ')';
+                        })();
+                    </script>
+                    <!-- Phones: size + enlarge (phone.css / js/phone.js) -->
+                    <div class="preview-bar">
+                        <span class="preview-bar-meta" id="preview-bar-meta" dir="ltr">16:9 · 1920 × 1080</span>
+                        <button type="button" class="preview-enlarge" id="preview-enlarge">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9.5 6.5M2 14l4.5-4.5"/></svg>
+                            <span>Enlarge preview</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Export Footer -->
+                <div class="card-footer">
+                    <div class="footer-meta">
+                        <span class="footer-tag">Output</span>
+                        <span class="footer-dim" id="footer-dim">1920 × 1080 · JPG</span>
+                    </div>
+                    <div class="footer-actions">
+                        <button id="copy-btn"><span class="btn-icon">⧉</span><span>Copy</span></button>
+                        <button id="export-btn"><span class="btn-icon">↓</span><span>Export</span></button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Hidden File Input for Manual Mode -->
+    <input type="file" id="manual-cover-upload" accept="image/*" style="display: none;">
+
+    <!-- ───────────────── INFO MODAL ───────────────── -->
+    <div id="info-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="kicker"><span class="kicker-dot"></span>Guide</span>
+                    <h2>Rating guide</h2>
+                </div>
+                <div class="modal-header-actions">
+                    <a href="/en/guide" target="_blank" class="close-btn guide-expand-btn" title="Open full page" aria-label="Open full page"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5"/></svg></a>
+                    <button id="close-modal" class="close-btn" aria-label="Close">×</button>
+                </div>
+            </header>
+            <!-- Phones: jump between the guide's sections (built by js/phone.js) -->
+            <nav class="guide-tabs" id="guide-tabs" aria-label="Guide sections"></nav>
+            <div class="modal-body">
+                <p class="guide-intro">CCCC is a tool for rating creative works by what they contain, not by age. <a href="/en/about">About the project</a></p>
+                <section class="modal-section">
+                    <h3 class="section-title"><span class="section-num">01</span>Levels</h3>
+                    <div class="grades-container">
+                        <div class="grade-card grade-red">
+                            <div class="grade-header">
+                                <div class="grade-badge red">1</div>
+                                <div class="grade-title">Level 1</div>
+                                <div class="grade-meta">Severe</div>
+                            </div>
+                            <div class="grade-body">
+                                <div class="grade-desc">
+                                    <div class="grade-desc-label">// In story-based media</div>
+                                    <p>The content is central and appears frequently. Skipping it makes the overall story hard to follow.</p>
+                                </div>
+                                <div class="grade-desc">
+                                    <div class="grade-desc-label">// In games</div>
+                                    <p>You cannot finish the game without encountering this content.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grade-card grade-orange">
+                            <div class="grade-header">
+                                <div class="grade-badge orange">2</div>
+                                <div class="grade-title">Level 2</div>
+                                <div class="grade-meta">Moderate</div>
+                            </div>
+                            <div class="grade-body">
+                                <div class="grade-desc">
+                                    <div class="grade-desc-label">// In story-based media</div>
+                                    <p>You can skip the content and still follow the story, but frequent skipping disrupts the experience.</p>
+                                </div>
+                                <div class="grade-desc">
+                                    <div class="grade-desc-label">// In games</div>
+                                    <p>You can finish the game while avoiding this content, but doing so makes it harder and changes the experience.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grade-card grade-yellow">
+                            <div class="grade-header">
+                                <div class="grade-badge yellow">3</div>
+                                <div class="grade-title">Level 3</div>
+                                <div class="grade-meta">Mild</div>
+                            </div>
+                            <div class="grade-body">
+                                <div class="grade-desc">
+                                    <div class="grade-desc-label">// In story-based media</div>
+                                    <p>The content is rare and easy to skip without losing track of the story.</p>
+                                </div>
+                                <div class="grade-desc">
+                                    <div class="grade-desc-label">// In games</div>
+                                    <p>You can ignore the content or take another route to finish the game.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="modal-section">
+                    <h3 class="section-title"><span class="section-num">02</span>Content flags</h3>
+                    <div class="semantic-legend">
+                        <span class="legend-badge theme-badge"><span class="legend-dot"></span>Belief and ideology</span>
+                        <span class="legend-badge warning-badge"><span class="legend-dot"></span>Moral and disturbing content</span>
+                        <span class="legend-badge mechanic-badge"><span class="legend-dot"></span>Spending and engagement</span>
+                    </div>
+                    <div class="modal-grid">
+                        <div class="modal-item theme-card">
+                            <img src="/assets/icons/كفريات.png?v=2" alt="Blasphemy">
+                            <div class="item-text">
+                                <strong>Blasphemy</strong>
+                                <p>Content that promotes disbelief or atheism, mocks religion or God, or presents beliefs and philosophies that conflict with Islamic teachings positively or neutrally.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item theme-card">
+                            <img src="/assets/icons/سحر.png?v=2" alt="Magic">
+                            <div class="item-text">
+                                <strong>Magic</strong>
+                                <p>Powers, symbols and spells tied to sorcery, astrology and fortune-telling.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item warning-card">
+                            <img src="/assets/icons/جنس.png?v=2" alt="Sexual content">
+                            <div class="item-text">
+                                <strong>Sexual content</strong>
+                                <p>Suggestive or explicit sexual scenes.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item warning-card">
+                            <img src="/assets/icons/تعري.png?v=2" alt="Nudity">
+                            <div class="item-text">
+                                <strong>Nudity</strong>
+                                <p>Full or partial nudity.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item warning-card">
+                            <img src="/assets/icons/شذوذ.png?v=2" alt="LGBTQ+ themes">
+                            <div class="item-text">
+                                <strong>LGBTQ+ themes</strong>
+                                <p>Depictions or positive portrayals of LGBTQ+ themes, including same-sex relationships and transgender identities.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item warning-card">
+                            <img src="/assets/icons/صادم.png?v=2" alt="Disturbing">
+                            <div class="item-text">
+                                <strong>Disturbing</strong>
+                                <p>Potentially distressing content, including graphic violence, gore, rape, suicide, torture and intensely disturbing imagery.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item warning-card">
+                            <img src="/assets/icons/مفاسد.png?v=2" alt="Vices">
+                            <div class="item-text">
+                                <strong>Vices</strong>
+                                <p>Promoting or encouraging gambling or drug use, portraying them positively, or showing sensual scenes such as suggestive body shots or implied seduction.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item mechanic-card">
+                            <img src="/assets/icons/إدمانيّات.png?v=2" alt="Addictive design">
+                            <div class="item-text">
+                                <strong>Addictive design</strong>
+                                <p>(Games only) Mechanics that require regular daily returns to keep progressing, such as daily logins and streaks.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item mechanic-card">
+                            <img src="/assets/icons/تبذير.png?v=2" alt="Pay-to-win">
+                            <div class="item-text">
+                                <strong>Pay-to-win</strong>
+                                <p>(Games only) Progress is tied to money spent on in-game items.</p>
+                            </div>
+                        </div>
+                        <div class="modal-item mechanic-card">
+                            <img src="/assets/icons/قمار.png?v=2" alt="Gambling">
+                            <div class="item-text">
+                                <strong>Gambling</strong>
+                                <p>(Games only) Mechanics that encourage spending on loot boxes or gacha pulls with random rewards.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="modal-section">
+                    <h3 class="section-title"><span class="section-num">03</span>Exceptions</h3>
+                    <div class="exceptions-card">
+                        <p class="exceptions-desc">For rating purposes, CCCC assumes a work contains music or songs, profanity, and romantic relationships outside marriage unless marked otherwise. Use each badge below only when the work is free of that content.</p>
+                        <div class="exceptions-icons">
+                            <img src="/assets/icons/en/nomusic.png" alt="No music">
+                            <img src="/assets/icons/en/noprofanity.png" alt="No profanity">
+                            <img src="/assets/icons/en/noaffairs.png" alt="No romantic relationships outside marriage">
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- App JS (provided separately by the user) -->
+
+
+
+</body>
+
+</html>

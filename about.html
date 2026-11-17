@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عن المشروع — CCCC</title>
+    <meta name="description" content="التصنيف المحافظ للمحتوى الإبداعي (CCCC): أداة لتصنيف الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقم عمري.">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <!-- Arabic uses the site's own Handjet files (style.v3.css); Google's copy broke letter joins on iOS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.v3.css">
+    <style>
+        body { margin: 0; background: var(--ink-1); color: var(--text-0); font-family: var(--font-ar); }
+        .about-shell { max-width: 760px; margin: 0 auto; padding: 16px 16px 56px; }
+        .about-back { color: var(--acc); text-decoration: none; font-family: var(--font-ar); font-size: 17px; font-weight: 600; white-space: nowrap; }
+        .about-back:hover { text-decoration: underline; }
+
+        .about h1 { font-size: 46px; font-weight: 700; line-height: 1.1; margin: 44px 0 14px; }
+        .about .lead { font-size: 22px; line-height: 1.65; color: var(--text-0); margin: 0 0 8px; }
+        .about section { padding: 26px 0 4px; border-top: 1px dashed var(--line); margin-top: 22px; }
+        .about h2 { font-size: 26px; font-weight: 700; margin: 0 0 10px; }
+        .about p { font-size: 20px; line-height: 1.75; color: var(--text-1); margin: 0 0 12px; }
+        .about a { color: var(--acc); }
+        .about strong { color: var(--text-0); font-weight: 700; }
+
+        .levels { list-style: none; padding: 0; margin: 4px 0 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .levels li { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 600; padding: 6px 12px; border-radius: 6px; background: var(--ink-3); border: 1px solid var(--line); }
+        .levels i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+        .about-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
+        .about-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border-radius: 8px; text-decoration: none; font-size: 20px; font-weight: 700; }
+        .btn-primary { background: var(--acc); color: var(--ink-0) !important; }
+        .btn-quiet { background: var(--ink-3); color: var(--text-0) !important; border: 1px solid var(--line-bright); }
+
+        @media (max-width: 640px) {
+            .topbar { flex-wrap: nowrap; gap: 10px; padding: 10px 12px; }
+            .topbar .brand-logo { height: 26px !important; }
+            .brand-en { font-size: 8px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .brand-ar { font-size: 17px; }
+            .about h1 { font-size: 36px; margin-top: 30px; }
+            .about .lead { font-size: 20px; }
+            .about p { font-size: 19px; }
+            .about-actions a { flex: 1 1 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="about-shell">
+        <header class="topbar">
+            <div class="topbar-brand">
+                <a href="./" style="display: inline-flex;"><img src="assets/LOGO.png" alt="CCCC" class="brand-logo" style="height: 32px; width: auto; object-fit: contain;"></a>
+                <div class="brand-meta">
+                    <div class="brand-en">CONSERVATIVE CLASSIFICATION FOR CREATIVE CONTENT</div>
+                    <div class="brand-ar">التصنيف المحافظ للمحتوى الإبداعي</div>
+                </div>
+            </div>
+            <a class="about-back" href="./">← العودة للأداة</a>
+        </header>
+
+        <main class="about">
+            <h1>من نحن</h1>
+            <p class="lead">التصنيف المحافظ للمحتوى الإبداعي (CCCC) أداةٌ تتيح للمستهلكين والمراجعين وصنّاع المحتوى، ولأي جهة أخرى، تصنيفَ الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقمٍ عمري.</p>
+
+            <section>
+                <h2>لماذا أنشأناه</h2>
+                <p>تخبرك التصنيفات العمرية بالسنّ المناسبة للعمل، لكنها لا تخبرك بما يحتويه. والمجتمعات المحافظة لا تسأل "هل يناسب هذا العمل من هم فوق الثالثة عشرة؟"، بل تسأل "هل يخلو من الكفريات والسحر والتعرّي؟". ولأن أنظمة التصنيف الحالية لا تجيب عن هذا السؤال، خصوصًا في الأنمي والمانجا والألعاب، رأينا أن من واجبنا تصميم أداة تجيب عنه.</p>
+            </section>
+
+            <section>
+                <h2>كيف يعمل</h2>
+                <p>يُصنَّف كل عنصر بثلاث درجات بحسب حضوره في العمل:</p>
+                <ul class="levels">
+                    <li><i style="background: #ff5a5a"></i>الدرجة الأولى · شديد</li>
+                    <li><i style="background: #ff9a3c"></i>الدرجة الثانية · متوسط</li>
+                    <li><i style="background: #ffd84a"></i>الدرجة الثالثة · خفيف</li>
+                </ul>
+                <p>أما الموسيقى والألفاظ النابية وعلاقات الحب، فتُصنَّف بالوجود أو الغياب فقط، دون درجات.</p>
+                <p>التفاصيل في <a href="guide">شرح التصنيف المحافظ</a>.</p>
+            </section>
+
+            <section>
+                <h2>ما لسنا عليه</h2>
+                <p>لسنا جهة رقابية، ولا نُصدر أحكامًا ملزمة. نحن نوفّر النظام والأداة، والمستخدم هو من يصنّف الأعمال التي شاهدها أو قرأها أو لعبها، وينشر تصنيفه باسمه وعلى مسؤوليته.</p>
+            </section>
+
+            <section>
+                <h2>مفتوح للجميع</h2>
+                <p>المشروع <a href="https://github.com/Avuduru/CCCC" target="_blank" rel="noopener">مفتوح المصدر</a>، ويمكن لأي شخص استخدامه ومشاركة تصنيفاته.</p>
+            </section>
+
+            <div class="about-actions">
+                <a class="btn-primary" href="./">ابدأ التصنيف</a>
+                <a class="btn-quiet" href="guide">شرح التصنيف المحافظ</a>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

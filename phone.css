@@ -135,6 +135,11 @@
     .guide-panel-text { flex: 1; font-family: var(--font-ar); font-size: 21px; font-weight: 700; }
     .guide-panel-chev { color: var(--text-1); flex: none; }
     .warning-text { display: none; }
+    .phone-about-link {
+        display: flex; align-items: center; justify-content: center; min-height: 44px;
+        color: var(--acc); font-family: var(--font-ar); font-size: 18px; font-weight: 600; text-decoration: none;
+    }
+    #info-modal .guide-intro { font-size: 18px; }
 
     .control-row { gap: 8px; }
     .control-label { flex-basis: 100%; font-size: 18px; color: var(--text-1); }

@@ -332,7 +332,9 @@ Anime, manga, books, HowLongToBeat, and translation need no keys. On the server,
 
 Run `data/schema.sql` once (phpMyAdmin, HeidiSQL, or the `mysql` CLI). It creates two tables: `works` (one row per title) and `classifications` (one row per person per title).
 
-Each classification stores the 10 content levels, the 3 exception badges, the classifier's name, the classifier's own **/10 score** (`classifier_rating`), the **site language** it came from (`lang`, `ar`/`en`), orientation and action. The `stats` endpoint exposes aggregates including `avg_score` and `by_lang`. On an existing database that predates the `classifier_rating`/`lang` columns, `proxy.php` **adds them automatically** on the first rating save (needs `ALTER` privilege on the DB user); if it can't, saves still work without those two fields and you can run the `ALTER TABLE` from `data/schema.sql`'s comment manually.
+Each classification stores the 10 content levels, the 3 exception badges, the classifier's name, the classifier's own **/10 score** (`classifier_rating`), the **site language** it came from (`lang`, `ar`/`en`), orientation and action. It also stores the classifier's **own synopsis** (`synopsis`) together with a `custom_synopsis` flag — but **only when they wrote it** (manual mode, or they edited the auto-fetched one), so the sources' own text isn't duplicated. The `stats` endpoint exposes aggregates including `avg_score`, `by_lang` and `custom_synopses`. On an existing database that predates any of these columns, `proxy.php` **adds them automatically** on the first rating save (needs `ALTER` privilege on the DB user); if it can't, saves still work without those fields and you can run the `ALTER TABLE` from `data/schema.sql`'s comment manually.
+
+The stored `synopsis` is **user-generated text**: it's kept as plain text (control chars stripped, capped) and is never rendered server-side. Anything that later displays it must HTML-escape it and have a way to hide abuse — see `SECURITY.md`.
 
 ### Good to know
 

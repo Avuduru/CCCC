@@ -32,9 +32,48 @@ export const MANUAL_PH = {
 const $ = (sel, root) => (root || document).querySelector(sel);
 export const cardEl = () => document.getElementById('preview-canvas');
 
+// Start panel: before a work is picked (first visit, or after switching type) the card
+// shows the logo over the icons and three steps instead of an empty cover and synopsis.
+// Manual mode has its own hints, so it never shows the panel.
+export const isIntro = () => state.type !== 'manual' && !state.meta.id;
+
+function buildIntro(card) {
+    if (card.dataset.introBuilt) return;
+    card.dataset.introBuilt = '1';
+    const logo = $('.cd-brand-logo', card).getAttribute('src');
+    const cats = CATEGORIES.Mawjoodat;
+    const order = [0, 3, 6, 1, 8, 4, 2, 9, 5, 7];   // mixed, so neighbours differ
+    const art = () => {
+        const d = document.createElement('div');
+        d.className = 'cd-intro-art';
+        d.setAttribute('aria-hidden', 'true');
+        const m = document.createElement('div');
+        m.className = 'cd-intro-mosaic';
+        for (let i = 0; i < 40; i++) {
+            const img = document.createElement('img');
+            img.src = iconSrc(cats[order[(i + Math.floor(i / 6)) % order.length]], 1);
+            img.alt = '';
+            m.appendChild(img);
+        }
+        const b = document.createElement('div');
+        b.className = 'cd-intro-brand';
+        b.innerHTML = `<img src="${logo}" alt=""><span>${tr('intro.tagline')}</span>`;
+        d.append(m, b);
+        return d;
+    };
+    ['#poster-img', '#cd-tall-poster'].forEach(sel => { const host = $(sel, card); if (host) host.appendChild(art()); });
+    const steps = $('.cd-intro-steps', card);
+    steps.innerHTML = tr('intro.steps').map(([title, sub], i) =>
+        `<li><span class="cd-intro-num">0${i + 1}</span><span><b>${title}</b><small>${sub}</small></span></li>`).join('');
+    const legend = $('.cd-intro-legend', card);
+    legend.innerHTML = `<span class="cd-intro-legend-label">${tr('intro.levels')}</span>` +
+        [1, 2, 3].map(v => `<span class="cd-intro-lvl lvl-${v}"><i></i>${tr('level.' + v)}</span>`).join('');
+}
+
 export function layoutOf() {
     if (state.orientation !== 'vertical') return 'h';
-    return state.meta.wide ? 'wide' : 'tall';
+    // The start panel uses the band layout: art on top, the steps get the full width
+    return (state.meta.wide || isIntro()) ? 'wide' : 'tall';
 }
 
 const isFocused = (el) => el && document.activeElement === el;
@@ -190,12 +229,16 @@ export function renderCard() {
 
     card.dataset.imgPos = manual ? (m.imgPos || 'center') : 'center';
 
+    const intro = isIntro();
+    card.classList.toggle('cd-intro', intro);
+    if (intro) buildIntro(card);
+
     // Empty manual fields show a dimmed hint in the preview (class cd-ph);
     // js/export.js removes every hint from the exported image.
     const t = $('#title-text', card);
     if (!isFocused(t)) {
         const ph = manual && !(m.title || '').trim();
-        const text = ph ? MANUAL_PH.title : (m.title || '');
+        const text = ph ? MANUAL_PH.title : intro ? tr('intro.title') : (m.title || '');
         t.textContent = text;
         t.dataset.full = text;
         t.classList.toggle('cd-ph', ph);
@@ -330,7 +373,8 @@ function fitTallPoster(card, L) {
     // No image: drop the empty box so the synopsis gets the whole row. Manual mode
     // keeps it in the preview (it's the upload target), never in the export clone.
     const empty = poster.classList.contains('empty-poster');
-    poster.classList.toggle('cd-no-img', empty && (state.type !== 'manual' || card !== cardEl()));
+    // (the start panel fills the empty poster, so it stays)
+    poster.classList.toggle('cd-no-img', empty && !card.classList.contains('cd-intro') && (state.type !== 'manual' || card !== cardEl()));
     if (L !== 'tall') { poster.style.width = ''; poster.style.height = ''; return; }
     const row = $('.cd-row', card);
     const cs = getComputedStyle(row);
@@ -386,7 +430,7 @@ export function fitCard(card = cardEl()) {
     // the row empty. The (empty) synopsis stays clickable underneath so it can be typed into.
     const syn = $('#synopsis-text', card);
     const synText = isFocused(syn) ? syn.innerText : (syn.dataset.full ?? syn.textContent);
-    card.classList.toggle('cd-no-syn', L === 'tall' && !(synText || '').trim());
+    card.classList.toggle('cd-no-syn', L === 'tall' && !card.classList.contains('cd-intro') && !(synText || '').trim());
     fitTallPoster(card, L);
     fitSynopsis(card);
     fitClassifier(card, L);

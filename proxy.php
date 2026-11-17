@@ -928,6 +928,8 @@ switch ($type) {
                 'ratings'      => $input['ratings'],
                 'badges'       => $input['badges'] ?? [],
                 'classifier'   => $input['classifier'] ?? '',
+                'rating'       => $input['rating'] ?? '',
+                'lang'         => $input['lang'] ?? '',
                 'orientation'  => $input['orientation'] ?? 'horizontal',
                 'action'       => $input['action'] ?? 'export',
                 'created_at'   => date('c')
@@ -950,6 +952,13 @@ switch ($type) {
             $classifier  = substr((string)($input['classifier'] ?? ''), 0, 100);
             $orientation = in_array($input['orientation'] ?? '', ['horizontal','vertical']) ? $input['orientation'] : 'horizontal';
             $action      = in_array($input['action'] ?? '', ['export','copy','rate']) ? $input['action'] : 'export';
+            // Classifier's own /10 score (optional) and which site the rating came from
+            $rating = null;
+            if (isset($input['rating']) && preg_match('/^\d{1,2}(\.\d{1,2})?$/', (string)$input['rating'])) {
+                $r = (float)$input['rating'];
+                if ($r >= 0 && $r <= 10) $rating = $r;
+            }
+            $lang = in_array($input['lang'] ?? '', ['ar', 'en'], true) ? $input['lang'] : 'ar';
 
             // SHA-256 of the visitor's address (clientIp: the edge-appended one) — never stored raw
             $ipHash   = hash('sha256', clientIp());
@@ -1028,7 +1037,20 @@ switch ($type) {
                 $classifier, $orientation, $action
             ]);
 
-            // ── 4. Sync rater_count (unique IPs who rated this work) ─────
+            // ── 4. Classifier /10 score + site language ──────────────────
+            // Set by a follow-up UPDATE so a write still succeeds before the migration in
+            // data/schema.sql is run — if the columns don't exist yet, the catch ignores it
+            // (SQLSTATE 42S22 = unknown column) and the rest of the save is unaffected.
+            try {
+                $pdo->prepare(
+                    "UPDATE classifications SET classifier_rating = ?, lang = ?
+                     WHERE work_id = ? AND ip_hash = ?"
+                )->execute([$rating, $lang, $workId, $ipHash]);
+            } catch (PDOException $e) {
+                if ($e->getCode() !== '42S22') throw $e;   // only tolerate "column not added yet"
+            }
+
+            // ── 5. Sync rater_count (unique IPs who rated this work) ─────
             $pdo->prepare(
                 "UPDATE works
                  SET rater_count = (SELECT COUNT(*) FROM classifications WHERE work_id = ?),

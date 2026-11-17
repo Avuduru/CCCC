@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { fitCard, CARD_SIZE, MANUAL_PH } from './card.js';
-import { t, allValues } from './i18n.js';
+import { t, allValues, LANG } from './i18n.js';
 
 // Exported cards are full-colour (4:4:4) baseline JPEGs at this quality.
 // X/Twitter passes such JPEGs through untouched, while it re-saves PNGs at
@@ -80,6 +80,8 @@ function logClassification(action) {
                 ratings: state.ratings,
                 badges: state.badges,
                 classifier: state.classifier.name || '',
+                rating: state.classifier.rating || '',   // the classifier's /10 score
+                lang: LANG,                               // 'ar' or 'en' (which site)
                 orientation: state.orientation,
                 action: action
             })

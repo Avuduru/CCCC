@@ -64,6 +64,9 @@
     --font-en: 'Silkscreen', 'JetBrains Mono', monospace;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     --font-ar: 'Handjet', 'Tahoma', sans-serif;
+    /* Paragraphs (guide, about): easier to read at length than the pixel face.
+       ltr.css swaps in IBM Plex Sans for the English site. */
+    --font-body: 'IBM Plex Sans Arabic', 'IBM Plex Sans', 'Tahoma', sans-serif;
 
     /* — Canvas (preserved; sizes used inside #preview-canvas) — */
     --canvas-title-size: 5.5cqw;
@@ -1065,7 +1068,8 @@ body {
 }
 .item-text p {
     margin: 0;
-    font-size: 15px;
+    font-family: var(--font-body);
+    font-size: 14px;
     line-height: 1.5;
     color: var(--text-1);
 }
@@ -1080,7 +1084,8 @@ body {
 }
 .exceptions-desc {
     margin: 0 0 14px 0;
-    font-size: 15px;
+    font-family: var(--font-body);
+    font-size: 14px;
     line-height: 1.6;
     color: var(--text-1);
 }
@@ -1171,7 +1176,8 @@ body {
 }
 .grade-desc p {
     margin: 0;
-    font-size: 15px;
+    font-family: var(--font-body);
+    font-size: 14px;
     line-height: 1.55;
     color: var(--text-1);
 }

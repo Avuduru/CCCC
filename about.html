@@ -4,24 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>عن المشروع — CCCC</title>
+    <link rel="alternate" hreflang="ar" href="https://muhafid.com/about">
+    <link rel="alternate" hreflang="en" href="https://muhafid.com/en/about">
     <meta name="description" content="التصنيف المحافظ للمحتوى الإبداعي (CCCC): أداة لتصنيف الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقم عمري.">
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <!-- Arabic uses the site's own Handjet files (style.v3.css); Google's copy broke letter joins on iOS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.v3.css">
     <style>
         body { margin: 0; background: var(--ink-1); color: var(--text-0); font-family: var(--font-ar); }
         .about-shell { max-width: 760px; margin: 0 auto; padding: 16px 16px 56px; }
         .about-back { color: var(--acc); text-decoration: none; font-family: var(--font-ar); font-size: 17px; font-weight: 600; white-space: nowrap; }
         .about-back:hover { text-decoration: underline; }
+        .about-nav { display: flex; align-items: center; gap: 18px; }
+        .about-lang { color: var(--text-1); text-decoration: none; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.04em; white-space: nowrap; }
+        .about-lang:hover { color: var(--acc); }
 
         .about h1 { font-size: 46px; font-weight: 700; line-height: 1.1; margin: 44px 0 14px; }
-        .about .lead { font-size: 22px; line-height: 1.65; color: var(--text-0); margin: 0 0 8px; }
+        .about .lead { font-family: var(--font-body); font-size: 19px; line-height: 1.8; color: var(--text-0); margin: 0 0 8px; }
         .about section { padding: 26px 0 4px; border-top: 1px dashed var(--line); margin-top: 22px; }
         .about h2 { font-size: 26px; font-weight: 700; margin: 0 0 10px; }
-        .about p { font-size: 20px; line-height: 1.75; color: var(--text-1); margin: 0 0 12px; }
+        .about p { font-family: var(--font-body); font-size: 17px; line-height: 1.85; color: var(--text-1); margin: 0 0 12px; }
         .about a { color: var(--acc); }
         .about strong { color: var(--text-0); font-weight: 700; }
 
@@ -40,8 +45,8 @@
             .brand-en { font-size: 8px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .brand-ar { font-size: 17px; }
             .about h1 { font-size: 36px; margin-top: 30px; }
-            .about .lead { font-size: 20px; }
-            .about p { font-size: 19px; }
+            .about .lead { font-size: 18px; }
+            .about p { font-size: 16px; }
             .about-actions a { flex: 1 1 100%; }
         }
     </style>
@@ -56,7 +61,10 @@
                     <div class="brand-ar">التصنيف المحافظ للمحتوى الإبداعي</div>
                 </div>
             </div>
-            <a class="about-back" href="./">→ العودة إلى الأداة</a>
+            <nav class="about-nav">
+                <a class="about-lang" href="/en/about" lang="en" hreflang="en">English</a>
+                <a class="about-back" href="./">→ العودة إلى الأداة</a>
+            </nav>
         </header>
 
         <main class="about">

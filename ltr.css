@@ -1,0 +1,66 @@
+/* English site (/en): the same layout mirrored left-to-right.
+   Loaded only by the English pages (lang/en/*.html), after the shared styles.
+   Flex and grid rows mirror by themselves under dir="ltr"; this file only flips
+   the rules that name a physical side (right/left) and sets the English fonts. */
+
+:root {
+    /* Paragraphs: IBM Plex Sans reads more easily than the pixel face at length */
+    --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+body { direction: ltr; }
+
+/* ── Header ── */
+/* The small line is the Arabic name (the Arabic site has the English name there) */
+.brand-en { font-family: var(--font-ar); font-size: 13px; letter-spacing: 0; text-transform: none; text-align: left; }
+@media (max-width: 640px) {
+    .brand-en { font-size: 12px; }
+    /* The English name is longer than the Arabic one: two lines rather than cut off */
+    .brand-ar { font-size: 17px; white-space: normal; line-height: 1.05; }
+    /* Level buttons: "Moderate" is longer than the Arabic words the 56px width was set for */
+    .level-btn { width: auto; min-width: 50px; padding: 0 8px; font-size: 15px; }
+    .rating-row-label > span { line-height: 1.05; }
+}
+
+/* ── Controls ── */
+.control-label,
+.dropdown-item,
+.rating-row-label { text-align: left; }
+.dropdown-toggle .chev { margin-left: 0; margin-right: 6px; }
+.search-hint { margin-right: 0; margin-left: auto; }
+.warning-text .warn-prefix { margin-left: 0; margin-right: 6px; direction: ltr; }
+@keyframes fadeInRow {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Rating bar: gray → red from the left; js/ui.js sets the knob's left */
+.rating-knob { right: auto; left: 12.5%; transform: translate(-50%, -50%); transition: left 0.2s ease; }
+
+/* Labels' "optional" / hints */
+.cl-label em { margin-right: 0; margin-left: 4px; }
+.mf-label em { margin-right: 0; margin-left: 6px; }
+
+/* ── Guide modal ── */
+.modal-item.warning-card,
+.modal-item.theme-card,
+.modal-item.mechanic-card,
+.exceptions-card,
+.grade-red, .grade-orange, .grade-yellow { border-right-width: 1px; }
+.modal-item.warning-card  { border-right-color: var(--line); border-left: 3px solid var(--accent-red); }
+.modal-item.theme-card    { border-right-color: var(--line); border-left: 3px solid var(--theme-purple); }
+.modal-item.mechanic-card { border-right-color: var(--line); border-left: 3px solid var(--mech-teal); }
+.exceptions-card { border-right-color: rgba(52, 208, 184, 0.18); border-left: 3px solid var(--mech-teal); }
+.grade-red    { border-right-color: var(--line); border-left: 3px solid var(--accent-red); }
+.grade-orange { border-right-color: var(--line); border-left: 3px solid var(--accent-orange); }
+.grade-yellow { border-right-color: var(--line); border-left: 3px solid var(--accent-yellow); }
+
+
+/* ── Share card ── */
+.cd-card[dir="ltr"] { direction: ltr; text-align: left; }
+.cd-card[dir="ltr"] .cd-brand-url { margin-right: 0; margin-left: auto; }
+.cd-card[dir="ltr"] .cd-title,
+.cd-card[dir="ltr"] .cd-title[dir="ltr"] { text-align: left; }
+.cd-card[dir="ltr"].cd-tall .cd-title { text-align: center; }
+/* English synopsis reads left to right; an Arabic one typed in keeps its own direction */
+.cd-card[dir="ltr"] .cd-synopsis-text { direction: ltr; text-align: start; unicode-bidi: plaintext; }

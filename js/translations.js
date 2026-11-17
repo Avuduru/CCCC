@@ -1,3 +1,5 @@
+import { EN } from './i18n.js';
+
 // Genre Translation Map (English to Arabic)
 export const genreTranslations = {
     // General
@@ -146,6 +148,8 @@ export const genreTranslations = {
  */
 export function translateGenres(genreText) {
     if (!genreText) return '';
+    // The English site shows the sources' own genre names
+    if (EN) return genreText.split(',').map(g => g.trim()).filter(Boolean).join(', ');
 
     // Split by comma, translate each, rejoin
     return genreText
@@ -164,6 +168,8 @@ export function translateGenres(genreText) {
  */
 export async function translateText(text) {
     if (!text || text.length === 0) return text;
+    // The sources write in English, so the English site uses their text as is
+    if (EN) return text;
 
     // Check cache first
     const cacheKey = `trans_${text.substring(0, 50)}`; // Use first 50 chars as key

@@ -15,8 +15,26 @@ if ($file === '') {
     $file = 'index';
 }
 
+// The page files live at the top level (Arabic) and in lang/en/ (English, generated
+// by tools/i18n/build_en.py); lang/ is only reached through the clean URLs below.
+$english = ($file === 'en' || strpos($file, 'en/') === 0);
+if (strpos($file, 'lang/') === 0) {
+    $file = '';   // -> 404
+} elseif ($english) {
+    // /en/ and /en/about/ -> /en and /en/about: the pages' links assume no trailing slash
+    if ($file !== 'en' && substr($file, -1) === '/') {
+        $clean = '/' . rtrim($file, '/');
+        $query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+        header('Location: ' . $clean . ($query ? '?' . $query : ''), true, 301);
+        exit;
+    }
+    // English pages: /en, /en/about, /en/guide
+    $page = $file === 'en' ? 'index' : substr($file, 3);
+    $file = in_array($page, ['index', 'about', 'guide'], true) ? 'lang/en/' . $page : '';
+}
+
 // Check if the corresponding .html file exists
-if (file_exists($file . '.html')) {
+if ($file !== '' && file_exists($file . '.html')) {
     // Return standard 200 OK and serve the HTML content
     http_response_code(200);
     $html = file_get_contents($file . '.html');
@@ -62,6 +80,31 @@ if ($file === 'proxy.php') {
 
 // If no file matches, return a clean 404
 http_response_code(404);
+if ($english) {
+?>
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>404 – Page not found</title>
+    <style>
+        body { background: #0e1014; color: #fff; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .error { text-align: center; }
+        h1 { color: #c8ff5e; font-size: 48px; }
+        a { color: #fff; text-decoration: none; border-bottom: 1px solid #c8ff5e; }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <h1>404</h1>
+        <p>Sorry, this page could not be found.</p>
+        <a href="/en">Back to home</a>
+    </div>
+</body>
+</html>
+<?php
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -79,7 +122,7 @@ http_response_code(404);
     <div class="error">
         <h1>404</h1>
         <p>عذرا، الصفحة غير موجودة.</p>
-        <a href="./">العودة إلى الرئيسية</a>
+        <a href="/">العودة إلى الرئيسية</a>
     </div>
 </body>
 </html>

@@ -3,6 +3,7 @@
 // phone.css keeps these elements hidden.
 import { state } from './state.js';
 import { CARD_SIZE } from './card.js';
+import { t } from './i18n.js';
 
 export function initPhone() {
     buildTypeChips();
@@ -119,11 +120,11 @@ function openPreviewSheet() {
     sheet.className = 'preview-sheet';
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-modal', 'true');
-    sheet.setAttribute('aria-label', 'معاينة البطاقة');
+    sheet.setAttribute('aria-label', t('preview.title'));
     sheet.innerHTML = `
         <header class="preview-sheet-head">
-            <h2>معاينة البطاقة</h2>
-            <button type="button" class="preview-sheet-close" aria-label="إغلاق المعاينة">
+            <h2>${t('preview.title')}</h2>
+            <button type="button" class="preview-sheet-close" aria-label="${t('preview.close')}">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13"/></svg>
             </button>
         </header>
@@ -131,8 +132,8 @@ function openPreviewSheet() {
             <span class="preview-sheet-meta" dir="ltr">${size === CARD_SIZE.h ? '16:9 · 1920 × 1080' : '4:5 · 1200 × 1500'} · JPG</span>
         </div>
         <div class="preview-sheet-actions">
-            <button type="button" class="ph-export">تصدير</button>
-            <button type="button" class="ph-copy">نسخ</button>
+            <button type="button" class="ph-export">${t('actions.export')}</button>
+            <button type="button" class="ph-copy">${t('actions.copy')}</button>
         </div>`;
     // Same handlers as the page's own buttons (Copy must run inside this tap for iOS)
     sheet.querySelector('.ph-export').addEventListener('click', () => document.getElementById('export-btn').click());
@@ -185,7 +186,7 @@ function buildGuideTabs() {
     const tabs = sections.map((sec, i) => {
         const h = sec.querySelector('.section-title');
         const num = h && h.querySelector('.section-num');
-        const label = h ? h.textContent.replace(num ? num.textContent : '', '').trim() : `القسم ${i + 1}`;
+        const label = h ? h.textContent.replace(num ? num.textContent : '', '').trim() : t('guide.section_fallback', { n: i + 1 });
         const tab = document.createElement('button');
         tab.type = 'button';
         tab.className = 'guide-tab';

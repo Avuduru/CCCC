@@ -22,9 +22,10 @@
 		redir @www https://muhafid.com{uri} permanent
 
 		# Never serve VCS metadata, dotfiles (.git, .env, .htaccess...), raw data,
-		# docs, legacy pages, or build/server config. .htaccess is NOT read by
+		# docs, legacy pages, build/server config, or the raw English page files (lang/,
+		# served only through /en by index.php). .htaccess is NOT read by
 		# Caddy/FrankenPHP, so these rules replace its <FilesMatch> blocks.
-		@private path_regexp private (^|/)\.|^/(data|Docs|archive|Demo|tools)(/|$)|^/(README\.md|composer\.(json|lock)|railpack\.json|Caddyfile|php\.ini.*|cacert\.pem|local-router\.php|test_proxy\.php|demo(\.html)?)$
+		@private path_regexp private (^|/)\.|^/(data|Docs|archive|Demo|tools|lang)(/|$)|^/(README\.md|composer\.(json|lock)|railpack\.json|Caddyfile|php\.ini.*|cacert\.pem|local-router\.php|test_proxy\.php|demo(\.html)?)$
 		respond @private 404
 
 		# Versioned URLs (?v=..., added by index.php from each file's modified time)
@@ -35,7 +36,7 @@
 		# Everything else (the pages, unversioned styles/scripts) is revalidated on
 		# each visit (cheap 304s), so a deploy is picked up immediately.
 		@revalidate {
-			path / /guide /about *.html *.css *.js
+			path / /guide /about /en /en/guide /en/about *.html *.css *.js
 			not query v=*
 		}
 		header @revalidate Cache-Control "no-cache"

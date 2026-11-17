@@ -1,15 +1,17 @@
 // State
+import { t } from './i18n.js';
+
 export const state = {
     type: 'anime', // default
     orientation: 'horizontal', // 'horizontal' or 'vertical'
     ratings: {},   // { kufr: 2 }
     badges: {},    // { nomusic: true }
     meta: {
-        title: 'عنوان العمل',
+        title: t('card.default.title'),
         year: '2023',
         poster: null,   // tall cover/poster (2:3)
         wide: '',       // wide art (16:9) for the vertical band; '' → A-style vertical layout
-        genre: 'نوع العمل',
+        genre: t('card.default.genre'),
         synopsis: '',
         score: '',
         stats: '',

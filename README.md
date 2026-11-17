@@ -11,7 +11,7 @@ Conservative Classification of Creative Content (CCCC)
 
 <p dir="ltr"><a href="#العربية">العربية</a> · <a href="#english">English</a> · <a href="#for-developers">For developers</a></p>
 
-<img src=".github/readme/card-horizontal.jpg" alt="بطاقة تصنيف أفقية للعبة Celeste" width="720">
+<img src=".github/readme/wolf-of-wall-street-horizontal.jpg" alt="بطاقة تصنيف بالعرض لفيلم The Wolf of Wall Street" width="720">
 
 </div>
 
@@ -58,7 +58,7 @@ Conservative Classification of Creative Content (CCCC)
 يعمل الموقع على الجوال بتصميم خاص به: تبقى البطاقة ظاهرة أعلى الشاشة أثناء التعديل، ويُشارك التصدير مباشرةً إلى إكس وواتساب وغيرهما.
 
 <div align="center">
-<img src=".github/readme/card-vertical.jpg" alt="بطاقة تصنيف عمودية للعبة Hollow Knight" width="360">
+<img src=".github/readme/berserk-vertical-poster.jpg" alt="بطاقة تصنيف بالطول لمانجا Berserk" width="300"> <img src=".github/readme/genshin-impact-vertical.jpg" alt="بطاقة تصنيف بالطول للعبة Genshin Impact" width="300">
 </div>
 
 ### نظام التصنيف
@@ -175,6 +175,10 @@ Anime · Manga · Movies · TV series · Games · Books — plus **manual mode**
 5. Add your name and score as the classifier (optional), then export the card as an image or copy it — wide (1920×1080) or tall (1200×1500).
 
 On phones the site has its own layout: the card stays pinned at the top while you edit, and Export opens the share sheet for X, WhatsApp and others.
+
+<div align="center">
+<img src=".github/readme/pluribus-horizontal.jpg" alt="Landscape rating card for the series Pluribus" width="720">
+</div>
 
 ### The rating system
 

@@ -139,6 +139,9 @@
     flex: none; display: flex; justify-content: center; align-items: flex-start; gap: 28px;
     background: #161a21; border-radius: 18px; padding: 22px 28px 26px;
 }
+/* Landscape: badges start at the reading edge (right in Arabic, left in English)
+   instead of floating in the middle; the portrait layouts stay centred */
+.cd-h .cd-stickers { justify-content: flex-start; }
 .cd-wide .cd-stickers { padding: 22px 28px; }
 .cd-tall .cd-stickers { padding: 20px 28px 24px; }
 .cd-tall .cd-stickers-wrap { padding: 8px 0 0; }

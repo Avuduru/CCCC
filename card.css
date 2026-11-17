@@ -202,9 +202,6 @@
 .share-btn:active { transform: translateY(1px); }
 
 /* ── Manual mode ── */
-/* Score scale on the card ("8.5/10"), smaller than the number */
-.cd-score-den { font-size: 0.7em; opacity: 0.75; }
-.cd-score-den:empty { display: none; }
 /* Preview-only hints in empty manual fields (removed from exports) */
 .cd-card .cd-ph { opacity: 0.38; }
 .cd-card .cd-score.cd-ph { opacity: 0.45; }
@@ -228,11 +225,6 @@
 .mf-input::placeholder { color: var(--text-3); }
 .mf-input:focus { border-color: var(--acc-dim); box-shadow: 0 0 0 3px rgba(200, 255, 94, 0.08); }
 .mf-textarea { height: auto; min-height: 96px; padding: 10px 12px; line-height: 1.5; resize: vertical; }
-.mf-pair { display: flex; gap: 8px; }
-.mf-pair > .mf-field { flex: 1; }
-.mf-score-row { display: flex; gap: 6px; }
-.mf-score-row #mf-score { flex: 1; text-align: center; direction: ltr; }
-.mf-select { flex: none; width: 76px; padding: 0 6px; font-family: var(--font-mono); font-size: 14px; cursor: pointer; direction: ltr; }
 .mf-image-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .mf-btn {
     height: 36px; padding: 0 14px; border-radius: 4px; cursor: pointer;

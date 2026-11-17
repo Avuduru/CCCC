@@ -1,4 +1,5 @@
-import { initUI, updatePreview, renderControls, updateDisplayedInfo, reAdjustLayout, preloadStickers, syncManualForm, normalizeScore } from './ui.js';
+import { initUI, updatePreview, renderControls, updateDisplayedInfo, reAdjustLayout, preloadStickers, syncManualForm } from './ui.js';
+import { initPhone, syncTypeChips } from './phone.js';
 import { handleSearch } from './api.js';
 import { handleExport, handleCopyToClipboard } from './export.js';
 import { debounce } from './utils.js';
@@ -11,6 +12,8 @@ function updateFooterDimensions() {
     if (el) el.textContent = state.orientation === 'vertical' ? '1200 × 1500 · JPG' : '1920 × 1080 · JPG';
     const ratio = document.getElementById('ratio-meta');
     if (ratio) ratio.textContent = (state.orientation === 'vertical' ? '4:5' : '16:9') + ' · جاهزة للتصدير';
+    const bar = document.getElementById('preview-bar-meta');   // phones
+    if (bar) bar.textContent = state.orientation === 'vertical' ? '4:5 · 1200 × 1500' : '16:9 · 1920 × 1080';
 }
 
 function init() {
@@ -18,6 +21,7 @@ function init() {
     setupDesignSettings();
     initUI();
     setupEventListeners();
+    initPhone();
     // Silently preload stickers in the background to prevent click delay
     setTimeout(preloadStickers, 500);
 }
@@ -99,7 +103,7 @@ function setupEventListeners() {
                 state.meta = {
                     id: '', title: '', year: '', poster: '', wide: '',
                     genre: '', synopsis: '', score: '', stats: '',
-                    scoreScale: '10', imgPos: 'center'
+                    imgPos: 'center'
                 };
             } else {
                 state.meta = {
@@ -112,7 +116,6 @@ function setupEventListeners() {
                     synopsis: '',
                     score: '',
                     stats: '',
-                    scoreScale: '',
                     imgPos: 'center'
                 };
             }
@@ -120,7 +123,6 @@ function setupEventListeners() {
             // Manual Mode UI Toggles (upload hints are handled by card.js)
             const titleText = document.getElementById('title-text');
             const genreText = document.getElementById('genre-text');
-            const scoreText = document.getElementById('score-text');
 
             // Clear the previous type's query and results so they can't be
             // re-opened and selected under the new type (e.g. a game saved as a book)
@@ -134,18 +136,17 @@ function setupEventListeners() {
                 // Enable editing
                 titleText.contentEditable = "true";
                 genreText.contentEditable = "true";
-                if (scoreText) scoreText.contentEditable = "true";
             } else {
                 // Disable editing
                 titleText.contentEditable = "false";
                 genreText.contentEditable = "false";
-                if (scoreText) scoreText.contentEditable = "false";
             }
 
             renderControls();
             updatePreview();
             updateDisplayedInfo();
             syncManualForm();
+            syncTypeChips();
         });
     });
 
@@ -228,16 +229,13 @@ function setupEventListeners() {
     card.addEventListener('focusin', (e) => {
         if (state.type !== 'manual') return;
         const el = e.target;
-        if (el.id === 'score-text' && el.parentElement.classList.contains('cd-ph')) {
-            el.textContent = ''; el.parentElement.classList.remove('cd-ph');
-        } else if ((el.id === 'title-text' || el.id === 'synopsis-text') && el.classList.contains('cd-ph')) {
+        if ((el.id === 'title-text' || el.id === 'synopsis-text') && el.classList.contains('cd-ph')) {
             el.textContent = ''; el.dataset.full = ''; el.classList.remove('cd-ph');
         }
     });
     // Leaving a field: re-render (an emptied field gets its hint back) and update the form
-    card.addEventListener('focusout', (e) => {
+    card.addEventListener('focusout', () => {
         if (state.type !== 'manual') return;
-        if (e.target.id === 'score-text') state.meta.score = normalizeScore(e.target.innerText, state.meta.scoreScale);
         setTimeout(() => { updateDisplayedInfo(); syncManualForm(); }, 0);
     });
 

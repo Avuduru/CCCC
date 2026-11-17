@@ -1,0 +1,245 @@
+/* ════════════════════════════════════════════════════════════════
+   PHONE LAYOUT (≤ 640px) — the approved phone design.
+   Phones are drawn at real size (index.html no longer shrinks them to 75%):
+   the card preview is pinned at the top while the controls scroll under it,
+   Export / Copy sit in a fixed bar at the bottom, and every control is at
+   least 44px tall. Desktop and tablets are untouched.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Phone-only pieces: hidden everywhere else */
+.guide-panel, .type-chips, .preview-bar, .guide-tabs, .level-btns { display: none; }
+
+/* Enlarged preview (js/phone.js) — only ever opened from the phone layout */
+.preview-sheet {
+    position: fixed; inset: 0; z-index: 990;
+    background: #08090c; color: var(--text-0);
+    display: flex; flex-direction: column;
+}
+.preview-sheet-head {
+    height: 60px; flex: none; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 8px 0 16px;
+}
+.preview-sheet-head h2 { margin: 0; font-family: var(--font-ar); font-size: 22px; font-weight: 700; }
+.preview-sheet-close {
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    background: var(--ink-3); border: 1px solid var(--line-bright); border-radius: 22px;
+    color: var(--text-0); cursor: pointer;
+}
+.preview-sheet-body {
+    flex: 1; min-height: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+}
+.preview-sheet-card { position: relative; overflow: hidden; border-radius: 8px; outline: 1px solid var(--line-bright); flex: none; }
+.preview-sheet-meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-1); }
+.preview-sheet-actions {
+    flex: none; display: flex; gap: 10px;   /* RTL: Export (first) on the right, as in the bottom bar */
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+}
+
+/* The two action buttons, shared by the fixed bar and the enlarged preview */
+@media (max-width: 640px) {
+    .ph-export, #export-btn {
+        flex: 1; height: 54px; justify-content: center; padding: 0 16px;
+        font-size: 24px; border-radius: 10px;
+    }
+    .ph-copy, #copy-btn {
+        width: 120px; flex: none; height: 54px; justify-content: center; padding: 0 12px;
+        font-size: 22px; border-radius: 10px;
+    }
+    .ph-export, .ph-copy {
+        display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+        font-family: var(--font-ar); font-weight: 700; line-height: 1;
+    }
+    .ph-export { background: var(--acc); color: var(--ink-0); border: 1px solid var(--acc-dim); }
+    .ph-copy { background: var(--ink-4); color: var(--text-0); border: 1px solid var(--line-bright); }
+}
+
+@media (max-width: 640px) {
+    /* Room at the bottom of the page for the fixed action bar */
+    .app-shell { padding: 0 0 104px; gap: 0; }
+
+    /* ── Header: logo + English name above the Arabic name ── */
+    .topbar {
+        flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 12px;
+        padding: 12px 16px; border-radius: 0; border-width: 0 0 1px;
+    }
+    .topbar-status { display: none; }
+    .topbar-brand { gap: 12px; min-width: 0; }
+    .topbar .brand-logo { height: 28px !important; flex: none; }
+    .brand-en { font-size: 8px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-1); }
+    .brand-ar { font-size: 19px; }
+
+    /* ── Preview first, pinned while the controls scroll under it ── */
+    .card-container { display: flex; flex-direction: column; gap: 0; }
+    .stage {
+        order: -1; position: sticky; top: 0; z-index: 20; gap: 0;
+        background: var(--ink-1); padding: 10px 16px 4px;
+        border-bottom: 1px solid var(--line-bright);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
+    }
+    .stage-header { display: none; }
+    .stage-frame { background: none; border: 0; padding: 0; box-shadow: none; border-radius: 0; }
+    .stage-frame::before, .stage-frame::after { display: none; }
+    .cd-scaler { border-radius: 8px; outline: 1px solid var(--line-bright); }
+    .preview-bar { display: flex; align-items: center; justify-content: space-between; min-height: 40px; }
+    .preview-bar-meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-1); }
+    .preview-enlarge {
+        height: 40px; display: inline-flex; align-items: center; gap: 6px; padding: 0 4px;
+        background: none; border: 0; color: var(--acc); cursor: pointer;
+        font-family: var(--font-ar); font-size: 19px; font-weight: 600;
+    }
+    /* A 4:5 card at full width would fill half the screen: pin it small, beside its info */
+    .stage-frame:has(.cd-v) { display: flex; gap: 14px; align-items: stretch; padding-bottom: 6px; }
+    .stage-frame:has(.cd-v) .cd-scaler { width: 152px; flex: none; }
+    .stage-frame:has(.cd-v) .preview-bar {
+        flex: 1; min-width: 0; flex-direction: column; align-items: stretch; justify-content: space-between; padding: 4px 0;
+    }
+    .stage-frame:has(.cd-v) .preview-enlarge {
+        height: 44px; justify-content: center;
+        background: var(--ink-3); border: 1px solid var(--line-bright); border-radius: 8px;
+    }
+
+    /* ── Export / Copy: fixed at the bottom, within thumb reach ── */
+    .card-footer {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 950;
+        border-radius: 0; border-width: 1px 0 0;
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+        background: rgba(13, 15, 20, 0.96);
+    }
+    .footer-meta { display: none; }
+    .footer-actions { width: 100%; gap: 10px; flex-direction: row-reverse; }   /* Export first (right) */
+    #export-btn:hover { transform: none; }
+
+    /* ── Controls ── */
+    .top-controls { background: transparent; border: 0; border-radius: 0; padding: 16px; gap: 18px; }
+    .panel-section { gap: 12px; }
+    .panel-section:not(.manual-panel) > .section-head { display: none; }
+
+    /* The guide comes first */
+    .guide-panel {
+        display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px;
+        background: rgba(255, 154, 60, 0.08); border: 1px solid rgba(255, 154, 60, 0.45);
+        border-radius: 8px; color: #ffb067; text-decoration: none;
+    }
+    .guide-panel-icon {
+        width: 32px; height: 32px; flex: none; display: flex; align-items: center; justify-content: center;
+        border-radius: 16px; background: rgba(255, 154, 60, 0.18);
+    }
+    .guide-panel-text { flex: 1; font-family: var(--font-ar); font-size: 21px; font-weight: 700; }
+    .guide-panel-chev { color: var(--text-1); flex: none; }
+    .warning-text { display: none; }
+
+    .control-row { gap: 8px; }
+    .control-label { flex-basis: 100%; font-size: 18px; color: var(--text-1); }
+
+    /* Orientation: full width, no label */
+    .control-row:has(.orientation-selector) .control-label { display: none; }
+    .orientation-selector { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; padding: 4px; gap: 4px; border-radius: 8px; }
+    .orient-btn { height: 44px; justify-content: center; font-size: 20px; border-radius: 6px; }
+
+    /* Content type: a row of buttons instead of the dropdown */
+    .type-row .custom-dropdown { display: none; }
+    .type-chips {
+        display: flex; flex-basis: 100%; gap: 8px; overflow-x: auto; scrollbar-width: none;
+        margin: 0 -16px; padding: 0 16px 2px; -webkit-overflow-scrolling: touch;
+    }
+    .type-chips::-webkit-scrollbar { display: none; }
+    .type-chip {
+        flex: none; height: 44px; padding: 0 18px; border-radius: 22px; cursor: pointer;
+        background: var(--ink-3); border: 1px solid var(--line-bright); color: var(--text-0);
+        font-family: var(--font-ar); font-size: 20px; font-weight: 600;
+    }
+    .type-chip.active { border-color: var(--acc); color: var(--acc); }
+
+    /* Search + classifier */
+    .search-wrapper { height: 50px; border-radius: 8px; padding: 0 14px; }
+    #search-query, #reviewer-name-input, #reviewer-rating-input { font-size: 19px; }
+    #search-row .search-hint { display: none; }
+    .classifier-inputs .rating-input { width: 112px; }
+    .search-result-item { min-height: 56px; font-size: 18px; }
+
+    /* Manual form */
+    .mf-label { font-size: 18px; }
+    .mf-label em { font-size: 15px; }
+    .mf-input { height: 50px; font-size: 19px; border-radius: 8px; }
+    .mf-textarea { height: auto; min-height: 110px; }
+    .mf-btn { height: 44px; font-size: 18px; border-radius: 8px; }
+    .mf-seg button { height: 38px; font-size: 17px; padding: 0 12px; }
+
+    /* ── Stickers ── */
+    .ratings-section { padding-top: 16px; }
+    .ratings-title { font-size: 24px; }
+    .tags-cloud { background: none; border: 0; padding: 0; gap: 8px; }
+    .category-tag {
+        height: 44px; padding: 0 16px; font-size: 20px; border-radius: 8px;
+        border-style: dashed; color: var(--text-0);
+    }
+    .category-tag .plus-icon { font-size: 16px; }
+
+    /* Each added sticker: name · خفيف / متوسط / شديد · remove */
+    .ratings-grid { gap: 8px; }
+    .rating-row {
+        min-height: 52px; padding: 0 4px 0 12px; gap: 8px;
+        background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px;
+    }
+    .rating-row-label { display: contents; }
+    .rating-row-label > span { order: 1; flex: 1; min-width: 0; font-family: var(--font-ar); font-size: 21px; font-weight: 600; }
+    .rating-bar-container { display: none !important; }
+    .level-btns { display: flex; order: 2; gap: 4px; flex: none; }
+    .remove-slider-btn { order: 3; width: 44px; height: 44px; font-size: 24px; color: var(--text-1); padding: 0; }
+    .level-btn {
+        width: 56px; height: 40px; border: 0; border-radius: 6px; cursor: pointer;
+        font-family: var(--font-ar); font-size: 16px; font-weight: 700;
+    }
+    .level-btn.lvl-3 { background: rgba(255, 216, 74, 0.16); color: #ffe48a; }
+    .level-btn.lvl-2 { background: rgba(255, 154, 60, 0.16); color: #ffbf85; }
+    .level-btn.lvl-1 { background: rgba(255, 90, 90, 0.16); color: #ff9c9c; }
+    .level-btn.active { color: #0e1014; box-shadow: inset 0 0 0 2px var(--text-0); }
+    .level-btn.lvl-3.active { background: rgb(255, 216, 74); }
+    .level-btn.lvl-2.active { background: rgb(255, 154, 60); }
+    .level-btn.lvl-1.active { background: rgb(255, 90, 90); }
+
+    /* Exceptions: full-width rows with a switch */
+    .toggles-grid { flex-direction: column; flex-wrap: nowrap; gap: 0; padding: 0; background: var(--ink-3); border-radius: 8px; }
+    .toggle-badge {
+        min-height: 52px; padding: 0 14px; justify-content: space-between; flex-direction: row-reverse;
+        border-radius: 0; border: 0; border-bottom: 1px solid var(--line);
+    }
+    .toggle-badge:last-child { border-bottom: 0; }
+    .toggle-badge span:not(.toggle-square) { font-size: 20px; color: var(--text-0); }
+    .toggle-square { width: 48px; height: 28px; border-radius: 14px; }
+    .toggle-square::after { width: 22px; height: 22px; top: 2px; left: 2px; }
+    .toggle-badge.active .toggle-square::after { left: 22px; }
+
+    /* ── Guide: a full-screen sheet with section tabs ── */
+    #info-modal { padding: 0; }
+    #info-modal .modal-content {
+        max-width: none; width: 100%; height: 100%; max-height: none;
+        border: 0; border-radius: 0; background: var(--ink-1);
+    }
+    #info-modal .modal-header { padding: 8px 8px 8px 16px; background: var(--ink-1); border-bottom: 0; }
+    #info-modal .modal-header .kicker { display: none; }
+    #info-modal .modal-header h2 { font-size: 23px; color: #ffb067; }
+    #info-modal .guide-expand-btn { display: none; }
+    #info-modal #close-modal { width: 44px; height: 44px; border-radius: 22px; }
+    .guide-tabs {
+        display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;
+        margin: 0 16px 12px; padding: 4px; flex: none;
+        background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px;
+    }
+    .guide-tab {
+        height: 40px; background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+        color: var(--text-1); font-family: var(--font-ar); font-size: 18px; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;
+    }
+    .guide-tab.active { background: var(--ink-1); border-color: var(--line-bright); color: var(--acc); }
+    #info-modal .modal-body { padding: 16px 16px 32px; border-top: 1px solid var(--line); }
+    #info-modal .section-title { font-size: 22px; }
+    #info-modal .grade-title { font-size: 22px; }
+    #info-modal .grade-meta { font-size: 13px; }
+    #info-modal .grade-desc-label { font-size: 12px; }
+    #info-modal .grade-desc p { font-size: 18px; line-height: 1.45; }
+    #info-modal .modal-item { padding: 12px; }
+    #info-modal .legend-badge { font-size: 15px; }
+}

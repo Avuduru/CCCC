@@ -24,8 +24,7 @@ const STICKER = { gap: 16, groupGap: 28, one: 190, two: { h: 140, wide: 120, tal
 export const MANUAL_PH = {
     title: 'اكتب العنوان هنا',
     synopsis: 'اكتب النبذة هنا...',
-    score: '0.0',
-    stats: 'المدة/عدد الحلقات',
+    stats: 'المدة',
     genres: ['التصنيف 1', 'التصنيف 2', 'التصنيف 3'],
 };
 
@@ -198,15 +197,10 @@ export function renderCard() {
         t.dir = startsLatin(text) ? 'ltr' : 'rtl';
     }
 
-    const score = (m.score ?? '').toString().trim();
-    const st = $('#score-text', card);
-    const badge = $('#score-badge', card);
-    if (!isFocused(st)) {
-        st.textContent = score || (manual ? MANUAL_PH.score : '');
-        badge.classList.toggle('cd-ph', manual && !score);
-    }
-    $('#score-den', card).textContent = manual && score && m.scoreScale ? '/' + m.scoreScale : '';
-    badge.classList.toggle('hidden', !score && !manual);
+    // Manual cards have no score pill: the classifier's own rating is their score
+    const score = manual ? '' : (m.score ?? '').toString().trim();
+    $('#score-text', card).textContent = score;
+    $('#score-badge', card).classList.toggle('hidden', !score);
 
     const g = $('#genre-text', card);
     if (!isFocused(g)) {

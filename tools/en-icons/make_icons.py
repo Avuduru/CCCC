@@ -20,7 +20,7 @@ GEO = json.load(open(os.path.join(os.path.dirname(__file__), 'geo.json'), encodi
 LABELS = {
     'kufr': 'BLASPHEMY', 'sex': 'SEXUAL CONTENT', 'nudity': 'NUDITY', 'vices': 'VICES', 'magic': 'MAGIC',
     'lgbt': 'LGBTQ+', 'gore': 'DISTURBING', 'addiction': 'ADDICTIVE', 'lootbox': 'GAMBLING', 'p2w': 'PAY-TO-WIN',
-    'nomusic': 'MUSIC', 'noprofanity': 'PROFANITY', 'noaffairs': 'ROMANCE',
+    'nomusic': 'MUSIC', 'noprofanity': 'PROFANITY', 'noaffairs': 'DATING/AFFAIRS',   # = no relationships outside marriage (before it, or cheating)
 }
 TOP_LINE = 'CONTAINS NO'   # top line of the three green badges
 FONT = {'family': 'Barlow Condensed', 'weight': 800, 'max': 38, 'track': 0.03,

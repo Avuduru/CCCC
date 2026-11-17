@@ -409,14 +409,29 @@ function searchHltb($gameName)
 
 
 /**
- * The visitor's address. The host's edge proxy appends the address it actually saw to
- * X-Forwarded-For, so the LAST entry is the real one; earlier entries are whatever the
- * client sent.
+ * The visitor's address, for vote dedup and rate limiting. Behind a proxy, REMOTE_ADDR is
+ * the proxy, and the real address is in a header — but which header is trustworthy depends
+ * on the host, and the client controls any header when it can reach the origin directly
+ * (e.g. the *.cranl.net deployment URL). So:
+ *   - if TRUSTED_IP_HEADER is set (e.g. "X-Real-IP"), use that header — set it to whatever
+ *     the host's edge guarantees it overwrites, so a client can't forge it;
+ *   - otherwise fall back to the LAST X-Forwarded-For entry (the one the edge appends;
+ *     earlier entries are client-supplied), then REMOTE_ADDR.
+ * The value must parse as an IP, so a junk header can never poison the hash.
  */
 function clientIp()
 {
-    $fwd = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
-    return $fwd !== '' ? trim(substr(strrchr(',' . $fwd, ','), 1)) : ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $valid = function ($ip) { $ip = trim((string)$ip); return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : null; };
+
+    $header = getenv('TRUSTED_IP_HEADER');
+    if ($header) {
+        $key = 'HTTP_' . strtoupper(str_replace('-', '_', $header));
+        $parts = explode(',', $_SERVER[$key] ?? '');
+        if ($ip = $valid(end($parts))) return $ip;
+    }
+    $fwd = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
+    if ($ip = $valid(end($fwd))) return $ip;
+    return $valid($_SERVER['REMOTE_ADDR'] ?? '') ?? 'unknown';
 }
 
 /**

@@ -26,3 +26,6 @@ archive/
 # Python bytecode (tools/)
 __pycache__/
 *.pyc
+
+# Rate-limit counters written by proxy.php
+data/ratelimit/

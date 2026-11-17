@@ -25,7 +25,7 @@ export const MANUAL_PH = {
     title: 'اكتب العنوان هنا',
     synopsis: 'اكتب نبذة قصيرة…',
     stats: 'المدة',
-    genres: ['التصنيف 1', 'التصنيف 2', 'التصنيف 3'],
+    genres: ['النوع 1', 'النوع 2', 'النوع 3'],
 };
 
 const $ = (sel, root) => (root || document).querySelector(sel);

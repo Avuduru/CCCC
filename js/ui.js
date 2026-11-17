@@ -338,7 +338,7 @@ function setupModal() {
         document.body.style.overflow = 'hidden'; // Prevent Scroll
     };
     openBtn.addEventListener('click', openModal);
-    // Phones: the "شرح التصنيف المحافظ" panel at the top of the controls
+    // Phones: the "دليل التصنيف المحافظ" panel at the top of the controls
     const guidePanel = document.getElementById('open-guide-panel');
     if (guidePanel) guidePanel.addEventListener('click', openModal);
 

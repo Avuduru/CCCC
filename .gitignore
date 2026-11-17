@@ -29,3 +29,6 @@ __pycache__/
 
 # Rate-limit counters written by proxy.php
 data/ratelimit/
+
+# Internal AI context — local only, not shipped
+/CLAUDE.md

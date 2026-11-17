@@ -184,7 +184,11 @@
     text-align: center;
 }
 #reviewer-rating-input::placeholder { color: var(--text-3); }
-.classifier-inputs .rating-input .search-hint { margin-right: 0; direction: ltr; unicode-bidi: isolate; }   /* "/10", not "10/" */
+/* Reads "8.5 /10" like the card: the number on the left, "/10" after it (an RTL
+   row put the number on the right, so it read "/10 8.5") */
+.classifier-inputs .rating-input { direction: ltr; }
+.classifier-inputs .rating-input .search-hint { margin-right: 0; margin-left: 0; direction: ltr; unicode-bidi: isolate; }
+#reviewer-rating-input::placeholder { direction: rtl; }
 
 /* Share button inside the phone export popup */
 .share-btn {

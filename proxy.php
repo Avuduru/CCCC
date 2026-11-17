@@ -550,6 +550,14 @@ $logFile = $dataDir . '/classifications.jsonl';
 $query = isset($_GET['query']) ? $_GET['query'] : '';
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 
+// Translate receives its text base64url-encoded in `q` (only A-Z a-z 0-9 _ -, so a
+// synopsis with "%", quotes or <> can't trip the WAF). Decode it into $query so the rest
+// of the handler is unchanged. Plain ?query= still works as a fallback.
+if ($type === 'translate' && isset($_GET['q']) && is_string($_GET['q']) && strlen($_GET['q']) <= 12000) {
+    $decoded = base64_decode(strtr($_GET['q'], '-_', '+/'), true);
+    if ($decoded !== false && preg_match('//u', $decoded) === 1) $query = $decoded;  // valid UTF-8
+}
+
 if (!$type) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing type parameter']);

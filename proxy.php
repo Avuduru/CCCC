@@ -562,6 +562,12 @@ if (!is_dir($dataDir)) {
 }
 $logFile = $dataDir . '/classifications.jsonl';
 
+// The rating-guide version every new rating is saved under (column guide_version).
+// Raise it by one whenever a guide change alters what a rating means, and add a dated
+// entry to the changelog on the About page (about.html, then tools/i18n/build_en.py).
+// It is set here, never taken from the request, so a client can't claim another version.
+const GUIDE_VERSION = 1;
+
 $query = isset($_GET['query']) ? $_GET['query'] : '';
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 
@@ -930,6 +936,7 @@ switch ($type) {
                 'classifier'   => $input['classifier'] ?? '',
                 'rating'       => $input['rating'] ?? '',
                 'lang'         => $input['lang'] ?? '',
+                'guide_version' => GUIDE_VERSION,
                 'custom_synopsis' => !empty($input['custom_synopsis']) ? 1 : 0,
                 'synopsis'     => !empty($input['custom_synopsis']) ? ($input['synopsis'] ?? '') : '',
                 'orientation'  => $input['orientation'] ?? 'horizontal',
@@ -1047,7 +1054,7 @@ switch ($type) {
                 $classifier, $orientation, $action
             ]);
 
-            // ── 4. Classifier /10 score + site language ──────────────────
+            // ── 4. Classifier /10 score, site language, synopsis ─────────
             // Set by a follow-up UPDATE so a write still succeeds before the migration in
             // data/schema.sql is run — if the columns don't exist yet, the catch ignores it
             // (SQLSTATE 42S22 = unknown column) and the rest of the save is unaffected.
@@ -1070,6 +1077,26 @@ switch ($type) {
                     try { $pdo->exec("ALTER TABLE classifications ADD COLUMN $col"); } catch (PDOException $e2) {}
                 }
                 try { $pdo->prepare($setExtra)->execute($extraVals); } catch (PDOException $e3) {}
+            }
+
+            // ── 4b. Rating-guide version (GUIDE_VERSION, set server-side) ─
+            // Its own UPDATE and its own auto-migration, so if this column can't be added
+            // the score/language/synopsis above still save exactly as before.
+            $setGuide = "UPDATE classifications SET guide_version = ? WHERE work_id = ? AND ip_hash = ?";
+            try {
+                $pdo->prepare($setGuide)->execute([GUIDE_VERSION, $workId, $ipHash]);
+            } catch (PDOException $e) {
+                // The rating itself is already saved: never fail the request over this column
+                if ($e->getCode() === '42S22') {   // column not there yet: add it once
+                    try {
+                        $pdo->exec("ALTER TABLE classifications ADD COLUMN guide_version SMALLINT UNSIGNED DEFAULT NULL");
+                        // Every rating saved before this column existed was made under guide v1.
+                        $pdo->exec("UPDATE classifications SET guide_version = 1 WHERE guide_version IS NULL");
+                    } catch (PDOException $e2) {}
+                    try { $pdo->prepare($setGuide)->execute([GUIDE_VERSION, $workId, $ipHash]); } catch (PDOException $e3) {}
+                } else {
+                    error_log('CCCC guide_version not saved: ' . $e->getMessage());
+                }
             }
 
             // ── 5. Sync rater_count (unique IPs who rated this work) ─────
@@ -1125,6 +1152,15 @@ switch ($type) {
                     $out['by_lang'] = $byLang;
                     $out['custom_synopses'] = (int)$pdo->query("SELECT COUNT(*) FROM classifications WHERE custom_synopsis = 1")->fetchColumn();
                 } catch (PDOException $e) { /* columns not added yet */ }
+                // Ratings per guide version (separate guard: this column arrives later)
+                $out['guide_version'] = GUIDE_VERSION;
+                try {
+                    $byGuide = [];
+                    foreach ($pdo->query("SELECT guide_version, COUNT(*) AS cnt FROM classifications WHERE guide_version IS NOT NULL GROUP BY guide_version") as $row) {
+                        $byGuide['v' . (int)$row['guide_version']] = (int)$row['cnt'];
+                    }
+                    $out['by_guide_version'] = $byGuide;
+                } catch (PDOException $e) { /* column not added yet */ }
                 echo json_encode($out);
             } catch (PDOException $e) {
                 error_log('CCCC stats error: ' . $e->getMessage());

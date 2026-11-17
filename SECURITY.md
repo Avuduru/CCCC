@@ -37,7 +37,8 @@ Everything else is static HTML/CSS/JS.
 - **Rating log (`type=log`)** — `content_id` must match the id shape for its type; vote levels are
   clamped to 0–3; a work's title is set by its **first** vote only (later voters can't rename it);
   the payload is capped (16 KB) and the content-type whitelisted; in production, if the DB is down the
-  endpoint returns 503 rather than writing an unbounded fallback file.
+  endpoint returns 503 rather than writing an unbounded fallback file. The rating's `guide_version` is
+  set server-side from `GUIDE_VERSION` and never read from the request.
 - **Stored user text (the classifier's own `synopsis`)** — the one piece of free-form user-generated
   content stored. It is kept as **plain text** (control characters stripped, capped at 2000), and is
   **never rendered server-side**. ⚠️ Whatever later **displays** it (e.g. a community/consensus page)

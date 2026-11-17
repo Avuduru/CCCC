@@ -56,6 +56,12 @@
         .levels li { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 600; padding: 6px 12px; border-radius: 6px; background: var(--ink-3); border: 1px solid var(--line); }
         .levels i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 
+        .changelog { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-direction: column; gap: 14px; }
+        .changelog li { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 4px; }
+        .cl-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .cl-ver { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--acc); }
+        .cl-head time { font-family: var(--font-mono); font-size: 13px; color: var(--text-1); }
+
         .about-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
         .about-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border-radius: 8px; text-decoration: none; font-size: 20px; font-weight: 700; }
         .btn-primary { background: var(--acc); color: var(--ink-0) !important; }
@@ -118,6 +124,19 @@
             <section>
                 <h2>مفتوح للجميع</h2>
                 <p>المشروع <a href="https://github.com/Avuduru/CCCC" target="_blank" rel="noopener">مفتوح المصدر</a>، ويمكن لأي شخص استخدامه ومشاركة تصنيفاته.</p>
+            </section>
+
+            <!-- Changelog: one dated entry per guide change that alters what a rating means.
+                 Raise GUIDE_VERSION in proxy.php with it, then add the English text in tools/i18n/build_en.py. -->
+            <section id="changelog">
+                <h2>سجل التغييرات</h2>
+                <p>نسجّل هنا كل تغيير في دليل التصنيف يغيّر معنى التصنيف. ويُحفظ مع كل تصنيف رقم إصدار الدليل الذي صُنِّف وفقه، فلا تختلط التصنيفات القديمة بالجديدة.</p>
+                <ol class="changelog">
+                    <li>
+                        <div class="cl-head"><span class="cl-ver" dir="ltr">GUIDE.v1</span><time datetime="2026-11-17" dir="ltr">2026-11-17</time></div>
+                        <p>الإصدار الأول عند الإطلاق: عشرة موجودات بثلاث درجات (شديد ومتوسط وخفيف)، وثلاثة رموز للمستثنيات (الموسيقى والألفاظ النابية والعلاقات العاطفية خارج الزواج).</p>
+                    </li>
+                </ol>
             </section>
 
             <div class="about-actions">

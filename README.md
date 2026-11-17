@@ -267,7 +267,7 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 |---|---|
 | `index.html` | The app |
 | `guide.html` | The rating guide (`/guide`) |
-| `about.html` | About the project (`/about`) |
+| `about.html` | About the project (`/about`), ending with the dated **changelog** of rating-guide changes (`/about#changelog`) |
 | `index.php` | Clean URLs (`/guide` → `guide.html`, `/en/guide` → `lang/en/guide.html`); adds `?v=<file time>` to every local CSS/JS/image link and an import map for the JS modules, so each deploy only refreshes the files that changed. The finished page is built once per deploy and kept in the system temp dir (`cccc-pages/`, 10-min safety TTL; skipped on the PHP dev server) |
 | `lang/en/` | The English pages (`/en`, `/en/guide`, `/en/about`), generated from the Arabic ones — don't edit them by hand (see below) |
 | `ltr.css` | Mirrors the layout left-to-right for the English pages (loaded only there) |
@@ -332,7 +332,18 @@ Anime, manga, books, HowLongToBeat, and translation need no keys. On the server,
 
 Run `data/schema.sql` once (phpMyAdmin, HeidiSQL, or the `mysql` CLI). It creates two tables: `works` (one row per title) and `classifications` (one row per person per title).
 
-Each classification stores the 10 content levels, the 3 exception badges, the classifier's name, the classifier's own **/10 score** (`classifier_rating`), the **site language** it came from (`lang`, `ar`/`en`), orientation and action. It also stores the classifier's **own synopsis** (`synopsis`) together with a `custom_synopsis` flag — but **only when they wrote it** (manual mode, or they edited the auto-fetched one), so the sources' own text isn't duplicated. The `stats` endpoint exposes aggregates including `avg_score`, `by_lang` and `custom_synopses`. On an existing database that predates any of these columns, `proxy.php` **adds them automatically** on the first rating save (needs `ALTER` privilege on the DB user); if it can't, saves still work without those fields and you can run the `ALTER TABLE` from `data/schema.sql`'s comment manually.
+Each classification stores the 10 content levels, the 3 exception badges, the classifier's name, the classifier's own **/10 score** (`classifier_rating`), the **site language** it came from (`lang`, `ar`/`en`), orientation and action. It also stores the classifier's **own synopsis** (`synopsis`) together with a `custom_synopsis` flag — but **only when they wrote it** (manual mode, or they edited the auto-fetched one), so the sources' own text isn't duplicated. Each rating also records the **rating-guide version** it was made under (`guide_version`), set by the server from `GUIDE_VERSION` in `proxy.php`, never from the request. The `stats` endpoint exposes aggregates including `avg_score`, `by_lang`, `custom_synopses`, the current `guide_version` and `by_guide_version`. On an existing database that predates any of these columns, `proxy.php` **adds them automatically** on the first rating save (needs `ALTER` privilege on the DB user); if it can't, saves still work without those fields and you can run the `ALTER TABLE` from `data/schema.sql`'s comment manually. When `guide_version` is added, ratings saved before it existed are set to `1` (they were all made under the launch guide).
+
+### Changing the rating guide (changelog)
+
+Ratings are live, so a change to what a category or level **means** must be traceable. Every such change, in the same PR:
+
+1. Edit the guide (`guide.html`) and anything else the change touches.
+2. Raise `GUIDE_VERSION` in `proxy.php` by one, and update the `GUIDE.v<N>` labels in `guide.html` (the footer label links to the changelog).
+3. Add a dated entry at the top of the **Changelog** list at the end of `about.html` (`<section id="changelog">`): the new `GUIDE.v<N>`, the date, and one plain sentence on what changed and which ratings it affects.
+4. Add the English for every new Arabic string in `tools/i18n/build_en.py` (`about_rules()` / `guide_rules()`), then run `python tools/i18n/build_en.py`.
+
+Wording or layout changes that don't change what a rating means don't need a version bump or an entry.
 
 The stored `synopsis` is **user-generated text**: it's kept as plain text (control chars stripped, capped) and is never rendered server-side. Anything that later displays it must HTML-escape it and have a way to hide abuse — see `SECURITY.md`.
 

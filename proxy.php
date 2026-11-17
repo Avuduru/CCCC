@@ -8,6 +8,10 @@ if (in_array($origin, $allowedOrigins, true)) {
     header("Access-Control-Allow-Origin: *");
 }
 header("Content-Type: application/json; charset=UTF-8");
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Strict-Transport-Security: max-age=31536000');
+header_remove('X-Powered-By');
 
 // --- Helper Functions ---
 
@@ -481,6 +485,14 @@ $STEAMGRIDDB_KEY = getenv('STEAMGRIDDB_KEY') ?: '';
 $DEEPL_KEY = getenv('DEEPL_KEY') ?: '';
 $GOOGLE_BOOKS_KEY = getenv('GOOGLE_BOOKS_KEY') ?: ''; // Optional, works without it
 
+// Safety net: no response may ever carry one of our API keys (e.g. inside an upstream
+// pagination URL or error message). Every byte we send passes through this filter.
+$secrets = array_values(array_filter([$TMDB_KEY, $RAWG_KEY, $STEAMGRIDDB_KEY, $DEEPL_KEY, $GOOGLE_BOOKS_KEY, getenv('DB_PASS') ?: ''],
+    function ($s) { return strlen($s) >= 8; }));
+if ($secrets) {
+    ob_start(function ($buffer) use ($secrets) { return str_replace($secrets, '[redacted]', $buffer); });
+}
+
 // --- Main Logic ---
 
 // --- Initialize Data Storage ---
@@ -501,9 +513,16 @@ if (!$type) {
 
 // Ensure query is present for API searches
 $needsQuery = !in_array($type, ['log', 'stats', 'lookup']);
-if ($needsQuery && empty($query)) {
+if (!is_string($query) || !is_string($type) || ($needsQuery && $query === '')) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing query parameter']);
+    exit;
+}
+// Long inputs only make sense for translation (a synopsis) and image URLs
+$maxQuery = $type === 'translate' ? 6000 : ($type === 'image_proxy' ? 2048 : 300);
+if (strlen($query) > $maxQuery) {
+    http_response_code(413);
+    echo json_encode(['error' => 'Query too long']);
     exit;
 }
 
@@ -517,11 +536,14 @@ switch ($type) {
         break;
 
     case 'movie_details':
-        $url = "https://api.themoviedb.org/3/movie/$query?api_key=$TMDB_KEY&language=en-US";
-        break;
-
     case 'tv_details':
-        $url = "https://api.themoviedb.org/3/tv/$query?api_key=$TMDB_KEY&language=en-US";
+        // TMDB ids are numbers; anything else could steer the request to other endpoints
+        if (!ctype_digit((string)$query)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid id']);
+            exit;
+        }
+        $url = 'https://api.themoviedb.org/3/' . ($type === 'movie_details' ? 'movie' : 'tv') . "/$query?api_key=$TMDB_KEY&language=en-US";
         break;
 
     case 'game':
@@ -532,7 +554,12 @@ switch ($type) {
 
     case 'game_details':
         // Fetch detailed game info including description
-        // Query should be the game ID (slug)
+        // Query must be the game's RAWG slug or numeric id (nothing that changes the path)
+        if (!preg_match('/^[a-z0-9-]{1,200}$/i', (string)$query)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid game id']);
+            exit;
+        }
         $url = "https://api.rawg.io/api/games/$query?key=$RAWG_KEY";
         break;
 
@@ -545,7 +572,7 @@ switch ($type) {
         $searchData = json_decode($searchResponse, true);
 
         if ($searchData && isset($searchData['success']) && $searchData['success'] && !empty($searchData['data'])) {
-            $gameId = $searchData['data'][0]['id'];
+            $gameId = (int)$searchData['data'][0]['id'];
             // Fetch vertical grids (600x900)
             $gridUrl = "https://www.steamgriddb.com/api/v2/grids/game/$gameId?dimensions=600x900&styles=alternate,material,white_logo";
             $gridResponse = fetchUrl($gridUrl, $headers);
@@ -568,56 +595,115 @@ switch ($type) {
         exit;
 
     case 'image_proxy':
-        // Proxy images to avoid CORS issues during export
-        if (empty($query)) {
-            echo json_encode(['error' => 'No image URL provided']);
-            exit;
-        }
-
-        // SECURITY: Prevent Server-Side Request Forgery (SSRF)
-        $url = filter_var($query, FILTER_VALIDATE_URL);
-        if (!$url || !preg_match('/^https?:\/\//i', $url)) {
-            http_response_code(400);
-            echo "Invalid image URL scheme.";
-            exit;
-        }
-
-        // SECURITY: Block internal network scanning (localhost, 192.168.x, 10.x, etc.)
-        $host = parse_url($url, PHP_URL_HOST);
-        $ip = gethostbyname($host);
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            http_response_code(403);
-            echo "Access to internal networks is forbidden.";
-            exit;
-        }
-
-        // Fetch the image
+        // Serves the covers the card needs from our own origin, so the export canvas
+        // isn't tainted (CORS). It is NOT a general proxy:
+        //  - only the image hosts our data sources use (anything else -> 403), so it
+        //    can't fetch arbitrary pages or be pointed at internal services;
+        //  - every hop (redirects included) is re-checked and the connection is pinned
+        //    to the IP that was checked (no DNS-rebinding swap between check and fetch);
+        //  - only raster images are passed on, with nosniff and a sandbox CSP, so a
+        //    response can never run as a page on muhafid.com;
+        //  - 10 s timeout and a 10 MB cap.
         if (!function_exists('curl_init')) {
             http_response_code(500);
             echo json_encode(['error' => 'PHP cURL extension is not enabled']);
             exit;
         }
-        $verifySSL = getenv('APP_ENV') !== 'local';
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS); // Strictly HTTP/S
-        curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : false);
-        $imageData = curl_exec($ch);
-        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-        curl_close($ch);
+        $allowedImageHosts = [
+            'image.tmdb.org',                                        // TMDB posters/backdrops
+            'media.rawg.io',                                         // RAWG key art
+            'cdn2.steamgriddb.com', 'cdn.steamgriddb.com',           // SteamGridDB covers
+            's4.anilist.co',                                         // AniList covers
+            'cdn.myanimelist.net',                                   // Jikan / MAL covers
+            'covers.openlibrary.org', 'archive.org',                 // Open Library (redirects to *.archive.org)
+            'books.google.com', 'books.googleusercontent.com',       // Google Books thumbnails
+        ];
+        $hostAllowed = function ($host) use ($allowedImageHosts) {
+            $host = strtolower(rtrim((string)$host, '.'));
+            foreach ($allowedImageHosts as $h) {
+                if ($host === $h || substr($host, -strlen($h) - 1) === '.' . $h) return true;
+            }
+            return false;
+        };
+        // All addresses the host resolves to must be public; returns the one to connect to
+        $publicIp = function ($host) {
+            $ips = [];
+            if (filter_var($host, FILTER_VALIDATE_IP)) {
+                $ips[] = $host;
+            } else {
+                foreach (@dns_get_record($host, DNS_A) ?: [] as $r) if (!empty($r['ip'])) $ips[] = $r['ip'];
+                foreach (@dns_get_record($host, DNS_AAAA) ?: [] as $r) if (!empty($r['ipv6'])) $ips[] = $r['ipv6'];
+                if (!$ips) $ips = @gethostbynamel($host) ?: [];
+            }
+            if (!$ips) return null;
+            foreach ($ips as $ip) {
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) return null;
+            }
+            foreach ($ips as $ip) if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) return $ip;
+            return $ips[0];
+        };
+        $refuse = function ($code, $msg) {
+            http_response_code($code);
+            header('Content-Type: text/plain; charset=UTF-8');
+            echo $msg;
+            exit;
+        };
 
-        if ($imageData) {
-            header("Content-Type: $contentType");
-            // Image proxy CORS is handled by the top-level origin check above
-            echo $imageData;
-        } else {
-            http_response_code(404);
-            echo "Image not found";
+        $url = $query;
+        $verifySSL = getenv('APP_ENV') !== 'local';
+        $maxBytes = 10 * 1024 * 1024;
+        $imageData = null;
+        $contentType = '';
+        for ($hop = 0; $hop < 4; $hop++) {
+            $parts = parse_url($url);
+            $scheme = strtolower($parts['scheme'] ?? '');
+            $host = $parts['host'] ?? '';
+            if (!in_array($scheme, ['http', 'https'], true) || !$host || isset($parts['user']) || isset($parts['pass'])) {
+                $refuse(400, 'Invalid image URL.');
+            }
+            if (!$hostAllowed($host)) $refuse(403, 'Image host not allowed.');
+            $port = (int)($parts['port'] ?? ($scheme === 'https' ? 443 : 80));
+            if (!in_array($port, [80, 443], true)) $refuse(403, 'Image port not allowed.');
+            $ip = $publicIp($host);
+            if (!$ip) $refuse(403, 'Access to internal networks is forbidden.');
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RESOLVE => ["{$host}:{$port}:" . (strpos($ip, ':') !== false ? "[{$ip}]" : $ip)],
+                CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+                CURLOPT_FOLLOWLOCATION => false,           // redirects are followed by this loop, re-checked
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_MAXFILESIZE => $maxBytes,
+                CURLOPT_NOPROGRESS => false,
+                CURLOPT_PROGRESSFUNCTION => function ($c, $dlTotal, $dlNow) use ($maxBytes) { return $dlNow > $maxBytes ? 1 : 0; },
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; muhafid.com image proxy)',
+                CURLOPT_SSL_VERIFYPEER => $verifySSL,
+                CURLOPT_SSL_VERIFYHOST => $verifySSL ? 2 : 0,
+            ]);
+            $body = curl_exec($ch);
+            $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $next = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+            $contentType = strtolower((string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE));
+            curl_close($ch);
+
+            if ($code >= 300 && $code < 400 && $next) { $url = $next; continue; }
+            if ($code === 200 && $body !== false && $body !== '') $imageData = $body;
+            break;
         }
+
+        $mime = trim(explode(';', $contentType)[0]);
+        if ($imageData === null) $refuse(404, 'Image not found');
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'], true)) {
+            $refuse(415, 'Not an image.');
+        }
+        header("Content-Type: {$mime}");
+        header('X-Content-Type-Options: nosniff');
+        header("Content-Security-Policy: default-src 'none'; sandbox");
+        header('Cache-Control: public, max-age=86400');
+        echo $imageData;
         exit;
 
     case 'translate':
@@ -709,11 +795,17 @@ switch ($type) {
             exit;
         }
 
-        $raw   = file_get_contents('php://input');
+        $raw   = file_get_contents('php://input', false, null, 0, 16385);
+        if (strlen($raw) > 16384) {   // a real payload is well under 2 KB
+            http_response_code(413);
+            echo json_encode(['error' => 'Payload too large']);
+            exit;
+        }
         $input = json_decode($raw, true);
-        if (!$input || !isset($input['content_type']) || !isset($input['ratings'])) {
+        $validTypes = ['anime', 'manga', 'movie', 'tv', 'game', 'book', 'manual'];
+        if (!is_array($input) || !in_array($input['content_type'] ?? null, $validTypes, true) || !isset($input['ratings'])) {
             http_response_code(400);
-            echo json_encode(['error' => 'Invalid payload', 'json_error' => json_last_error_msg()]);
+            echo json_encode(['error' => 'Invalid payload']);
             exit;
         }
 
@@ -749,10 +841,21 @@ switch ($type) {
             $orientation = in_array($input['orientation'] ?? '', ['horizontal','vertical']) ? $input['orientation'] : 'horizontal';
             $action      = in_array($input['action'] ?? '', ['export','copy','rate']) ? $input['action'] : 'export';
 
-            // SHA-256 of client IP — never stored raw
-            $ip       = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-            $ip       = trim(explode(',', $ip)[0]); // take first IP if behind proxy
+            // SHA-256 of client IP — never stored raw. The host's edge proxy appends the
+            // address it actually saw to X-Forwarded-For, so the LAST entry is the real one;
+            // earlier entries are whatever the client sent and could be faked to vote many times.
+            $fwd      = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+            $ip       = $fwd !== '' ? trim(substr(strrchr(',' . $fwd, ','), 1)) : ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
             $ipHash   = hash('sha256', $ip);
+
+            // Rate limit: at most 30 different works per visitor per 10 minutes
+            $recent = $pdo->prepare("SELECT COUNT(*) FROM classifications WHERE ip_hash = ? AND updated_at > (NOW() - INTERVAL 10 MINUTE)");
+            $recent->execute([$ipHash]);
+            if ((int)$recent->fetchColumn() >= 30) {
+                http_response_code(429);
+                echo json_encode(['error' => 'Too many requests']);
+                exit;
+            }
 
             // ── 2. Upsert the work ───────────────────────────────────────
             $pdo->prepare(
@@ -894,7 +997,7 @@ switch ($type) {
         // Return consensus ratings for a specific work (for the future Letterboxd page)
         // Usage: proxy.php?type=lookup&query=CONTENT_ID&content_type=anime
         $lookupId   = $query;
-        $lookupType = $_GET['content_type'] ?? '';
+        $lookupType = is_string($_GET['content_type'] ?? null) ? $_GET['content_type'] : '';
 
         if (!$lookupId || !$lookupType) {
             http_response_code(400);
@@ -1007,10 +1110,11 @@ switch ($type) {
 function fetchAniListFallback($query, $type) {
     $format = $type === 'anime' ? 'ANIME' : 'MANGA';
     
-    // GraphQL query to fetch exact fields needed and automatically filter NSFW (isAdult: false)
-    $graphql = '{
+    // GraphQL query to fetch exact fields needed and automatically filter NSFW (isAdult: false).
+    // The search text goes in as a variable, never spliced into the query itself.
+    $graphql = 'query ($search: String) {
       Page(page: 1, perPage: 20) {
-        media(search: "' . addslashes($query) . '", type: ' . $format . ', isAdult: false, sort: POPULARITY_DESC) {
+        media(search: $search, type: ' . $format . ', isAdult: false, sort: POPULARITY_DESC) {
           id
           title { romaji english }
           coverImage { extraLarge large }
@@ -1024,7 +1128,7 @@ function fetchAniListFallback($query, $type) {
       }
     }';
 
-    $payload = json_encode(['query' => $graphql]);
+    $payload = json_encode(['query' => $graphql, 'variables' => ['search' => (string)$query]]);
     $headers = [
         'Content-Type: application/json',
         'Accept: application/json'

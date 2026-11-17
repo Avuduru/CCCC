@@ -5,6 +5,26 @@
  * the corresponding .html file (like guide.html) without redirecting the URL.
  */
 
+// Security headers for every page this script serves.
+// CSP: scripts only from this site (inline ones included: the scale script, the import
+// map) and cdnjs (html2canvas, pinned with SRI); WebAssembly for the JPEG encoder; images
+// from anywhere over HTTPS (search thumbnails come straight from TMDB, RAWG, AniList...);
+// fetch() only to this site (proxy.php); no framing by other sites.
+header("Content-Security-Policy: default-src 'self'; "
+    . "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com; "
+    . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    . "font-src 'self' https://fonts.gstatic.com data:; "
+    . "img-src 'self' data: blob: https:; "
+    . "connect-src 'self' data: blob:; "
+    . "worker-src 'self' blob:; "
+    . "frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'");
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('X-Frame-Options: SAMEORIGIN');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+header('Strict-Transport-Security: max-age=31536000');
+header_remove('X-Powered-By');
+
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Remove the leading slash

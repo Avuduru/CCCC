@@ -42,7 +42,13 @@ function buildIntro(card) {
     card.dataset.introBuilt = '1';
     const logo = $('.cd-brand-logo', card).getAttribute('src');
     const cats = CATEGORIES.Mawjoodat;
+    const free = CATEGORIES.Mustathniyat;
     const order = [0, 3, 6, 1, 8, 4, 2, 9, 5, 7];   // mixed, so neighbours differ
+    // Every colour the system uses: severe red, moderate orange, mild yellow, and
+    // (every 4th tile) a green exception badge
+    const tile = (i) => (i % 4 === 3
+        ? iconSrc(free[Math.floor(i / 4) % free.length], 0)
+        : iconSrc(cats[order[(i + Math.floor(i / 6)) % order.length]], [1, 2, 3][(i + Math.floor(i / 5)) % 3]));
     const art = () => {
         const d = document.createElement('div');
         d.className = 'cd-intro-art';
@@ -51,7 +57,7 @@ function buildIntro(card) {
         m.className = 'cd-intro-mosaic';
         for (let i = 0; i < 40; i++) {
             const img = document.createElement('img');
-            img.src = iconSrc(cats[order[(i + Math.floor(i / 6)) % order.length]], 1);
+            img.src = tile(i);
             img.alt = '';
             m.appendChild(img);
         }

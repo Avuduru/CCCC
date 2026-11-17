@@ -35,7 +35,7 @@
 		# Everything else (the pages, unversioned styles/scripts) is revalidated on
 		# each visit (cheap 304s), so a deploy is picked up immediately.
 		@revalidate {
-			path / /guide *.html *.css *.js
+			path / /guide /about *.html *.css *.js
 			not query v=*
 		}
 		header @revalidate Cache-Control "no-cache"

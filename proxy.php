@@ -1089,13 +1089,26 @@ switch ($type) {
                 foreach ($pdo->query("SELECT title, content_type, rater_count FROM works ORDER BY rater_count DESC LIMIT 10") as $row) {
                     $top[] = $row;
                 }
-                echo json_encode([
+                $out = [
                     'total_raters' => $totalRaters,
                     'total_works'  => $totalWorks,
                     'by_type'      => $byType,
                     'top_works'    => $top,
                     'source'       => 'mysql'
-                ]);
+                ];
+                // The classifier /10 score + language — only once the columns exist (added
+                // automatically on the first rating save). Guarded so stats works before then.
+                try {
+                    $r = $pdo->query("SELECT COUNT(classifier_rating) AS scored, ROUND(AVG(classifier_rating), 2) AS avg_score FROM classifications")->fetch();
+                    $out['scored_count'] = (int)$r['scored'];
+                    $out['avg_score']    = $r['avg_score'] !== null ? (float)$r['avg_score'] : null;
+                    $byLang = [];
+                    foreach ($pdo->query("SELECT lang, COUNT(*) AS cnt FROM classifications WHERE lang IS NOT NULL GROUP BY lang") as $row) {
+                        $byLang[$row['lang']] = (int)$row['cnt'];
+                    }
+                    $out['by_lang'] = $byLang;
+                } catch (PDOException $e) { /* columns not added yet */ }
+                echo json_encode($out);
             } catch (PDOException $e) {
                 error_log('CCCC stats error: ' . $e->getMessage());
                 echo json_encode(['error' => 'Database error']);

@@ -24,6 +24,9 @@ header('X-Frame-Options: SAMEORIGIN');
 header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()');
 header('Strict-Transport-Security: max-age=31536000');
 header_remove('X-Powered-By');
+// Pages are revalidated on every visit; this also stops a ?v= on a page URL from being
+// pinned in the edge cache by the server's long-cache rule for versioned files.
+header('Cache-Control: no-cache');
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 

@@ -11,6 +11,7 @@ header("Content-Type: application/json; charset=UTF-8");
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Strict-Transport-Security: max-age=31536000');
+header('Cache-Control: no-store');   // API answers are never cached (the image proxy overrides this)
 header_remove('X-Powered-By');
 
 // --- Helper Functions ---
@@ -357,7 +358,11 @@ function searchHltb($gameName)
 
     for ($attempt = 0; $attempt < 2; $attempt++) {
         if (!$path) {
-            $path = hltbDiscoverSearchPath() ?: 'search/site';
+            // Rediscovery fetches every JS chunk of HLTB's site: at most once an hour, so a
+            // broken endpoint can't make every request do it
+            $recentDiscovery = (time() - ($cache['_discovery']['ts'] ?? 0)) < 3600;
+            $path = (!$recentDiscovery ? hltbDiscoverSearchPath() : null) ?: ($cache['_endpoint']['path'] ?? 'search/site');
+            if (!$recentDiscovery) $cache['_discovery'] = ['ts' => time()];
             $discovered = true;
             $cache['_endpoint'] = ['ts' => time(), 'path' => $path];
             $saveCache();
@@ -402,6 +407,46 @@ function searchHltb($gameName)
     return $result;
 }
 
+
+/**
+ * The visitor's address. The host's edge proxy appends the address it actually saw to
+ * X-Forwarded-For, so the LAST entry is the real one; earlier entries are whatever the
+ * client sent.
+ */
+function clientIp()
+{
+    $fwd = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    return $fwd !== '' ? trim(substr(strrchr(',' . $fwd, ','), 1)) : ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+}
+
+/**
+ * Sliding-window rate limit per visitor (hashed address), stored in data/ratelimit/.
+ * Returns true when the visitor is over the limit for this bucket.
+ */
+function rateLimited($bucket, $limit, $windowSec)
+{
+    global $dataDir;
+    $dir = $dataDir . '/ratelimit';
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    // Now and then, drop files of visitors not seen for a day
+    if (mt_rand(1, 200) === 1) {
+        foreach (glob($dir . '/*') ?: [] as $f) if (@filemtime($f) < time() - 86400) @unlink($f);
+    }
+    $fh = @fopen($dir . '/' . $bucket . '-' . substr(hash('sha256', clientIp()), 0, 32), 'c+');
+    if (!$fh) return false;   // never block visitors because the limiter itself failed
+    flock($fh, LOCK_EX);
+    $now = time();
+    $hits = json_decode(stream_get_contents($fh), true);
+    $hits = array_values(array_filter(is_array($hits) ? $hits : [], function ($t) use ($now, $windowSec) { return $t > $now - $windowSec; }));
+    $limited = count($hits) >= $limit;
+    if (!$limited) $hits[] = $now;
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($hits));
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    return $limited;
+}
 
 function fetchUrl($url, $headers = [], $postData = null, $timeout = 10)
 {
@@ -526,6 +571,18 @@ if (strlen($query) > $maxQuery) {
     exit;
 }
 
+// Rate limits per visitor: calls that use our API quotas or fetch from other sites.
+// A person searching and making cards stays far below these.
+$apiTypes = ['movie', 'tv', 'movie_details', 'tv_details', 'game', 'game_details', 'game_cover', 'hltb',
+             'anime', 'manga', 'book', 'book_details', 'translate'];
+if ((in_array($type, $apiTypes, true) && rateLimited('api', 240, 600))
+    || ($type === 'image_proxy' && rateLimited('img', 400, 600))) {
+    http_response_code(429);
+    header('Retry-After: 60');
+    echo json_encode(['error' => 'Too many requests']);
+    exit;
+}
+
 $url = '';
 
 switch ($type) {
@@ -609,21 +666,27 @@ switch ($type) {
             echo json_encode(['error' => 'PHP cURL extension is not enabled']);
             exit;
         }
+        // Exact host names only (no subdomain wildcards)
         $allowedImageHosts = [
             'image.tmdb.org',                                        // TMDB posters/backdrops
             'media.rawg.io',                                         // RAWG key art
             'cdn2.steamgriddb.com', 'cdn.steamgriddb.com',           // SteamGridDB covers
             's4.anilist.co',                                         // AniList covers
             'cdn.myanimelist.net',                                   // Jikan / MAL covers
-            'covers.openlibrary.org', 'archive.org',                 // Open Library (redirects to *.archive.org)
+            'covers.openlibrary.org',                                // Open Library covers
             'books.google.com', 'books.googleusercontent.com',       // Google Books thumbnails
         ];
-        $hostAllowed = function ($host) use ($allowedImageHosts) {
+        // Open Library stores its covers on archive.org: covers.openlibrary.org redirects to
+        // archive.org/download/<s|m|l>_covers_NNNN/..., which redirects to an iaNNN.us.archive.org
+        // server. archive.org is allowed only as part of that chain, never as a starting point,
+        // so the proxy can't relay arbitrary archive.org / Wayback Machine content.
+        $startHost = '';
+        $hostAllowed = function ($host, $path, $hop) use ($allowedImageHosts, &$startHost) {
             $host = strtolower(rtrim((string)$host, '.'));
-            foreach ($allowedImageHosts as $h) {
-                if ($host === $h || substr($host, -strlen($h) - 1) === '.' . $h) return true;
-            }
-            return false;
+            if (in_array($host, $allowedImageHosts, true)) return true;
+            if ($hop === 0 || $startHost !== 'covers.openlibrary.org') return false;
+            if ($host === 'archive.org') return (bool)preg_match('#^/download/[sml]_covers_\d+/#', (string)$path);
+            return (bool)preg_match('/^ia\d+\.us\.archive\.org$/', $host);
         };
         // All addresses the host resolves to must be public; returns the one to connect to
         $publicIp = function ($host) {
@@ -661,7 +724,8 @@ switch ($type) {
             if (!in_array($scheme, ['http', 'https'], true) || !$host || isset($parts['user']) || isset($parts['pass'])) {
                 $refuse(400, 'Invalid image URL.');
             }
-            if (!$hostAllowed($host)) $refuse(403, 'Image host not allowed.');
+            if ($hop === 0) $startHost = strtolower(rtrim($host, '.'));
+            if (!$hostAllowed($host, $parts['path'] ?? '', $hop)) $refuse(403, 'Image host not allowed.');
             $port = (int)($parts['port'] ?? ($scheme === 'https' ? 443 : 80));
             if (!in_array($port, [80, 443], true)) $refuse(403, 'Image port not allowed.');
             $ip = $publicIp($host);
@@ -809,9 +873,30 @@ switch ($type) {
             exit;
         }
 
+        // The work's id must look like the ids the site itself sends for that type
+        $idPatterns = [
+            'anime' => '/^(anilist|mal):\d{1,10}$/', 'manga' => '/^(anilist|mal):\d{1,10}$/',
+            'movie' => '/^\d{1,10}$/', 'tv' => '/^\d{1,10}$/',
+            'game'  => '/^[a-z0-9-]{1,200}$/i',
+            'book'  => '#^/works/OL\d{1,12}W$#',
+            'manual' => '/^manual:.{1,200}$/su',
+        ];
+        $cid = (string)($input['content_id'] ?? '');
+        if (!preg_match($idPatterns[$input['content_type']], $cid)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid content id']);
+            exit;
+        }
+
         $pdo = getDB();
+        if (!$pdo && getenv('APP_ENV') !== 'local') {
+            // Production without a database: refuse rather than write an unbounded file
+            http_response_code(503);
+            echo json_encode(['error' => 'Storage unavailable']);
+            exit;
+        }
         if (!$pdo) {
-            // DB not available — fall back to JSONL so nothing is lost
+            // Local development only: no database, so keep a JSONL log instead
             $logEntry = [
                 'id'           => uniqid(),
                 'content_id'   => $input['content_id'] ?? null,
@@ -832,6 +917,8 @@ switch ($type) {
         try {
             // ── 1. Resolve ratings & badges ──────────────────────────────
             $ratings = is_array($input['ratings']) ? $input['ratings'] : [];
+            // A level is 0 (absent) or 1–3; anything else counts as absent
+            $lvl = function ($k) use ($ratings) { $v = (int)($ratings[$k] ?? 0); return ($v >= 0 && $v <= 3) ? $v : 0; };
             $badges  = is_array($input['badges'])  ? $input['badges']  : [];
 
             $contentId   = substr((string)($input['content_id'] ?? 'manual'), 0, 255);
@@ -841,12 +928,8 @@ switch ($type) {
             $orientation = in_array($input['orientation'] ?? '', ['horizontal','vertical']) ? $input['orientation'] : 'horizontal';
             $action      = in_array($input['action'] ?? '', ['export','copy','rate']) ? $input['action'] : 'export';
 
-            // SHA-256 of client IP — never stored raw. The host's edge proxy appends the
-            // address it actually saw to X-Forwarded-For, so the LAST entry is the real one;
-            // earlier entries are whatever the client sent and could be faked to vote many times.
-            $fwd      = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
-            $ip       = $fwd !== '' ? trim(substr(strrchr(',' . $fwd, ','), 1)) : ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
-            $ipHash   = hash('sha256', $ip);
+            // SHA-256 of the visitor's address (clientIp: the edge-appended one) — never stored raw
+            $ipHash   = hash('sha256', clientIp());
 
             // Rate limit: at most 30 different works per visitor per 10 minutes
             $recent = $pdo->prepare("SELECT COUNT(*) FROM classifications WHERE ip_hash = ? AND updated_at > (NOW() - INTERVAL 10 MINUTE)");
@@ -858,11 +941,11 @@ switch ($type) {
             }
 
             // ── 2. Upsert the work ───────────────────────────────────────
+            // The title is set once, by the first vote; later voters can't rename a work.
             $pdo->prepare(
                 "INSERT INTO works (content_id, content_type, title)
                  VALUES (?, ?, ?)
                  ON DUPLICATE KEY UPDATE
-                    title      = VALUES(title),
                     updated_at = NOW()"
             )->execute([$contentId, $contentType, $title]);
 
@@ -906,16 +989,16 @@ switch ($type) {
                      updated_at       = NOW()"
             )->execute([
                 $workId, $ipHash,
-                (int)($ratings['kufr']     ?? 0),
-                (int)($ratings['sex']      ?? 0),
-                (int)($ratings['nudity']   ?? 0),
-                (int)($ratings['vices']    ?? 0),
-                (int)($ratings['magic']    ?? 0),
-                (int)($ratings['lgbt']     ?? 0),
-                (int)($ratings['gore']     ?? 0),
-                (int)($ratings['addiction']?? 0),
-                (int)($ratings['lootbox']  ?? 0),
-                (int)($ratings['p2w']      ?? 0),
+                $lvl('kufr'),
+                $lvl('sex'),
+                $lvl('nudity'),
+                $lvl('vices'),
+                $lvl('magic'),
+                $lvl('lgbt'),
+                $lvl('gore'),
+                $lvl('addiction'),
+                $lvl('lootbox'),
+                $lvl('p2w'),
                 !empty($badges['nomusic'])     ? 1 : 0,
                 !empty($badges['noprofanity']) ? 1 : 0,
                 !empty($badges['noaffairs'])   ? 1 : 0,

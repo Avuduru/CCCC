@@ -162,7 +162,7 @@
     .search-wrapper { height: 50px; border-radius: 8px; padding: 0 14px; }
     #search-query, #reviewer-name-input, #reviewer-rating-input { font-size: 19px; }
     #search-row .search-hint { display: none; }
-    .classifier-inputs .rating-input { width: 112px; }
+    .classifier-inputs .rating-input { width: 124px; }   /* room for the "تقييمك" placeholder */
     .search-result-item { min-height: 56px; font-size: 18px; }
 
     /* Manual form */

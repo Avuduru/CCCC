@@ -1041,13 +1041,19 @@ switch ($type) {
             // Set by a follow-up UPDATE so a write still succeeds before the migration in
             // data/schema.sql is run — if the columns don't exist yet, the catch ignores it
             // (SQLSTATE 42S22 = unknown column) and the rest of the save is unaffected.
+            $setExtra = "UPDATE classifications SET classifier_rating = ?, lang = ?
+                         WHERE work_id = ? AND ip_hash = ?";
             try {
-                $pdo->prepare(
-                    "UPDATE classifications SET classifier_rating = ?, lang = ?
-                     WHERE work_id = ? AND ip_hash = ?"
-                )->execute([$rating, $lang, $workId, $ipHash]);
+                $pdo->prepare($setExtra)->execute([$rating, $lang, $workId, $ipHash]);
             } catch (PDOException $e) {
                 if ($e->getCode() !== '42S22') throw $e;   // only tolerate "column not added yet"
+                // Columns missing — add them automatically (needs ALTER privilege on the DB user).
+                // Runs once; afterwards the UPDATE above just succeeds. If the user can't ALTER,
+                // the rating already saved without these two fields, so nothing is lost.
+                foreach (['classifier_rating DECIMAL(4,2) DEFAULT NULL', 'lang CHAR(2) DEFAULT NULL'] as $col) {
+                    try { $pdo->exec("ALTER TABLE classifications ADD COLUMN $col"); } catch (PDOException $e2) {}
+                }
+                try { $pdo->prepare($setExtra)->execute([$rating, $lang, $workId, $ipHash]); } catch (PDOException $e3) {}
             }
 
             // ── 5. Sync rater_count (unique IPs who rated this work) ─────

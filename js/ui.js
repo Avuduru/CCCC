@@ -88,6 +88,10 @@ export function renderControls() {
                     <div class="bar-segment seg-red" data-val="1"></div>
                     <div class="rating-knob"></div>
                 </div>
+                <div class="level-btns" role="group" aria-label="درجة ${cat.label}">
+                    ${[[3, 'خفيف'], [2, 'متوسط'], [1, 'شديد']].map(([v, name]) =>
+                        `<button type="button" class="level-btn lvl-${v}${currentLevel === v ? ' active' : ''}" data-id="${cat.id}" data-val="${v}" aria-pressed="${currentLevel === v}">${name}</button>`).join('')}
+                </div>
             `;
             list.appendChild(row);
 
@@ -143,6 +147,15 @@ function attachControlListeners() {
             const id = btn.dataset.id;
             state.ratings[id] = 0; // Reset
             renderControls();      // Re-run builder
+            updatePreview();
+        });
+    });
+
+    // 2b. Level buttons (phones show these instead of the drag bar; phone.css)
+    document.querySelectorAll('.level-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.ratings[btn.dataset.id] = parseInt(btn.dataset.val, 10);
+            renderControls();
             updatePreview();
         });
     });
@@ -264,21 +277,6 @@ export function normalizeRating(raw) {
     return String(Math.round(n * 100) / 100);
 }
 
-// Manual score: Western/Arabic digits, "٫" or "," as the decimal point, up to two
-// decimals, clamped to the chosen scale (no scale: any number up to 999).
-export function normalizeScore(raw, scale) {
-    const t = String(raw || '').trim()
-        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
-        .replace(/[٫,]/g, '.');
-    const m = t.match(/^\d{1,3}(\.\d{0,2})?/);
-    if (!m) return '';
-    let n = parseFloat(m[0]);
-    if (isNaN(n)) return '';
-    const max = parseFloat(scale);
-    if (max && n > max) n = max;
-    return String(Math.round(n * 100) / 100);
-}
-
 // ── Manual mode form (side panel) ─────────────────────────────────────────
 // Every card field as a normal input, so manual cards can be made on a phone,
 // where the scaled-down card is too small to edit. Editing on the card still works;
@@ -299,8 +297,6 @@ export function syncManualForm() {
     set('mf-title', m.title || '');
     set('mf-genres', splitList(m.genre).join('، '));
     set('mf-stats', splitList(m.stats).join('، '));
-    set('mf-score', m.score || '');
-    set('mf-scale', m.scoreScale ?? '10');
     set('mf-synopsis', m.synopsis || '');
     const hasImage = !!(m.poster || m.wide);
     mf('mf-upload').textContent = hasImage ? 'تغيير الصورة' : 'رفع صورة';
@@ -318,14 +314,6 @@ function setupManualForm() {
     on('mf-genres', 'input', e => { state.meta.genre = e.target.value; changed(); });
     on('mf-genres', 'blur', () => { state.meta.genre = splitList(state.meta.genre).join('، '); syncManualForm(); });
     on('mf-stats', 'input', e => { state.meta.stats = splitList(e.target.value).join(' • '); changed(); });
-    on('mf-score', 'input', e => { state.meta.score = normalizeScore(e.target.value, state.meta.scoreScale); changed(); });
-    on('mf-score', 'blur', () => syncManualForm());
-    on('mf-scale', 'change', e => {
-        state.meta.scoreScale = e.target.value;
-        state.meta.score = normalizeScore(state.meta.score, state.meta.scoreScale);
-        mf('mf-score').value = state.meta.score;   // e.g. 85 → 5 on "/5", shown in the box too
-        changed(); syncManualForm();
-    });
     on('mf-synopsis', 'input', e => { state.meta.synopsis = e.target.value; changed(); });
     on('mf-upload', 'click', () => mf('manual-cover-upload').click());
     on('mf-remove', 'click', () => { state.meta.poster = ''; state.meta.wide = ''; changed(); syncManualForm(); });
@@ -341,11 +329,15 @@ function setupModal() {
 
     if (!modal || !openBtn || !closeBtn) return;
 
-    openBtn.addEventListener('click', (e) => {
+    const openModal = (e) => {
         e.preventDefault();
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden'; // Prevent Scroll
-    });
+    };
+    openBtn.addEventListener('click', openModal);
+    // Phones: the "شرح التصنيف المحافظ" panel at the top of the controls
+    const guidePanel = document.getElementById('open-guide-panel');
+    if (guidePanel) guidePanel.addEventListener('click', openModal);
 
     const closeModal = () => {
         modal.classList.add('hidden');

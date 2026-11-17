@@ -16,6 +16,7 @@
     <link rel="icon" type="image/png" href="assets/favicon.png?v=3">
     <link rel="stylesheet" href="style.v3.css">
     <link rel="stylesheet" href="card.css">
+    <link rel="stylesheet" href="phone.css">
 
     <!-- html2canvas for export -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -32,6 +33,7 @@
     <link rel="modulepreload" href="js/config.js">
     <link rel="modulepreload" href="js/interact.js">
     <link rel="modulepreload" href="js/export.js">
+    <link rel="modulepreload" href="js/phone.js">
 
     <!-- Dynamic Desktop Scaling -->
     <script>
@@ -48,7 +50,10 @@
             
             // Constrain scale between 0.75x and 1.5x
             scale = Math.max(0.75, Math.min(1.5, scale));
-            
+
+            // Phones get their own layout at real size (phone.css), not a shrunk desktop
+            if (width <= 640) scale = 1;
+
             document.documentElement.style.setProperty('--app-zoom', scale);
         }
         window.addEventListener('resize', updateAppScale);
@@ -90,6 +95,13 @@
             <!-- ───────────────── CONTROL PANEL (RIGHT) ───────────────── -->
             <aside class="top-controls">
 
+                <!-- Phones: the guide comes first (phone.css); desktop keeps the تنبيه box below -->
+                <a href="#" class="guide-panel" id="open-guide-panel">
+                    <span class="guide-panel-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 3h4a2 2 0 0 1 2 2v8.5a1.5 1.5 0 0 0-1.5-1.5h-4.5zM13.5 3h-4a2 2 0 0 0-1.5.7M13.5 3v9h-4.5A1.5 1.5 0 0 0 8 13.5"/></svg></span>
+                    <span class="guide-panel-text">شرح التصنيف المحافظ</span>
+                    <svg class="guide-panel-chev" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>
+                </a>
+
                 <!-- Template / Orientation -->
                 <div class="panel-section">
                     <div class="section-head">
@@ -110,8 +122,10 @@
                         </div>
                     </div>
 
-                    <div class="control-row">
+                    <div class="control-row type-row">
                         <span class="control-label">نوع المحتوى</span>
+                        <!-- Phones: one tap per type (built by js/phone.js from the dropdown below) -->
+                        <div class="type-chips" id="type-chips" role="group" aria-label="نوع المحتوى"></div>
                         <div class="custom-dropdown" id="type-dropdown">
                             <button class="dropdown-toggle" id="current-type">
                                 <span>أنمي</span>
@@ -176,24 +190,11 @@
                         <input type="text" id="mf-genres" class="mf-input" placeholder="دراما، خيال، مغامرة">
                     </label>
 
-                    <div class="mf-pair">
-                        <label class="mf-field">
-                            <span class="mf-label">المدة</span>
-                            <input type="text" id="mf-stats" class="mf-input" placeholder="12 حلقة">
-                        </label>
-                        <div class="mf-field mf-score">
-                            <span class="mf-label">التقييم</span>
-                            <div class="mf-score-row">
-                                <input type="text" id="mf-score" class="mf-input" inputmode="decimal" maxlength="6" placeholder="8.5" aria-label="التقييم">
-                                <select id="mf-scale" class="mf-input mf-select" aria-label="مقياس التقييم">
-                                    <option value="10">/10</option>
-                                    <option value="100">/100</option>
-                                    <option value="5">/5</option>
-                                    <option value="">بدون</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- No score field: in manual mode the classifier's own rating (above) is the score -->
+                    <label class="mf-field">
+                        <span class="mf-label">المدة <em>حلقات، دقائق، صفحات أو ساعات</em></span>
+                        <input type="text" id="mf-stats" class="mf-input" placeholder="مثلاً: 24 حلقة · 120 دقيقة · 300 صفحة · 40 ساعة">
+                    </label>
 
                     <label class="mf-field">
                         <span class="mf-label">النبذة</span>
@@ -274,7 +275,7 @@
                             </div>
                             <h2 id="title-text" class="cd-title">عنوان العمل</h2>
                             <div class="cd-pills">
-                                <span id="score-badge" class="cd-score hidden" dir="ltr">★ <span id="score-text"></span><span class="cd-score-den" id="score-den"></span></span>
+                                <span id="score-badge" class="cd-score hidden" dir="ltr">★ <span id="score-text"></span></span>
                                 <div id="genre-text" class="cd-genres"></div>
                             </div>
                             <div class="cd-row">
@@ -312,6 +313,14 @@
                             c.style.transform = 'scale(' + k + ')';
                         })();
                     </script>
+                    <!-- Phones: size + enlarge (phone.css / js/phone.js) -->
+                    <div class="preview-bar">
+                        <span class="preview-bar-meta" id="preview-bar-meta" dir="ltr">16:9 · 1920 × 1080</span>
+                        <button type="button" class="preview-enlarge" id="preview-enlarge">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9.5 6.5M2 14l4.5-4.5"/></svg>
+                            <span>تكبير المعاينة</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Export Footer -->
@@ -339,13 +348,15 @@
             <header class="modal-header">
                 <div class="modal-title-wrap">
                     <span class="kicker"><span class="kicker-dot"></span>الدليل</span>
-                    <h2>شرح الدرجات والتصانيف</h2>
+                    <h2>شرح التصنيف المحافظ</h2>
                 </div>
                 <div class="modal-header-actions">
-                    <a href="guide" target="_blank" class="close-btn guide-expand-btn" title="فتح في صفحة كاملة">↗</a>
+                    <a href="guide" target="_blank" class="close-btn guide-expand-btn" title="فتح في صفحة كاملة" aria-label="فتح في صفحة كاملة"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M9 2h5v5M14 2 7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5"/></svg></a>
                     <button id="close-modal" class="close-btn" aria-label="إغلاق">×</button>
                 </div>
             </header>
+            <!-- Phones: jump between the guide's sections (built by js/phone.js) -->
+            <nav class="guide-tabs" id="guide-tabs" aria-label="أقسام الشرح"></nav>
             <div class="modal-body">
                 <section class="modal-section">
                     <h3 class="section-title"><span class="section-num">01</span>القيم والدرجات</h3>

@@ -13,7 +13,6 @@ export const state = {
         synopsis: '',
         score: '',
         stats: '',
-        scoreScale: '',   // manual only: '10' | '100' | '5' | '' → "8.5/10" on the card
         imgPos: 'center'  // manual only: which part of the image shows ('top' | 'center' | 'bottom')
     },
     classifier: {

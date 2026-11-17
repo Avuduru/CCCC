@@ -179,8 +179,12 @@ export async function translateText(text) {
     }
 
     try {
-        // Google Translate (GTX) via local proxy
-        const url = `proxy.php?type=translate&query=${encodeURIComponent(text)}`;
+        // Google Translate (GTX) via local proxy. The synopsis is sent base64url-encoded
+        // (only A-Z a-z 0-9 _ -), so it never contains %, quotes or <> — the WAF's
+        // URL-encoding / XSS / SQLi rules can't false-positive on a synopsis (e.g. "90%").
+        const b64url = btoa(unescape(encodeURIComponent(text)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const url = `proxy.php?type=translate&q=${b64url}`;
         const response = await fetch(url);
         const data = await response.json();
 

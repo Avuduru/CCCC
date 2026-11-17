@@ -161,15 +161,22 @@
 
                     <div class="control-row classifier-row">
                         <span class="control-label">المُصنّف</span>
+                        <!-- Each box has its label above it, so nothing is cut off inside the boxes -->
                         <div class="classifier-inputs">
-                            <div class="search-wrapper compact">
-                                <span class="search-prompt">@</span>
-                                <input type="text" id="reviewer-name-input" placeholder="اسمك (اختياري)…">
-                            </div>
-                            <div class="search-wrapper compact rating-input" title="تقييمك من 10 (اختياري)">
-                                <input type="text" id="reviewer-rating-input" inputmode="decimal" maxlength="5" placeholder="تقييمك" aria-label="تقييمك من 10">
-                                <span class="search-hint">/10</span>
-                            </div>
+                            <label class="cl-field cl-name">
+                                <span class="cl-label">الاسم <em>اختياري</em></span>
+                                <span class="search-wrapper compact">
+                                    <span class="search-prompt">@</span>
+                                    <input type="text" id="reviewer-name-input" placeholder="اسمك…">
+                                </span>
+                            </label>
+                            <label class="cl-field cl-rating">
+                                <span class="cl-label">التقييم <em>اختياري</em></span>
+                                <span class="search-wrapper compact rating-input" title="تقييمك من 10 (اختياري)">
+                                    <input type="text" id="reviewer-rating-input" inputmode="decimal" maxlength="5" placeholder="—" aria-label="تقييمك من 10">
+                                    <span class="search-hint">/10</span>
+                                </span>
+                            </label>
                         </div>
                     </div>
                 </div>

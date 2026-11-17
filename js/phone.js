@@ -19,24 +19,48 @@ export function initPhone() {
 const isPhone = () => window.matchMedia('(max-width: 640px)').matches;
 const isTextField = (el) => el && (el.matches('input[type="text"], input:not([type]), textarea') || el.isContentEditable);
 
+// The block a field belongs to (its label included), scrolled into view while typing
+const blockOf = (el) => el.closest('.mf-field') || el.closest('.classifier-row') || el.closest('.search-wrapper') || el;
+
+// After the keyboard closes the card pins again over the top of the screen;
+// put the field you were using just below it, so you still see what you typed
+// (e.g. the search box with the title you searched for).
+function keepBelowPinnedCard(el) {
+    const stage = document.querySelector('.stage');
+    if (!stage || !el) return;
+    const gap = stage.getBoundingClientRect().bottom + 12 - el.getBoundingClientRect().top;
+    if (gap > 0 || el.getBoundingClientRect().top > window.innerHeight - 140) window.scrollBy(0, -gap);
+}
+
 function setupKeyboardMode() {
     const controls = document.querySelector('.top-controls');
     if (!controls) return;
     let closeTimer = 0;
+    let lastBlock = null;
     controls.addEventListener('focusin', (e) => {
         if (!isPhone() || !isTextField(e.target)) return;
         clearTimeout(closeTimer);
         document.body.classList.add('kb-open');
-        const field = e.target.closest('.search-wrapper, .mf-field, .classifier-inputs') || e.target;
+        lastBlock = blockOf(e.target);
         // after the keyboard has started to open, so the scroll isn't undone
-        setTimeout(() => field.scrollIntoView({ block: 'start', behavior: 'smooth' }), 300);
+        setTimeout(() => lastBlock && lastBlock.scrollIntoView({ block: 'start', behavior: 'smooth' }), 300);
     });
     controls.addEventListener('focusout', () => {
         // Wait a moment: a tap on a search result blurs the field first, and the
         // layout must not move under that tap. Moving to another field cancels this.
         clearTimeout(closeTimer);
         closeTimer = setTimeout(() => {
-            if (!isTextField(document.activeElement)) document.body.classList.remove('kb-open');
+            if (isTextField(document.activeElement)) return;
+            document.body.classList.remove('kb-open');
+            const block = lastBlock;
+            requestAnimationFrame(() => keepBelowPinnedCard(block));
+            // iOS resizes the screen as the keyboard slides away: settle once more after
+            const vv = window.visualViewport;
+            if (vv) {
+                const settle = () => { vv.removeEventListener('resize', settle); keepBelowPinnedCard(block); };
+                vv.addEventListener('resize', settle);
+                setTimeout(() => vv.removeEventListener('resize', settle), 1200);
+            }
         }, 350);
     });
     // Picking a search result closes the keyboard, so the card (pinned again) is in view

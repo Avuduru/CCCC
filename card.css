@@ -174,9 +174,13 @@
    at the panel's full width (beside the label, the name box was ~23px wide) */
 .classifier-row { gap: 8px; }
 .classifier-row .control-label { flex-basis: 100%; }
-.classifier-inputs { display: flex; gap: 8px; flex: 1 1 100%; min-width: 0; }
-.classifier-inputs .search-wrapper:first-child { flex: 1; min-width: 0; }
-.classifier-inputs .rating-input { flex: none; width: 118px; }
+.classifier-inputs { display: flex; gap: 8px; flex: 1 1 100%; min-width: 0; align-items: flex-end; }
+.cl-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.cl-name { flex: 1; }
+.cl-rating { flex: none; width: 118px; }
+.cl-label { font-family: var(--font-ar); font-size: 14px; font-weight: 600; color: var(--text-1); line-height: 1.2; }
+.cl-label em { font-style: normal; font-weight: 400; font-size: 12px; color: var(--text-2); margin-right: 4px; }
+.cl-field .search-wrapper { width: 100%; box-sizing: border-box; }
 #reviewer-rating-input {
     width: 100%; min-width: 0; flex: 1;
     background: transparent; border: none; outline: none;
@@ -188,7 +192,6 @@
    row put the number on the right, so it read "/10 8.5") */
 .classifier-inputs .rating-input { direction: ltr; }
 .classifier-inputs .rating-input .search-hint { margin-right: 0; margin-left: 0; direction: ltr; unicode-bidi: isolate; }
-#reviewer-rating-input::placeholder { direction: rtl; }
 
 /* Share button inside the phone export popup */
 .share-btn {

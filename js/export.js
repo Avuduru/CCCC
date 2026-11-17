@@ -70,6 +70,12 @@ function logClassification(action) {
         }
         if (!contentId) return;
 
+        // "Custom" = the classifier wrote their own synopsis: manual mode, or they edited
+        // the auto-fetched one (state.meta.synopsisEdited, set by the synopsis input handlers).
+        // Only custom synopses are stored — no point keeping a copy of the sources' own text.
+        const customSyn = state.type === 'manual' || !!state.meta.synopsisEdited;
+        const synopsis = customSyn ? (state.meta.synopsis || '').slice(0, 2000) : '';
+
         fetch('proxy.php?type=log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -82,6 +88,8 @@ function logClassification(action) {
                 classifier: state.classifier.name || '',
                 rating: state.classifier.rating || '',   // the classifier's /10 score
                 lang: LANG,                               // 'ar' or 'en' (which site)
+                custom_synopsis: customSyn,
+                synopsis: synopsis,                       // only when the classifier wrote it
                 orientation: state.orientation,
                 action: action
             })

@@ -930,6 +930,8 @@ switch ($type) {
                 'classifier'   => $input['classifier'] ?? '',
                 'rating'       => $input['rating'] ?? '',
                 'lang'         => $input['lang'] ?? '',
+                'custom_synopsis' => !empty($input['custom_synopsis']) ? 1 : 0,
+                'synopsis'     => !empty($input['custom_synopsis']) ? ($input['synopsis'] ?? '') : '',
                 'orientation'  => $input['orientation'] ?? 'horizontal',
                 'action'       => $input['action'] ?? 'export',
                 'created_at'   => date('c')
@@ -959,6 +961,14 @@ switch ($type) {
                 if ($r >= 0 && $r <= 10) $rating = $r;
             }
             $lang = in_array($input['lang'] ?? '', ['ar', 'en'], true) ? $input['lang'] : 'ar';
+            // The classifier's own synopsis (only stored when they wrote it): plain text,
+            // control characters stripped, capped. Never rendered server-side; escape on display.
+            $customSyn = !empty($input['custom_synopsis']) ? 1 : 0;
+            $synopsis = null;
+            if ($customSyn && isset($input['synopsis']) && is_string($input['synopsis'])) {
+                $syn = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', trim($input['synopsis']));
+                if ($syn !== '') $synopsis = function_exists('mb_substr') ? mb_substr($syn, 0, 2000) : substr($syn, 0, 4000);
+            }
 
             // SHA-256 of the visitor's address (clientIp: the edge-appended one) — never stored raw
             $ipHash   = hash('sha256', clientIp());
@@ -1041,19 +1051,25 @@ switch ($type) {
             // Set by a follow-up UPDATE so a write still succeeds before the migration in
             // data/schema.sql is run — if the columns don't exist yet, the catch ignores it
             // (SQLSTATE 42S22 = unknown column) and the rest of the save is unaffected.
-            $setExtra = "UPDATE classifications SET classifier_rating = ?, lang = ?
+            $setExtra = "UPDATE classifications SET classifier_rating = ?, lang = ?, custom_synopsis = ?, synopsis = ?
                          WHERE work_id = ? AND ip_hash = ?";
+            $extraVals = [$rating, $lang, $customSyn, $synopsis, $workId, $ipHash];
             try {
-                $pdo->prepare($setExtra)->execute([$rating, $lang, $workId, $ipHash]);
+                $pdo->prepare($setExtra)->execute($extraVals);
             } catch (PDOException $e) {
                 if ($e->getCode() !== '42S22') throw $e;   // only tolerate "column not added yet"
                 // Columns missing — add them automatically (needs ALTER privilege on the DB user).
                 // Runs once; afterwards the UPDATE above just succeeds. If the user can't ALTER,
-                // the rating already saved without these two fields, so nothing is lost.
-                foreach (['classifier_rating DECIMAL(4,2) DEFAULT NULL', 'lang CHAR(2) DEFAULT NULL'] as $col) {
+                // the rating already saved without these fields, so nothing is lost.
+                foreach ([
+                    'classifier_rating DECIMAL(4,2) DEFAULT NULL',
+                    'lang CHAR(2) DEFAULT NULL',
+                    'custom_synopsis TINYINT(1) DEFAULT 0',
+                    'synopsis TEXT DEFAULT NULL',
+                ] as $col) {
                     try { $pdo->exec("ALTER TABLE classifications ADD COLUMN $col"); } catch (PDOException $e2) {}
                 }
-                try { $pdo->prepare($setExtra)->execute([$rating, $lang, $workId, $ipHash]); } catch (PDOException $e3) {}
+                try { $pdo->prepare($setExtra)->execute($extraVals); } catch (PDOException $e3) {}
             }
 
             // ── 5. Sync rater_count (unique IPs who rated this work) ─────
@@ -1107,6 +1123,7 @@ switch ($type) {
                         $byLang[$row['lang']] = (int)$row['cnt'];
                     }
                     $out['by_lang'] = $byLang;
+                    $out['custom_synopses'] = (int)$pdo->query("SELECT COUNT(*) FROM classifications WHERE custom_synopsis = 1")->fetchColumn();
                 } catch (PDOException $e) { /* columns not added yet */ }
                 echo json_encode($out);
             } catch (PDOException $e) {

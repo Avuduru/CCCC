@@ -318,7 +318,7 @@ function setupManualForm() {
     on('mf-genres', 'input', e => { state.meta.genre = e.target.value; changed(); });
     on('mf-genres', 'blur', () => { state.meta.genre = splitList(state.meta.genre).join(t('list.sep')); syncManualForm(); });
     on('mf-stats', 'input', e => { state.meta.stats = splitList(e.target.value).join(' • '); changed(); });
-    on('mf-synopsis', 'input', e => { state.meta.synopsis = e.target.value; changed(); });
+    on('mf-synopsis', 'input', e => { state.meta.synopsis = e.target.value; state.meta.synopsisEdited = true; changed(); });
     on('mf-upload', 'click', () => mf('manual-cover-upload').click());
     on('mf-remove', 'click', () => { state.meta.poster = ''; state.meta.wide = ''; changed(); syncManualForm(); });
     mf('mf-pos').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
@@ -460,6 +460,7 @@ function selectItem(item, type) {
     state.meta.score = '';
     state.meta.stats = '';
     state.meta.wide = '';
+    state.meta.synopsisEdited = false;   // a freshly picked work starts with the auto-fetched synopsis
     const proxied = (u) => u ? `proxy.php?query=${encodeURIComponent(u)}&type=image_proxy` : '';
 
 

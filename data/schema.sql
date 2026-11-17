@@ -62,13 +62,17 @@ CREATE TABLE IF NOT EXISTS classifications (
 
     -- ── Session metadata ──────────────────────────────────────
     classifier         VARCHAR(100) DEFAULT '',         -- watermark name entered by user
-    -- On an EXISTING database created before these two columns, proxy.php adds them
+    -- On an EXISTING database created before these columns, proxy.php adds them
     -- automatically on the first rating save. To add them by hand instead, run:
     --   ALTER TABLE classifications
     --     ADD COLUMN classifier_rating DECIMAL(4,2) DEFAULT NULL,
-    --     ADD COLUMN lang CHAR(2) DEFAULT NULL;
+    --     ADD COLUMN lang CHAR(2) DEFAULT NULL,
+    --     ADD COLUMN custom_synopsis TINYINT(1) DEFAULT 0,
+    --     ADD COLUMN synopsis TEXT DEFAULT NULL;
     classifier_rating  DECIMAL(4,2) DEFAULT NULL,       -- the classifier's own /10 score (optional)
     lang               CHAR(2)      DEFAULT NULL,        -- 'ar' or 'en' (which site the rating came from)
+    custom_synopsis    TINYINT(1)   DEFAULT 0,          -- 1 = the classifier wrote their own synopsis
+    synopsis           TEXT         DEFAULT NULL,        -- that synopsis (plain text; only when custom)
     orientation     ENUM('horizontal','vertical') DEFAULT 'horizontal',
     action          ENUM('export','copy','rate') DEFAULT 'export',
 

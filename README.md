@@ -332,6 +332,8 @@ Anime, manga, books, HowLongToBeat, and translation need no keys. On the server,
 
 Run `data/schema.sql` once (phpMyAdmin, HeidiSQL, or the `mysql` CLI). It creates two tables: `works` (one row per title) and `classifications` (one row per person per title).
 
+Each classification stores the 10 content levels, the 3 exception badges, the classifier's name, the classifier's own **/10 score** (`classifier_rating`), the **site language** it came from (`lang`, `ar`/`en`), orientation and action. The `stats` endpoint exposes aggregates including `avg_score` and `by_lang`. On an existing database that predates the `classifier_rating`/`lang` columns, `proxy.php` **adds them automatically** on the first rating save (needs `ALTER` privilege on the DB user); if it can't, saves still work without those two fields and you can run the `ALTER TABLE` from `data/schema.sql`'s comment manually.
+
 ### Good to know
 
 - **`.htaccess` is not used in production.** The server is Caddy, so access rules and redirects live in the `Caddyfile`.

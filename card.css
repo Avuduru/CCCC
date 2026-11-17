@@ -266,6 +266,8 @@
    The cover shows the logo over a faint field of the icons; the synopsis area
    shows three steps; the stickers panel shows the level legend. */
 .cd-intro-art, .cd-intro-steps, .cd-intro-legend { display: none; }
+/* The cover already shows the big logo; the small one in the brand row would repeat it */
+.cd-intro .cd-brand-logo { display: none; }
 .cd-intro .cd-pills, .cd-intro .cd-synopsis-text, .cd-intro .cd-stickers { display: none !important; }
 .cd-intro .cd-intro-art {
     display: flex; position: absolute; inset: 0; overflow: hidden; border-radius: inherit;

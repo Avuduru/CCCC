@@ -61,7 +61,9 @@ CREATE TABLE IF NOT EXISTS classifications (
     badge_noaffairs     TINYINT(1) DEFAULT 0,
 
     -- ── Session metadata ──────────────────────────────────────
-    classifier      VARCHAR(100) DEFAULT '',         -- watermark name entered by user
+    classifier         VARCHAR(100) DEFAULT '',         -- watermark name entered by user
+    classifier_rating  DECIMAL(4,2) DEFAULT NULL,       -- the classifier's own /10 score (optional)
+    lang               CHAR(2)      DEFAULT NULL,        -- 'ar' or 'en' (which site the rating came from)
     orientation     ENUM('horizontal','vertical') DEFAULT 'horizontal',
     action          ENUM('export','copy','rate') DEFAULT 'export',
 

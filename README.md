@@ -7,7 +7,7 @@
 **التصنيف المحافظ للمحتوى الإبداعي**<br>
 Conservative Classification of Creative Content (CCCC)
 
-[**muhafid.com**](https://muhafid.com) · [دليل التصنيف](https://muhafid.com/guide)
+[**muhafid.com**](https://muhafid.com) · [دليل التصنيف المحافظ](https://muhafid.com/guide) · [عن المشروع](https://muhafid.com/about)
 
 <p dir="ltr"><a href="#العربية">العربية</a> · <a href="#english">English</a> · <a href="#for-developers">For developers</a></p>
 
@@ -53,7 +53,9 @@ Conservative Classification of Creative Content (CCCC)
 2. يجلب الموقع تلقائيًا الغلاف والنبذة مترجمةً إلى العربية، والتصنيفات، والتقييم، والمدة (عدد الحلقات، أو مدة الفيلم، أو ساعات إنهاء اللعبة، أو عدد الصفحات).
 3. أضِف المحاذير الموجودة في العمل، وحدّد درجة كلٍّ منها.
 4. أشِر إلى المستثنيات التي يخلو منها العمل.
-5. اكتب اسمك بوصفك مُصنِّفًا (اختياري)، ثم صدّر البطاقة صورةً أو انسخها مباشرةً، بالعرض أو بالطول.
+5. اكتب اسمك وتقييمك بوصفك مُصنِّفًا (اختياري)، ثم صدّر البطاقة صورةً أو انسخها مباشرةً، بالعرض (1920×1080) أو بالطول (1200×1500).
+
+يعمل الموقع على الجوال بتصميم خاص به: تبقى البطاقة ظاهرة أعلى الشاشة أثناء التعديل، ويُشارك التصدير مباشرةً إلى إكس وواتساب وغيرهما.
 
 <div align="center">
 <img src=".github/readme/card-vertical.jpg" alt="بطاقة تصنيف عمودية للعبة Hollow Knight" width="360">
@@ -63,45 +65,45 @@ Conservative Classification of Creative Content (CCCC)
 
 يقوم التصنيف على ثلاثة عناصر: درجة الشدّة، والموجودات، والمستثنيات.
 
-### سُلَّم الشدّة
+### مقياس الشدة
 
-| الدرجة | اللون | في القصصيّات | في الألعاب |
+| الدرجة | اللون | في الأعمال القصصية | في الألعاب |
 |:---:|:---:|---|---|
-| **الأولى · شديد** | 🟥 أحمر | لا يمكن تخطّي المحتوى دون التأثير على القصة، ويتكرر ظهوره كثيرًا حتى يفقد المشاهد الفهم العام للقصة عند تخطّيه. | يستحيل إتمام اللعبة دون المرور عليه. |
-| **الثانية · متوسط** | 🟧 برتقالي | يمكن تخطّي المحتوى دون التأثير على فهم القصة، إلا أن كثرة ظهوره تُقطّع تسلسل العرض. | يُصعّب إتمام اللعبة ويغيّر تجربتها، لكن يمكن إتمامها كاملةً مع تخطّيه. |
-| **الثالثة · خفيف** | 🟨 أصفر | يمكن تخطّي المحتوى دون التأثير على القصة، وظهوره قليل يسهل تخطّيه. | يمكن تجاهله أو استخدام طرق بديلة لإتمام اللعبة. |
+| **الأولى · شديد** | 🟥 أحمر | يتكرر المحتوى ويشكل جزءا أساسيا من القصة، بحيث يصعب فهمها عند تخطيه. | لا يمكن إتمام اللعبة دون المرور بهذا المحتوى. |
+| **الثانية · متوسط** | 🟧 برتقالي | يمكن تخطي المحتوى دون التأثير على فهم القصة، لكن تكرار التخطي يقطع تسلسلها. | يمكن إتمام اللعبة مع تجنب هذا المحتوى، لكن تجنبه يزيد صعوبتها ويغير التجربة. |
+| **الثالثة · خفيف** | 🟨 أصفر | يظهر المحتوى نادرا، ويسهل تخطيه دون التأثير على فهم القصة. | يمكن تجاهل المحتوى أو اتباع طرق بديلة لإتمام اللعبة. |
 
 ### الموجودات: ما قد يحتويه العمل
 
 | المجموعة | المحذور | الأيقونة (شديد · متوسط · خفيف) | الوصف |
 |---|---|---|---|
-| محاذير عقدية وفكرية | **كفريات** | <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA1.png" alt="كفريات · 1" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA2.png" alt="كفريات · 2" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA3.png" alt="كفريات · 3" height="44"> | ما يروّج للكفر والإلحاد ويسخر من الأديان والذات الإلهية، بما في ذلك تقديم الفلسفات والعقائد المنحرفة بصورة إيجابية أو محايدة. |
-| | **سحر** | <img src="assets/icons/%D8%B3%D8%AD%D8%B11.png" alt="سحر · 1" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B12.png" alt="سحر · 2" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B13.png" alt="سحر · 3" height="44"> | القوى والرموز والتعويذات المرتبطة بالسحر والتنجيم ورؤية المستقبل. |
-| انحرافات أخلاقية وصادمة | **جنس** | <img src="assets/icons/%D8%AC%D9%86%D8%B31.png" alt="جنس · 1" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B32.png" alt="جنس · 2" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B33.png" alt="جنس · 3" height="44"> | مشاهد جنسية إيحائية أو مباشرة. |
-| | **تعرّي** | <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A1.png" alt="تعرّي · 1" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A2.png" alt="تعرّي · 2" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A3.png" alt="تعرّي · 3" height="44"> | ظهور أشخاص بجسد عارٍ كليًّا أو جزئيًّا. |
-| | **شذوذ** | <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B01.png" alt="شذوذ · 1" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B02.png" alt="شذوذ · 2" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B03.png" alt="شذوذ · 3" height="44"> | عرض الشذوذ الجنسي أو تمجيده بأشكاله المختلفة، كالمثلية والتحوّل الجنسي. |
-| | **صادم** | <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%851.png" alt="صادم · 1" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%852.png" alt="صادم · 2" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%853.png" alt="صادم · 3" height="44"> | محتوى يُلحق أثرًا نفسيًّا بالمشاهد، من عنف دموي وأشلاء واغتصاب وانتحار وتعذيب وما يثير الاشمئزاز الشديد. |
-| | **مفاسد** | <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF1.png" alt="مفاسد · 1" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF2.png" alt="مفاسد · 2" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF3.png" alt="مفاسد · 3" height="44"> | الترويج للقمار أو تعاطي المخدرات أو إظهارهما بصورة إيجابية، فضلًا عن المشاهد المثيرة للغرائز كالإيحاءات الجسدية والإغراء غير الصريح. |
-| استغلال مالي وسلوكي<br>(خاص بالألعاب) | **إدمانيّات** | <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA1.png" alt="إدمانيّات · 1" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA2.png" alt="إدمانيّات · 2" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA3.png" alt="إدمانيّات · 3" height="44"> | تصميم يدفع اللاعب إلى العودة المستمرة والمتابعة اليومية لتحقيق التقدم. |
-| | **تبذير** | <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B11.png" alt="تبذير · 1" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B12.png" alt="تبذير · 2" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B13.png" alt="تبذير · 3" height="44"> | تصميم يربط التقدم بالمال المُنفَق على أغراض داخل اللعبة. |
-| | **قمار** | <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B11.png" alt="قمار · 1" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B12.png" alt="قمار · 2" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B13.png" alt="قمار · 3" height="44"> | تصميم يشجّع على شراء الصناديق ذات المحتوى العشوائي وأنظمة السحب. |
+| محاذير عقدية وفكرية | **كفريات** | <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA1.png" alt="كفريات · 1" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA2.png" alt="كفريات · 2" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA3.png" alt="كفريات · 3" height="44"> | محتوى يروج للكفر أو الإلحاد، أو يسخر من الأديان أو الذات الإلهية، أو يعرض بصورة إيجابية أو محايدة عقائد وفلسفات تخالف العقيدة الإسلامية. |
+|  | **سحر** | <img src="assets/icons/%D8%B3%D8%AD%D8%B11.png" alt="سحر · 1" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B12.png" alt="سحر · 2" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B13.png" alt="سحر · 3" height="44"> | قوى ورموز وتعويذات مرتبطة بالسحر والتنجيم والتنبؤ بالغيب. |
+| محاذير أخلاقية ومحتوى صادم | **جنس** | <img src="assets/icons/%D8%AC%D9%86%D8%B31.png" alt="جنس · 1" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B32.png" alt="جنس · 2" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B33.png" alt="جنس · 3" height="44"> | مشاهد جنسية إيحائية أو مباشرة. |
+|  | **تعري** | <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A1.png" alt="تعري · 1" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A2.png" alt="تعري · 2" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A3.png" alt="تعري · 3" height="44"> | مشاهد تتضمن تعريا كاملا أو جزئيا. |
+|  | **شذوذ** | <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B01.png" alt="شذوذ · 1" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B02.png" alt="شذوذ · 2" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B03.png" alt="شذوذ · 3" height="44"> | عرض أو تمجيد الشذوذ، بما يشمل العلاقات المثلية والتحول الجنسي والموضوعات المرتبطة بهما. |
+|  | **صادم** | <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%851.png" alt="صادم · 1" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%852.png" alt="صادم · 2" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%853.png" alt="صادم · 3" height="44"> | محتوى قد يسبب الانزعاج الشديد، مثل العنف الدموي والأشلاء والاغتصاب والانتحار والتعذيب والمشاهد المثيرة للاشمئزاز. |
+|  | **مفاسد** | <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF1.png" alt="مفاسد · 1" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF2.png" alt="مفاسد · 2" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF3.png" alt="مفاسد · 3" height="44"> | الترويج للقمار أو تعاطي المخدرات، أو التشجيع عليهما أو تصويرهما بصورة إيجابية، إضافة إلى المشاهد المثيرة للغرائز، مثل الإيحاءات الجسدية والإغراء غير الصريح. |
+| استغلال مالي وسلوكي<br>(خاص بالألعاب) | **إدمانيات** | <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA1.png" alt="إدمانيات · 1" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA2.png" alt="إدمانيات · 2" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA3.png" alt="إدمانيات · 3" height="44"> | آليات تربط التقدم بالعودة اليومية المنتظمة، مثل تسجيل الدخول اليومي وسلاسل الأيام المتتالية. |
+|  | **تبذير** | <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B11.png" alt="تبذير · 1" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B12.png" alt="تبذير · 2" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B13.png" alt="تبذير · 3" height="44"> | ربط التقدم بالمال المنفق على عناصر داخل اللعبة. |
+|  | **قمار** | <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B11.png" alt="قمار · 1" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B12.png" alt="قمار · 2" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B13.png" alt="قمار · 3" height="44"> | آليات تشجع على شراء صناديق بمحتويات عشوائية أو دفع المال مقابل سحوبات عشوائية. |
 
 ### المستثنيات: ما يخلو منه العمل
 
-يفترض التصنيف المحافظ أن جميع الأعمال الإبداعية تحتوي على الموسيقى والأغاني، والألفاظ النابية، والعلاقات خارج إطار الزواج. فإن خلا العمل من شيء منها، أشار المُصنِّف إلى ذلك بإحدى الشارات الخضراء الآتية:
+يفترض نظام التصنيف وجود الموسيقى أو الأغاني، والألفاظ النابية، والعلاقات العاطفية خارج الزواج في العمل ما لم يشر التصنيف إلى خلاف ذلك. استخدم كل رمز من الرموز التالية فقط إذا كان العمل يخلو من المحتوى الذي يشير إليه.
 
 
 <div align="center">
 <img src="assets/icons/%D9%85%D9%88%D8%B3%D9%8A%D9%82%D9%890.png" alt="لا موسيقى" height="96"> <img src="assets/icons/%D8%A3%D9%84%D9%81%D8%A7%D8%B8%20%D9%86%D8%A7%D8%A8%D9%8A%D8%A90.png" alt="لا ألفاظ نابية" height="96"> <img src="assets/icons/%D8%B9%D9%84%D8%A7%D9%82%D8%A7%D8%AA%20%D8%AD%D8%A80.png" alt="لا علاقات حب" height="96">
 </div>
 
-للاطلاع على الشرح الكامل، راجع [دليل الدرجات والتصانيف](https://muhafid.com/guide).
+للاطلاع على الشرح الكامل، راجع [دليل التصنيف المحافظ](https://muhafid.com/guide).
 
 ### الخصوصية
 
 عند تصدير بطاقة أو نسخها، يحفظ الموقع: العمل الذي صنّفته، والدرجات والشارات التي اخترتها، واسم المُصنِّف إن كتبته، وقيمةً مُجزّأة (SHA-256 hash) لعنوان IP بدلًا من العنوان نفسه؛ وذلك لاحتساب تصنيف واحد لكل شخص في كل عمل.
 
-لا يطلب الموقع بريدًا إلكترونيًّا ولا يستخدم أدوات تحليل أو تتبّع. ويُحمّل الخطوط والمكتبات البرمجية من Google Fonts وcdnjs وjsDelivr.
+لا يطلب الموقع بريدًا إلكترونيًّا ولا يستخدم أدوات تحليل أو تتبّع. ويُحمّل بعض الخطوط من Google Fonts ومكتبة html2canvas من cdnjs.
 
 ### مصادر البيانات
 
@@ -170,48 +172,50 @@ Anime · Manga · Movies · TV series · Games · Books — plus **manual mode**
 2. The site fills in the cover, a synopsis translated to Arabic, genres, score, and length (episodes, runtime, hours to beat, or pages).
 3. Add the warnings that apply and set how strong each one is.
 4. Mark what the work is *free of*.
-5. Add your name as the classifier (optional), then export the card as an image or copy it — wide or tall.
+5. Add your name and score as the classifier (optional), then export the card as an image or copy it — wide (1920×1080) or tall (1200×1500).
+
+On phones the site has its own layout: the card stays pinned at the top while you edit, and Export opens the share sheet for X, WhatsApp and others.
 
 ### The rating system
 
 **Severity levels**
 
-| Level | Color | In stories | In games |
+| Level | Color | In story-based media | In games |
 |:---:|:---:|---|---|
-| **1 · Severe** | 🟥 Red | Can't be skipped without losing the story; it shows up a lot. | You can't finish the game without it. |
-| **2 · Moderate** | 🟧 Orange | Can be skipped without losing the story, but it shows up often and interrupts. | Makes the game harder or different, but you can still finish it while avoiding it. |
-| **3 · Mild** | 🟨 Yellow | Rare and easy to skip. | Easy to ignore or work around. |
+| **1 · Severe** | 🟥 Red | The content is central and appears frequently. Skipping it makes the overall story hard to follow. | You cannot finish the game without encountering this content. |
+| **2 · Moderate** | 🟧 Orange | You can skip the content and still follow the story, but frequent skipping disrupts the experience. | You can finish the game while avoiding this content, but doing so makes it harder and changes the experience. |
+| **3 · Mild** | 🟨 Yellow | The content is rare and easy to skip without losing track of the story. | You can ignore the content or take another route to finish the game. |
 
 **Warnings (what a work may contain)**
 
 | Group | Warning | Icon (severe · moderate · mild) | Meaning |
 |---|---|---|---|
-| Belief | **Kufr** (كفريات) | <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA1.png" alt="Kufr · 1" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA2.png" alt="Kufr · 2" height="44"> <img src="assets/icons/%D9%83%D9%81%D8%B1%D9%8A%D8%A7%D8%AA3.png" alt="Kufr · 3" height="44"> | Promotes disbelief or atheism, mocks religion or God, or presents false beliefs in a positive or neutral way. |
-| | **Magic** (سحر) | <img src="assets/icons/%D8%B3%D8%AD%D8%B11.png" alt="Magic · 1" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B12.png" alt="Magic · 2" height="44"> <img src="assets/icons/%D8%B3%D8%AD%D8%B13.png" alt="Magic · 3" height="44"> | Sorcery, spells, fortune-telling, and occult symbols. |
-| Morals & shock | **Sex** (جنس) | <img src="assets/icons/%D8%AC%D9%86%D8%B31.png" alt="Sex · 1" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B32.png" alt="Sex · 2" height="44"> <img src="assets/icons/%D8%AC%D9%86%D8%B33.png" alt="Sex · 3" height="44"> | Sexual scenes, suggestive or explicit. |
-| | **Nudity** (تعرّي) | <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A1.png" alt="Nudity · 1" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A2.png" alt="Nudity · 2" height="44"> <img src="assets/icons/%D8%AA%D8%B9%D8%B1%D9%8A3.png" alt="Nudity · 3" height="44"> | Full or partial nudity. |
-| | **LGBT** (شذوذ) | <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B01.png" alt="LGBT · 1" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B02.png" alt="LGBT · 2" height="44"> <img src="assets/icons/%D8%B4%D8%B0%D9%88%D8%B03.png" alt="LGBT · 3" height="44"> | Showing or glorifying homosexuality, gender transition, and similar. |
-| | **Shocking** (صادم) | <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%851.png" alt="Shocking · 1" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%852.png" alt="Shocking · 2" height="44"> <img src="assets/icons/%D8%B5%D8%A7%D8%AF%D9%853.png" alt="Shocking · 3" height="44"> | Gore, dismemberment, rape, suicide, torture, or deeply disturbing content. |
-| | **Vices** (مفاسد) | <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF1.png" alt="Vices · 1" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF2.png" alt="Vices · 2" height="44"> <img src="assets/icons/%D9%85%D9%81%D8%A7%D8%B3%D8%AF3.png" alt="Vices · 3" height="44"> | Promoting gambling or drugs, or seductive and suggestive scenes. |
-| Money & habits<br>(games only) | **Addictive** (إدمانيّات) | <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA1.png" alt="Addictive · 1" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA2.png" alt="Addictive · 2" height="44"> <img src="assets/icons/%D8%A5%D8%AF%D9%85%D8%A7%D9%86%D9%8A%D9%91%D8%A7%D8%AA3.png" alt="Addictive · 3" height="44"> | Built to make you come back every day to progress. |
-| | **Pay to win** (تبذير) | <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B11.png" alt="Pay to win · 1" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B12.png" alt="Pay to win · 2" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B13.png" alt="Pay to win · 3" height="44"> | Progress is tied to spending real money. |
-| | **Gambling** (قمار) | <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B11.png" alt="Gambling · 1" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B12.png" alt="Gambling · 2" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B13.png" alt="Gambling · 3" height="44"> | Loot boxes and gacha pulls. |
+| Belief and ideology | **Blasphemy** (كفريات) | <img src="assets/icons/en/kufr1.png" alt="Blasphemy · 1" height="44"> <img src="assets/icons/en/kufr2.png" alt="Blasphemy · 2" height="44"> <img src="assets/icons/en/kufr3.png" alt="Blasphemy · 3" height="44"> | Content that promotes disbelief or atheism, mocks religion or God, or presents beliefs and philosophies that conflict with Islamic teachings positively or neutrally. |
+|  | **Magic** (سحر) | <img src="assets/icons/en/magic1.png" alt="Magic · 1" height="44"> <img src="assets/icons/en/magic2.png" alt="Magic · 2" height="44"> <img src="assets/icons/en/magic3.png" alt="Magic · 3" height="44"> | Powers, symbols and spells tied to sorcery, astrology and fortune-telling. |
+| Moral and disturbing content | **Sexual content** (جنس) | <img src="assets/icons/en/sex1.png" alt="Sexual content · 1" height="44"> <img src="assets/icons/en/sex2.png" alt="Sexual content · 2" height="44"> <img src="assets/icons/en/sex3.png" alt="Sexual content · 3" height="44"> | Suggestive or explicit sexual scenes. |
+|  | **Nudity** (تعري) | <img src="assets/icons/en/nudity1.png" alt="Nudity · 1" height="44"> <img src="assets/icons/en/nudity2.png" alt="Nudity · 2" height="44"> <img src="assets/icons/en/nudity3.png" alt="Nudity · 3" height="44"> | Full or partial nudity. |
+|  | **LGBTQ+ themes** (شذوذ) | <img src="assets/icons/en/lgbt1.png" alt="LGBTQ+ themes · 1" height="44"> <img src="assets/icons/en/lgbt2.png" alt="LGBTQ+ themes · 2" height="44"> <img src="assets/icons/en/lgbt3.png" alt="LGBTQ+ themes · 3" height="44"> | Depictions or positive portrayals of LGBTQ+ themes, including same-sex relationships and transgender identities. |
+|  | **Disturbing** (صادم) | <img src="assets/icons/en/gore1.png" alt="Disturbing · 1" height="44"> <img src="assets/icons/en/gore2.png" alt="Disturbing · 2" height="44"> <img src="assets/icons/en/gore3.png" alt="Disturbing · 3" height="44"> | Potentially distressing content, including graphic violence, gore, rape, suicide, torture and intensely disturbing imagery. |
+|  | **Vices** (مفاسد) | <img src="assets/icons/en/vices1.png" alt="Vices · 1" height="44"> <img src="assets/icons/en/vices2.png" alt="Vices · 2" height="44"> <img src="assets/icons/en/vices3.png" alt="Vices · 3" height="44"> | Promoting or encouraging gambling or drug use, portraying them positively, or showing sensual scenes such as suggestive body shots or implied seduction. |
+| Spending and engagement<br>(games only) | **Addictive design** (إدمانيات) | <img src="assets/icons/en/addiction1.png" alt="Addictive design · 1" height="44"> <img src="assets/icons/en/addiction2.png" alt="Addictive design · 2" height="44"> <img src="assets/icons/en/addiction3.png" alt="Addictive design · 3" height="44"> | Mechanics that require regular daily returns to keep progressing, such as daily logins and streaks. |
+|  | **Pay-to-win** (تبذير) | <img src="assets/icons/en/p2w1.png" alt="Pay-to-win · 1" height="44"> <img src="assets/icons/en/p2w2.png" alt="Pay-to-win · 2" height="44"> <img src="assets/icons/en/p2w3.png" alt="Pay-to-win · 3" height="44"> | Progress is tied to money spent on in-game items. |
+|  | **Gambling** (قمار) | <img src="assets/icons/en/lootbox1.png" alt="Gambling · 1" height="44"> <img src="assets/icons/en/lootbox2.png" alt="Gambling · 2" height="44"> <img src="assets/icons/en/lootbox3.png" alt="Gambling · 3" height="44"> | Mechanics that encourage spending on loot boxes or gacha pulls with random rewards. |
 
 **"Free of" badges**
 
-The system assumes every work has music, profanity, and relationships outside marriage. When a work is free of one of these, the classifier adds a green badge: **No music**, **No profanity**, or **No romance**.
+For rating purposes, CCCC assumes a work contains music or songs, profanity, and romantic relationships outside marriage unless marked otherwise. Use each badge below only when the work is free of that content. The badges: **No music**, **No profanity**, **No dating/affairs**.
 
 <div align="center">
-<img src="assets/icons/%D9%85%D9%88%D8%B3%D9%8A%D9%82%D9%890.png" alt="لا موسيقى" height="96"> <img src="assets/icons/%D8%A3%D9%84%D9%81%D8%A7%D8%B8%20%D9%86%D8%A7%D8%A8%D9%8A%D8%A90.png" alt="لا ألفاظ نابية" height="96"> <img src="assets/icons/%D8%B9%D9%84%D8%A7%D9%82%D8%A7%D8%AA%20%D8%AD%D8%A80.png" alt="لا علاقات حب" height="96">
+<img src="assets/icons/en/nomusic.png" alt="Contains no music" height="96"> <img src="assets/icons/en/noprofanity.png" alt="Contains no profanity" height="96"> <img src="assets/icons/en/noaffairs.png" alt="Contains no dating or affairs" height="96">
 </div>
 
-Full details: [rating guide](https://muhafid.com/guide) (Arabic).
+Full details: [rating guide](https://muhafid.com/guide) (Arabic). An English version of the site (`muhafid.com/en`) is in progress; the English icons above are already in the repo.
 
 ### Privacy
 
 When you export or copy a card, the site saves the work, the ratings and badges you picked, your classifier name if you typed one, and a hashed (SHA-256) version of your IP address — never the IP itself — so each person counts once per work.
 
-No email, no analytics, no tracking. Fonts and libraries load from Google Fonts, cdnjs, and jsDelivr.
+No email, no analytics, no tracking. Some fonts load from Google Fonts and html2canvas from cdnjs.
 
 ### Data sources
 
@@ -249,7 +253,7 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 ### Stack
 
 - **Backend:** PHP 8.4, no framework and no Composer packages. `proxy.php` calls the external APIs (so keys stay on the server) and stores classifications.
-- **Frontend:** plain HTML, CSS, and JavaScript modules. Cards are rendered with [html2canvas](https://html2canvas.hertzen.com); the blurred background uses [StackBlur](https://github.com/flozz/StackBlur).
+- **Frontend:** plain HTML, CSS, and JavaScript modules. The card is laid out at its real export size (1920×1080 or 1200×1500) and the preview is the same element scaled down, so the preview and the export match. Exports are drawn with [html2canvas](https://html2canvas.hertzen.com) and saved as full-colour JPEG (quality 92, no chroma subsampling) with the vendored [jSquash](https://github.com/jamsinclair/jSquash) MozJPEG encoder; Copy puts a PNG on the clipboard.
 - **Database:** MySQL or MariaDB (optional — without it, classifications go to `data/classifications.jsonl`).
 - **Hosting:** [CranL](https://cranl.com) with Railpack (FrankenPHP/Caddy). Every push to `main` deploys.
 
@@ -259,13 +263,17 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 |---|---|
 | `index.html` | The app |
 | `guide.html` | The rating guide (`/guide`) |
-| `index.php` | Clean URLs (`/guide` → `guide.html`) and CSS/JS cache busting |
+| `about.html` | About the project (`/about`) |
+| `index.php` | Clean URLs (`/guide` → `guide.html`); adds `?v=<file time>` to every local CSS/JS/image link and an import map for the JS modules, so each deploy only refreshes the files that changed |
 | `proxy.php` | API proxy, HowLongToBeat lookup, translation, image proxy, classification storage and stats |
-| `js/` | Frontend modules (`app.js` is the entry point) |
-| `style.v3.css` | Styles |
-| `assets/` | Logo, fonts, and the warning/badge icons |
+| `js/` | Frontend modules: `app.js` (entry point), `card.js` (renders the card and fits every text block by measuring it), `export.js` (Export / Copy), `phone.js` (phone layout), `ui.js`, `api.js`… |
+| `js/vendor/jsquash-jpeg/` | MozJPEG encoder (WebAssembly), loaded on the first export |
+| `style.v3.css` · `card.css` · `phone.css` | Site styles · the card · the phone layout (≤ 640px) |
+| `assets/icons/` | Warning and badge icons; `assets/icons/en/` holds the English versions |
+| `assets/fonts/` | Handjet (served from the site; Google's copy broke Arabic letter joins on iOS) and PixelAE |
+| `tools/en-icons/` | Script that rebuilds the English icons from the Arabic ones (edit the labels, re-run) |
 | `data/schema.sql` | Database schema |
-| `Caddyfile` | Web server config: blocks `.git`, dotfiles, `data/`, and config files; redirects `www` to the bare domain |
+| `Caddyfile` | Web server config: blocks `.git`, dotfiles, `data/`, `tools/` and config files; redirects `www` to the bare domain; long cache for `?v=` files, revalidation for pages |
 | `railpack.json` | Pins the PHP version for deployment |
 
 ### Run it locally
@@ -317,4 +325,6 @@ Run `data/schema.sql` once (phpMyAdmin, HeidiSQL, or the `mysql` CLI). It create
 
 - **`.htaccess` is not used in production.** The server is Caddy, so access rules and redirects live in the `Caddyfile`.
 - **HowLongToBeat has no official API.** `proxy.php` reads the current search endpoint from HowLongToBeat's own website code and caches it for 24 hours, so it keeps working when they move it. If they change the request format itself, `searchHltb()` needs an update.
+- **Caching:** files with `?v=` are cached for a year (their URL changes on every deploy that touches them); `/`, `/guide`, `/about` and unversioned CSS/JS are revalidated on each visit.
+- **English icons:** `python tools/en-icons/make_icons.py` (needs Playwright) repaints the label areas of the Arabic icons and writes `assets/icons/en/`. Change a word in `LABELS` and re-run.
 - **Saved IDs are namespaced:** anime/manga use `anilist:<id>` or `mal:<id>`, books use the Open Library key (`/works/OL…W`), games use the RAWG slug, movies/TV use the TMDB ID, and manual entries use `manual:<title>`.

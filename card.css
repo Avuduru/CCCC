@@ -273,7 +273,7 @@
 }
 .cd-intro-mosaic {
     position: absolute; top: -8%; left: -18%; width: 136%;
-    display: flex; flex-wrap: wrap; gap: 18px; transform: rotate(-8deg); opacity: 0.16;
+    display: flex; flex-wrap: wrap; gap: 18px; transform: rotate(-8deg); opacity: 0.2;
 }
 .cd-intro-mosaic img { width: 132px; height: 132px; display: block; }
 .cd-intro-art::after {

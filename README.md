@@ -177,7 +177,7 @@ Anime · Manga · Movies · TV series · Games · Books — plus **manual mode**
 On phones the site has its own layout: the card stays pinned at the top while you edit, and Export opens the share sheet for X, WhatsApp and others.
 
 <div align="center">
-<img src=".github/readme/pluribus-horizontal.jpg" alt="Landscape rating card for the series Pluribus" width="720">
+<img src=".github/readme/pluribus-horizontal-en.jpg" alt="Landscape rating card for the series Pluribus, from the English site" width="720">
 </div>
 
 ### The rating system

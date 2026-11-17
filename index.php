@@ -60,6 +60,25 @@ if (strpos($file, 'lang/') === 0) {
 if ($file !== '' && file_exists($file . '.html')) {
     // Return standard 200 OK and serve the HTML content
     http_response_code(200);
+
+    // The finished page (versioned URLs + import map below) is the same for every
+    // visitor until the next deploy, so it is built once and kept in the temp dir
+    // instead of re-stat'ing ~50 files and walking js/ on every page view.
+    // Each deploy is a fresh build: every file gets the build time as its mtime (all
+    // ?v= values match), so this file's and the page's mtimes identify the deploy.
+    // The TTL is only a safety net in case a deploy ever keeps old mtimes.
+    // Skipped on the PHP dev server, so local edits show up at once.
+    $cacheFile = null;
+    if (PHP_SAPI !== 'cli-server') {
+        $cacheDir = sys_get_temp_dir() . '/cccc-pages';
+        $stamp = filemtime(__FILE__) . '-' . filemtime($file . '.html');
+        $cacheFile = $cacheDir . '/' . str_replace('/', '_', $file) . '-' . $stamp . '.html';
+        $age = @filemtime($cacheFile);
+        if ($age !== false && time() - $age < 600 && @readfile($cacheFile) !== false) {
+            exit;
+        }
+    }
+
     $html = file_get_contents($file . '.html');
 
     // Cache busting: every local file the page references gets ?v=<last modified>.
@@ -89,6 +108,21 @@ if ($file !== '' && file_exists($file . '.html')) {
         ksort($imports);
         $map = '<script type="importmap">' . json_encode(['imports' => $imports], JSON_UNESCAPED_SLASHES) . '</script>';
         $html = preg_replace('/<script type="module"/', $map . "\n    " . '<script type="module"', $html, 1);
+    }
+
+    // Best effort: if the temp dir isn't writable the page is simply built each time.
+    // Written to a temp name and renamed, so a reader never sees a half-written page.
+    if ($cacheFile !== null && (is_dir($cacheDir) || @mkdir($cacheDir, 0700, true))) {
+        $prefix = $cacheDir . '/' . str_replace('/', '_', $file) . '-';
+        foreach (glob($prefix . '*.html') ?: [] as $old) {
+            if ($old !== $cacheFile) @unlink($old);   // earlier deploys' copies
+        }
+        $tmp = $cacheFile . '.' . getmypid() . '.' . mt_rand() . '.tmp';
+        if (@file_put_contents($tmp, $html) === strlen($html)) {
+            @rename($tmp, $cacheFile) || @unlink($tmp);
+        } else {
+            @unlink($tmp);
+        }
     }
 
     echo $html;

@@ -268,7 +268,7 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `index.html` | The app |
 | `guide.html` | The rating guide (`/guide`) |
 | `about.html` | About the project (`/about`) |
-| `index.php` | Clean URLs (`/guide` → `guide.html`, `/en/guide` → `lang/en/guide.html`); adds `?v=<file time>` to every local CSS/JS/image link and an import map for the JS modules, so each deploy only refreshes the files that changed |
+| `index.php` | Clean URLs (`/guide` → `guide.html`, `/en/guide` → `lang/en/guide.html`); adds `?v=<file time>` to every local CSS/JS/image link and an import map for the JS modules, so each deploy only refreshes the files that changed. The finished page is built once per deploy and kept in the system temp dir (`cccc-pages/`, 10-min safety TTL; skipped on the PHP dev server) |
 | `lang/en/` | The English pages (`/en`, `/en/guide`, `/en/about`), generated from the Arabic ones — don't edit them by hand (see below) |
 | `ltr.css` | Mirrors the layout left-to-right for the English pages (loaded only there) |
 | `proxy.php` | API proxy, HowLongToBeat lookup, translation, image proxy, classification storage and stats |

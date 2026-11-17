@@ -32,3 +32,6 @@ data/ratelimit/
 
 # Internal AI context — local only, not shipped
 /CLAUDE.md
+
+# Local handoff notes (not shipped)
+/handoff.md

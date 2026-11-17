@@ -58,7 +58,10 @@ export function renderControls() {
     dropdownItems.forEach(item => {
         if (item.dataset.value === state.type) {
             const title = document.querySelector('.ratings-title');
-            if (title) title.innerHTML = `<span class="label-white">محتوى</span> <span class="label-green">ال${item.textContent}</span>`;
+            // Manual has no type name to join ("محتوى اليدوي" is wrong Arabic), so it reads just "المحتوى"
+            if (title) title.innerHTML = state.type === 'manual'
+                ? `<span class="label-white">المحتوى</span>`
+                : `<span class="label-white">محتوى</span> <span class="label-green">ال${item.textContent}</span>`;
         }
     });
 

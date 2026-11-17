@@ -23,7 +23,7 @@ const STICKER = { gap: 16, groupGap: 28, one: 190, two: { h: 140, wide: 120, tal
 // Hints shown in empty manual-mode fields (preview only, never exported)
 export const MANUAL_PH = {
     title: 'اكتب العنوان هنا',
-    synopsis: 'اكتب النبذة هنا...',
+    synopsis: 'اكتب نبذة قصيرة…',
     stats: 'المدة',
     genres: ['التصنيف 1', 'التصنيف 2', 'التصنيف 3'],
 };

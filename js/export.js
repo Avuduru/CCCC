@@ -268,7 +268,7 @@ function showExportModal(url, file) {
     }
 
     const instructions = document.createElement('p');
-    instructions.innerText = canShare ? 'أو اضغط مطولاً على الصورة لحفظها' : 'اضغط مطولاً على الصورة لحفظها';
+    instructions.innerText = canShare ? 'أو احفظ الصورة بالضغط عليها باستمرار' : 'لحفظ الصورة، اضغط عليها باستمرار';
     instructions.style.color = 'var(--text-dim)';
     instructions.style.fontSize = '14px';
     instructions.style.margin = '0';
@@ -310,7 +310,7 @@ export function handleExport() {
     renderCanvas(originalCanvas)
         .then(canvasToJpeg)
         .then(({ blob, ext }) => {
-            if (!blob) { exportBtn.innerText = 'ERROR'; return; }
+            if (!blob) { exportBtn.innerText = 'تعذر التصدير'; return; }
 
             const filename = getFilename(ext);
             const url = URL.createObjectURL(blob);
@@ -329,11 +329,11 @@ export function handleExport() {
         })
         .catch(err => {
             console.error('Export failed:', err);
-            exportBtn.innerText = 'ERROR';
+            exportBtn.innerText = 'تعذر التصدير';
         })
         .finally(() => {
             exporting = false;
-            setTimeout(() => { exportBtn.innerText = 'تصديـر'; }, 2000);
+            setTimeout(() => { exportBtn.innerText = 'تصدير'; }, 2000);
         });
 }
 

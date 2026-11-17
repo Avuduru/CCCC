@@ -111,7 +111,7 @@
                     </div>
 
                     <div class="control-row">
-                        <span class="control-label">قالب التصنيف</span>
+                        <span class="control-label">قالب البطاقة</span>
                         <div class="orientation-selector">
                             <button class="orient-btn active" data-value="horizontal">
                                 <span class="orient-icon orient-icon-h"></span>
@@ -149,7 +149,7 @@
                 <!-- Content / Search -->
                 <div class="panel-section">
                     <div class="section-head">
-                        <span class="kicker"><span class="kicker-dot"></span>المحتوى</span>
+                        <span class="kicker"><span class="kicker-dot"></span>العمل</span>
                     </div>
 
                     <div class="control-row" id="search-row">
@@ -195,19 +195,19 @@
                     </label>
 
                     <label class="mf-field">
-                        <span class="mf-label">التصنيفات <em>افصل بفاصلة</em></span>
+                        <span class="mf-label">التصنيفات <em>افصل بينها بفواصل</em></span>
                         <input type="text" id="mf-genres" class="mf-input" placeholder="دراما، خيال، مغامرة">
                     </label>
 
                     <!-- No score field: in manual mode the classifier's own rating (above) is the score -->
                     <label class="mf-field">
                         <span class="mf-label">المدة <em>حلقات، دقائق، صفحات أو ساعات</em></span>
-                        <input type="text" id="mf-stats" class="mf-input" placeholder="مثلاً: 24 حلقة · 120 دقيقة · 300 صفحة · 40 ساعة">
+                        <input type="text" id="mf-stats" class="mf-input" placeholder="مثال: 24 حلقة · 120 دقيقة · 300 صفحة · 40 ساعة">
                     </label>
 
                     <label class="mf-field">
                         <span class="mf-label">النبذة</span>
-                        <textarea id="mf-synopsis" class="mf-input mf-textarea" rows="4" placeholder="اكتب النبذة هنا..."></textarea>
+                        <textarea id="mf-synopsis" class="mf-input mf-textarea" rows="4" placeholder="اكتب نبذة قصيرة…"></textarea>
                     </label>
 
                     <div class="mf-field">
@@ -244,9 +244,9 @@
                     </div>
 
                     <div class="warning-text">
-                        <span class="warn-prefix">تنبيه !</span>
+                        <span class="warn-prefix">تنبيه!</span>
                         <br>
-                        قبل تصنيف أي محتوى، يرجى قراءة:
+                        قبل تصنيف أي عمل، اقرأ:
                         <br>
                         <a href="#" id="open-info-modal">شرح الدرجات والتصانيف</a>
                     </div>
@@ -343,7 +343,7 @@
                     </div>
                     <div class="footer-actions">
                         <button id="copy-btn"><span class="btn-icon">⧉</span><span>نسخ</span></button>
-                        <button id="export-btn"><span class="btn-icon">↓</span><span>تصديـر</span></button>
+                        <button id="export-btn"><span class="btn-icon">↓</span><span>تصدير</span></button>
                     </div>
                 </div>
             </section>
@@ -368,11 +368,11 @@
                 </div>
             </header>
             <!-- Phones: jump between the guide's sections (built by js/phone.js) -->
-            <nav class="guide-tabs" id="guide-tabs" aria-label="أقسام الشرح"></nav>
+            <nav class="guide-tabs" id="guide-tabs" aria-label="أقسام الدليل"></nav>
             <div class="modal-body">
-                <p class="guide-intro">التصنيف المحافظ للمحتوى الإبداعي (CCCC) أداةٌ تتيح تصنيفَ الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقمٍ عمري. <a href="about">اقرأ المزيد عنّا</a></p>
+                <p class="guide-intro">التصنيف المحافظ للمحتوى الإبداعي (CCCC) أداةٌ تتيح تصنيفَ الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقمٍ عمري. <a href="about">المزيد عن المشروع</a></p>
                 <section class="modal-section">
-                    <h3 class="section-title"><span class="section-num">01</span>القيم والدرجات</h3>
+                    <h3 class="section-title"><span class="section-num">01</span>الدرجات</h3>
                     <div class="grades-container">
                         <div class="grade-card grade-red">
                             <div class="grade-header">
@@ -388,7 +388,7 @@
                                 </div>
                                 <div class="grade-desc">
                                     <div class="grade-desc-label">// في الألعاب</div>
-                                    <p>يستحيل إتمام اللعبة دون المرور عليه.</p>
+                                    <p>لا يمكن إتمام اللعبة دون المرور بهذا المحتوى.</p>
                                 </div>
                             </div>
                         </div>
@@ -402,7 +402,7 @@
                             <div class="grade-body">
                                 <div class="grade-desc">
                                     <div class="grade-desc-label">// في القصصيّات</div>
-                                    <p>يمكن تخطي المحتوى دون التأثير على فهم القصة، إلا أن كثرة ظهوره تُقطّع تسلسل العرض.</p>
+                                    <p>يمكن تخطي المحتوى دون التأثير على فهم القصة، لكن تكرار التخطي يقطع تسلسلها.</p>
                                 </div>
                                 <div class="grade-desc">
                                     <div class="grade-desc-label">// في الألعاب</div>
@@ -420,11 +420,11 @@
                             <div class="grade-body">
                                 <div class="grade-desc">
                                     <div class="grade-desc-label">// في القصصيّات</div>
-                                    <p>يمكن تخطّي المحتوى دون التأثير على القصّة. ظهور قليل يمكن تخطيه بسهولة.</p>
+                                    <p>يظهر المحتوى نادرا، ويسهل تخطيه دون التأثير على فهم القصة.</p>
                                 </div>
                                 <div class="grade-desc">
                                     <div class="grade-desc-label">// في الألعاب</div>
-                                    <p>يمكن تجاهله أو استخدام طرق بديلة لإتمام اللعبة.</p>
+                                    <p>يمكن تجاهل المحتوى أو اتباع طرق بديلة لإتمام اللعبة.</p>
                                 </div>
                             </div>
                         </div>
@@ -450,7 +450,7 @@
                             <img src="assets/icons/سحر.png?v=2" alt="سحر">
                             <div class="item-text">
                                 <strong>سحر</strong>
-                                <p>القوى والرموز والتعويذات المرتبطة بالسحر والتنجيم ورؤية المستقبل.</p>
+                                <p>قوى ورموز وتعويذات مرتبطة بالسحر والتنجيم والتنبؤ بالغيب.</p>
                             </div>
                         </div>
                         <div class="modal-item warning-card">
@@ -461,10 +461,10 @@
                             </div>
                         </div>
                         <div class="modal-item warning-card">
-                            <img src="assets/icons/تعري.png?v=2" alt="تعرّي">
+                            <img src="assets/icons/تعري.png?v=2" alt="تعري">
                             <div class="item-text">
-                                <strong>تعرّي</strong>
-                                <p>ظهور أشخاص بجسد عاري كلياً أو جزئياً.</p>
+                                <strong>تعري</strong>
+                                <p>مشاهد تتضمن تعريا كاملا أو جزئيا.</p>
                             </div>
                         </div>
                         <div class="modal-item warning-card">
@@ -478,35 +478,35 @@
                             <img src="assets/icons/صادم.png?v=2" alt="صادم">
                             <div class="item-text">
                                 <strong>صادم</strong>
-                                <p>محتوى ذو طابع صادم يُلحق أثراً نفسياً بالمشاهد، من عنف دموي وأشلاء واغتصاب وانتحار وتعذيب وما يثير الاشمئزاز الشديد.</p>
+                                <p>محتوى قد يسبب الانزعاج الشديد، مثل العنف الدموي والأشلاء والاغتصاب والانتحار والتعذيب والمشاهد المثيرة للاشمئزاز.</p>
                             </div>
                         </div>
                         <div class="modal-item warning-card">
                             <img src="assets/icons/مفاسد.png?v=2" alt="مفاسد">
                             <div class="item-text">
                                 <strong>مفاسد</strong>
-                                <p>ترويج أو تشجيع على القمار أو تعاطي المخدرات أو إظهارها بصفة إيجابية، فضلاً عن المشاهد المثيرة للغرائز كالإيحاءات الجسدية والإغراء غير الصريح.</p>
+                                <p>الترويج للقمار أو تعاطي المخدرات، أو التشجيع عليهما أو تصويرهما بصورة إيجابية، إضافة إلى المشاهد المثيرة للغرائز، مثل الإيحاءات الجسدية والإغراء غير الصريح.</p>
                             </div>
                         </div>
                         <div class="modal-item mechanic-card">
-                            <img src="assets/icons/إدمانيّات.png?v=2" alt="إدمانيّات">
+                            <img src="assets/icons/إدمانيّات.png?v=2" alt="إدمانيات">
                             <div class="item-text">
-                                <strong>إدمانيّات</strong>
-                                <p>(خاص للألعاب) مصممة للعودة المستمرة والمتابعة الدورية اليومية لتحقيق التقدم.</p>
+                                <strong>إدمانيات</strong>
+                                <p>(خاص بالألعاب) آليات تربط التقدم بالعودة اليومية المنتظمة، مثل تسجيل الدخول اليومي وسلاسل الأيام المتتالية.</p>
                             </div>
                         </div>
                         <div class="modal-item mechanic-card">
                             <img src="assets/icons/تبذير.png?v=2" alt="تبذير">
                             <div class="item-text">
                                 <strong>تبذير</strong>
-                                <p>(خاص للألعاب) مصممة لربط التقدم بالمال المنفق على أغراض داخل اللعبة.</p>
+                                <p>(خاص بالألعاب) ربط التقدم بالمال المنفق على عناصر داخل اللعبة.</p>
                             </div>
                         </div>
                         <div class="modal-item mechanic-card">
                             <img src="assets/icons/قمار.png?v=2" alt="قمار">
                             <div class="item-text">
                                 <strong>قمار</strong>
-                                <p>(خاص للألعاب) مصممة لتشجيع شراء الصناديق ذات المحتوى العشوائي ونظام السحب.</p>
+                                <p>(خاص بالألعاب) آليات تشجع على شراء صناديق بمحتويات عشوائية أو دفع المال مقابل سحوبات عشوائية.</p>
                             </div>
                         </div>
                     </div>
@@ -519,9 +519,9 @@
                             والأغاني والألفاظ النابية والعلاقات خارج إطار الزواج. وفي حال خلو المحتوى منها، ينبغي للمُصنّف
                             استخدام التالي:</p>
                         <div class="exceptions-icons">
-                            <img src="assets/icons/موسيقى0.png" alt="خال من الموسيقى">
-                            <img src="assets/icons/ألفاظ نابية0.png" alt="خال من الألفاظ النابية">
-                            <img src="assets/icons/علاقات حب0.png" alt="خال من العلاقات خارج الزواج">
+                            <img src="assets/icons/موسيقى0.png" alt="لا يحتوي على موسيقى">
+                            <img src="assets/icons/ألفاظ نابية0.png" alt="لا يحتوي على ألفاظ نابية">
+                            <img src="assets/icons/علاقات حب0.png" alt="لا يحتوي على علاقات عاطفية خارج الزواج">
                         </div>
                     </div>
                 </section>

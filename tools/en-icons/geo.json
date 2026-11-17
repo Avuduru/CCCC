@@ -1,0 +1,215 @@
+{
+ "kufr1": {
+  "src": "كفريات1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "kufr2": {
+  "src": "كفريات2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "kufr3": {
+  "src": "كفريات3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "sex1": {
+  "src": "جنس1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "sex2": {
+  "src": "جنس2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "sex3": {
+  "src": "جنس3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "nudity1": {
+  "src": "تعري1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "nudity2": {
+  "src": "تعري2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "nudity3": {
+  "src": "تعري3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "vices1": {
+  "src": "مفاسد1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "vices2": {
+  "src": "مفاسد2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "vices3": {
+  "src": "مفاسد3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "magic1": {
+  "src": "سحر1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "magic2": {
+  "src": "سحر2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "magic3": {
+  "src": "سحر3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "lgbt1": {
+  "src": "شذوذ1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "lgbt2": {
+  "src": "شذوذ2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "lgbt3": {
+  "src": "شذوذ3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "gore1": {
+  "src": "صادم1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "gore2": {
+  "src": "صادم2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "gore3": {
+  "src": "صادم3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "addiction1": {
+  "src": "إدمانيّات1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "addiction2": {
+  "src": "إدمانيّات2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "addiction3": {
+  "src": "إدمانيّات3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "lootbox1": {
+  "src": "قمار1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "lootbox2": {
+  "src": "قمار2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "lootbox3": {
+  "src": "قمار3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "p2w1": {
+  "src": "تبذير1.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "p2w2": {
+  "src": "تبذير2.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "p2w3": {
+  "src": "تبذير3.png",
+  "w": 284,
+  "h": 284,
+  "stripTop": 238
+ },
+ "nomusic": {
+  "src": "موسيقى0.png",
+  "w": 283,
+  "h": 289,
+  "stripTop": 238,
+  "green": "#7cb342",
+  "topText": [
+   26,
+   110
+  ]
+ },
+ "noprofanity": {
+  "src": "ألفاظ نابية0.png",
+  "w": 284,
+  "h": 294,
+  "stripTop": 238,
+  "green": "#7cb342",
+  "topText": [
+   26,
+   77
+  ]
+ },
+ "noaffairs": {
+  "src": "علاقات حب0.png",
+  "w": 283,
+  "h": 289,
+  "stripTop": 238,
+  "green": "#7cb342",
+  "topText": [
+   12,
+   110
+  ]
+ }
+}

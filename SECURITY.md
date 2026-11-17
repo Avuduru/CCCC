@@ -38,6 +38,11 @@ Everything else is static HTML/CSS/JS.
   clamped to 0–3; a work's title is set by its **first** vote only (later voters can't rename it);
   the payload is capped (16 KB) and the content-type whitelisted; in production, if the DB is down the
   endpoint returns 503 rather than writing an unbounded fallback file.
+- **Stored user text (the classifier's own `synopsis`)** — the one piece of free-form user-generated
+  content stored. It is kept as **plain text** (control characters stripped, capped at 2000), and is
+  **never rendered server-side**. ⚠️ Whatever later **displays** it (e.g. a community/consensus page)
+  **must HTML-escape it** (stored-XSS risk lives in the display, not the storage) and should have a way
+  to **hide/moderate** abuse, spam or personal info. Until such a page exists, the text is write-only.
 - **Rate limits** (`rateLimited()`, per hashed visitor IP, counters in `data/ratelimit/`):
   240 API calls / 10 min, 400 images / 10 min, 30 rated works / 10 min.
 - **Client IP** (`clientIp()`) — used for the above. Reads `TRUSTED_IP_HEADER` if set (e.g. `X-Real-IP`),

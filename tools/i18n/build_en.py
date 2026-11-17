@@ -17,6 +17,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import seo  # noqa: E402  (titles, descriptions, canonical/hreflang, Open Graph, JSON-LD)
+
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'lang' / 'en'
 ARABIC = re.compile(r'[؀-ۿ]')
@@ -26,6 +29,7 @@ ARABIC = re.compile(r'[؀-ۿ]')
 ALLOWED_ARABIC = [
     'التصنيف المحافظ للمحتوى الإبداعي',
     'العربية',
+    'محافظ',   # the site's Arabic name, listed as an alternate name in the JSON-LD
 ]
 ALLOWED_ARABIC_ATTR = re.compile(r'(src|href)="/assets/icons/[^"]*"')
 
@@ -98,11 +102,10 @@ EXCEPTION_ICONS = [
 LEVELS = [('الدرجة الأولى', 'Level 1'), ('الدرجة الثانية', 'Level 2'), ('الدرجة الثالثة', 'Level 3')]
 
 
-def common_head(html, page_url_en, title_ar, title_en):
-    """lang/dir, title, English fonts, ltr.css last in <head>."""
+def common_head():
+    """lang/dir and ltr.css last in <head> (the SEO block is swapped in build())."""
     return [
         ('<html lang="ar" dir="rtl">', '<html lang="en" dir="ltr">', 1),
-        (f'<title>{title_ar}</title>', f'<title>{title_en}</title>', 1),
         ('</head>', '    <link rel="stylesheet" href="/ltr.css">\n</head>', 1),
     ]
 
@@ -111,7 +114,8 @@ def common_head(html, page_url_en, title_ar, title_en):
 def index_rules():
     r = [
         ('<link\n        href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap"\n        rel="stylesheet">', FONTS_EN, 1),
-        *[(a, b, 1) for a, b in HEADER_BRAND],
+        (f'<h1 class="brand-ar">{NAME_AR}</h1>', f'<h1 class="brand-ar">{NAME_EN}</h1>', 1),   # the tool page's main heading
+        HEADER_BRAND[1] + (1,),
         ('<a class="status-about" href="/en" lang="en" hreflang="en">English</a>', '<a class="status-about" href="/" lang="ar" hreflang="ar">العربية</a>', 1),
         ('<a class="status-about" href="about">عن المشروع</a>', '<a class="status-about" href="/en/about">About</a>', 1),
         ('<span class="status-text">الإصدار 1.0</span>', '<span class="status-text">Version 1.0</span>', 1),
@@ -213,8 +217,6 @@ def index_rules():
 # Page: about -------------------------------------------------------------------------
 def about_rules():
     return [
-        ('<meta name="description" content="التصنيف المحافظ للمحتوى الإبداعي (CCCC): أداة لتصنيف الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقم عمري.">',
-         '<meta name="description" content="CCCC (Conservative Classification of Creative Content): rate creative works by what they contain, not by age.">', 1),
         ('<!-- Arabic uses the site\'s own Handjet files (style.v3.css); Google\'s copy broke letter joins on iOS -->',
          '<!-- Headings use the site\'s own Handjet files (style.v3.css); paragraphs use IBM Plex Sans (ltr.css) -->', 1),
         ('<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">', FONTS_EN, 1),
@@ -310,10 +312,10 @@ def guide_rules():
 
 
 PAGES = [
-    # source, output, Arabic title, English title, rules
-    ('index.html', 'index.html', 'CCCC — التصنيف المحافظ', 'CCCC — Conservative Classification', index_rules),
-    ('about.html', 'about.html', 'عن المشروع — CCCC', 'About — CCCC', about_rules),
-    ('guide.html', 'guide.html', 'دليل التصنيف المحافظ — CCCC', 'Rating guide — CCCC', guide_rules),
+    # source, output, page key (tools/i18n/seo.py), rules
+    ('index.html', 'index.html', 'index', index_rules),
+    ('about.html', 'about.html', 'about', about_rules),
+    ('guide.html', 'guide.html', 'guide', guide_rules),
 ]
 
 # Links between pages and local file paths ---------------------------------------------
@@ -321,10 +323,14 @@ PAGE_LINKS = [('href="./"', 'href="/en"'), ('href="about"', 'href="/en/about"'),
 LOCAL_PATH = re.compile(r'\b(src|href)="(?!https?:|//|#|/|data:|mailto:)((?:assets|js)/[^"]*|[\w.-]+\.(?:css|js|png|ico))"')
 
 
-def build(src_name, rules, title_ar, title_en):
+def build(src_name, rules, page_key):
     html = (ROOT / src_name).read_text(encoding='utf-8')
     problems = []
-    for a, b, n in common_head(html, None, title_ar, title_en) + rules():
+    try:
+        html = seo.replace_block(html, seo.block(page_key, 'en'))
+    except AssertionError as err:
+        problems.append(f'{src_name}: {err}')
+    for a, b, n in common_head() + rules():
         found = html.count(a)
         if found != n:
             problems.append(f'{src_name}: expected {n}× but found {found}×:\n    {a[:160]}')
@@ -352,8 +358,8 @@ def main():
     check = '--check' in sys.argv
     all_problems, stale = [], []
     OUT.mkdir(parents=True, exist_ok=True)
-    for src, out, t_ar, t_en, rules in PAGES:
-        html, problems = build(src, rules, t_ar, t_en)
+    for src, out, key, rules in PAGES:
+        html, problems = build(src, rules, key)
         all_problems += problems
         target = OUT / out
         if problems:

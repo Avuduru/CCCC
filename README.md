@@ -279,6 +279,9 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `assets/fonts/` | Handjet (served from the site; Google's copy broke Arabic letter joins on iOS) and PixelAE |
 | `tools/en-icons/` | Script that rebuilds the English icons from the Arabic ones (edit the labels, re-run) |
 | `tools/i18n/build_en.py` | Builds `lang/en/*.html` from the Arabic pages and holds their English wording |
+| `tools/i18n/seo.py` | Titles, descriptions, canonical/`hreflang` links, Open Graph / X cards and JSON-LD for every page in both languages |
+| `tools/og/make_og.py` · `assets/og/` | Renders the link-preview images (1200×630, Arabic and English) |
+| `robots.txt` · `sitemap.xml` | Search engines: everything but `proxy.php` may be crawled; the sitemap lists all six pages with their other-language versions |
 | `data/schema.sql` | Database schema |
 | `Caddyfile` | Web server config: blocks `.git`, dotfiles, `data/`, `tools/`, `lang/` and config files; redirects `www` to the bare domain; long cache for `?v=` files, revalidation for pages |
 | `railpack.json` | Pins the PHP version for deployment |
@@ -333,6 +336,7 @@ Run `data/schema.sql` once (phpMyAdmin, HeidiSQL, or the `mysql` CLI). It create
 - **`.htaccess` is not used in production.** The server is Caddy, so access rules and redirects live in the `Caddyfile`.
 - **HowLongToBeat has no official API.** `proxy.php` reads the current search endpoint from HowLongToBeat's own website code and caches it for 24 hours, so it keeps working when they move it. If they change the request format itself, `searchHltb()` needs an update.
 - **Caching:** files with `?v=` are cached for a year (their URL changes on every deploy that touches them); `/`, `/guide`, `/about`, their `/en` versions and unversioned CSS/JS are revalidated on each visit.
+- **Search and link previews:** each page's `<head>` has a block between `<!-- SEO -->` and `<!-- /SEO -->`. Edit the wording in `tools/i18n/seo.py`, run it (it rewrites the Arabic pages), then run `tools/i18n/build_en.py` for the English ones. Keep descriptions under ~155 characters so Google shows them whole. Add new pages to `sitemap.xml`.
 - **English site:** the Arabic pages are the source. After changing `index.html`, `guide.html` or `about.html`, run `python tools/i18n/build_en.py`: it rebuilds `lang/en/` and stops with the exact text it couldn't translate if the Arabic changed (add the English wording to the script, then run it again). `--check` only reports whether `lang/en/` is up to date. Text the scripts show (buttons, card placeholders, length pills) lives in `js/i18n.js`. On `/en` the genres and synopsis come straight from the sources, untranslated.
 - **English icons:** `python tools/en-icons/make_icons.py` (needs Playwright) repaints the label areas of the Arabic icons and writes `assets/icons/en/`. Change a word in `LABELS` and re-run.
 - **Saved IDs are namespaced:** anime/manga use `anilist:<id>` or `mal:<id>`, books use the Open Library key (`/works/OL…W`), games use the RAWG slug, movies/TV use the TMDB ID, and manual entries use `manual:<title>`.

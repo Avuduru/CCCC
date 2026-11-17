@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+# The API proxy only returns data for the tool's own scripts
+Disallow: /proxy.php
+
+Sitemap: https://muhafid.com/sitemap.xml

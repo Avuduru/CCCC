@@ -100,6 +100,12 @@
         background: var(--ink-3); border: 1px solid var(--line-bright); border-radius: 8px;
     }
 
+    /* Typing (keyboard open, js/phone.js): the card scrolls away and the bar hides,
+       so the field and its search results get the little screen that's left */
+    body.kb-open .stage { position: relative; box-shadow: none; }
+    body.kb-open .card-footer { display: none; }
+    .search-wrapper, .mf-field, .classifier-inputs { scroll-margin-top: 12px; }
+
     /* ── Export / Copy: fixed at the bottom, within thumb reach ── */
     .card-footer {
         position: fixed; left: 0; right: 0; bottom: 0; z-index: 950;

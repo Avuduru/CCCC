@@ -8,6 +8,42 @@ export function initPhone() {
     buildTypeChips();
     setupEnlarge();
     buildGuideTabs();
+    setupKeyboardMode();
+}
+
+// ── Typing: give the keyboard's small screen to the field ────────────────
+// With the iPhone keyboard up only ~450px is visible; the pinned card and the
+// Export bar would cover the field and the search results. While a text field
+// in the controls has focus, body.kb-open unpins the card and hides the bar
+// (phone.css), and the field scrolls to the top so its results fit below it.
+const isPhone = () => window.matchMedia('(max-width: 640px)').matches;
+const isTextField = (el) => el && (el.matches('input[type="text"], input:not([type]), textarea') || el.isContentEditable);
+
+function setupKeyboardMode() {
+    const controls = document.querySelector('.top-controls');
+    if (!controls) return;
+    let closeTimer = 0;
+    controls.addEventListener('focusin', (e) => {
+        if (!isPhone() || !isTextField(e.target)) return;
+        clearTimeout(closeTimer);
+        document.body.classList.add('kb-open');
+        const field = e.target.closest('.search-wrapper, .mf-field, .classifier-inputs') || e.target;
+        // after the keyboard has started to open, so the scroll isn't undone
+        setTimeout(() => field.scrollIntoView({ block: 'start', behavior: 'smooth' }), 300);
+    });
+    controls.addEventListener('focusout', () => {
+        // Wait a moment: a tap on a search result blurs the field first, and the
+        // layout must not move under that tap. Moving to another field cancels this.
+        clearTimeout(closeTimer);
+        closeTimer = setTimeout(() => {
+            if (!isTextField(document.activeElement)) document.body.classList.remove('kb-open');
+        }, 350);
+    });
+    // Picking a search result closes the keyboard, so the card (pinned again) is in view
+    const results = document.getElementById('search-results');
+    if (results) results.addEventListener('click', () => {
+        if (isPhone() && document.activeElement && isTextField(document.activeElement)) document.activeElement.blur();
+    });
 }
 
 // ── Content type: one tap per type instead of a dropdown ──────────────────

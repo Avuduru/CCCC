@@ -143,9 +143,66 @@ function filterNSFWFromRAWG($data)
 }
 
 /**
+ * Search normalisation: lower-case, "&" -> "and", punctuation to spaces, common game
+ * abbreviations expanded (GTA -> grand theft auto) and Roman numerals II–XX, V, X turned
+ * into numbers (VI -> 6), so "GTA 6", "gta vi" and "Grand Theft Auto VI" all compare equal.
+ * A lone "I" is left alone (too common as a word).
+ */
+const SEARCH_ABBREVIATIONS = [
+    'gta' => 'grand theft auto', 'cod' => 'call of duty', 'rdr' => 'red dead redemption',
+    'gow' => 'god of war', 'ff' => 'final fantasy', 'mgs' => 'metal gear solid',
+    'tlou' => 'the last of us', 'botw' => 'breath of the wild', 'totk' => 'tears of the kingdom',
+    'ac' => 'assassins creed', 'nfs' => 'need for speed', 'ds' => 'dark souls',
+];
+const SEARCH_ROMAN = [
+    'ii' => 2, 'iii' => 3, 'iv' => 4, 'v' => 5, 'vi' => 6, 'vii' => 7, 'viii' => 8, 'ix' => 9, 'x' => 10,
+    'xi' => 11, 'xii' => 12, 'xiii' => 13, 'xiv' => 14, 'xv' => 15, 'xvi' => 16, 'xvii' => 17,
+    'xviii' => 18, 'xix' => 19, 'xx' => 20,
+];
+
+function normalizeSearchTitle($s)
+{
+    $s = mb_strtolower((string)$s, 'UTF-8');
+    $s = str_replace(['&', "'", '’'], [' and ', '', ''], $s);
+    $s = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $s);
+    $out = [];
+    foreach (preg_split('/\s+/', trim($s)) as $w) {
+        if ($w === '') continue;
+        if (isset(SEARCH_ABBREVIATIONS[$w])) $w = SEARCH_ABBREVIATIONS[$w];
+        elseif (isset(SEARCH_ROMAN[$w])) $w = (string)SEARCH_ROMAN[$w];
+        $out[] = $w;
+    }
+    return implode(' ', $out);
+}
+
+/**
+ * Extra RAWG search texts for a game query: abbreviations expanded, and the same text with
+ * its number written the other way (6 <-> VI), because RAWG's own search matches the text
+ * literally ("GTA 6" finds Far Cry 6, not Grand Theft Auto VI). Returns up to 2 queries.
+ */
+function gameSearchQueries($query)
+{
+    $words = preg_split('/\s+/', trim(mb_strtolower((string)$query, 'UTF-8')));
+    $expanded = [];
+    foreach ($words as $w) $expanded[] = SEARCH_ABBREVIATIONS[$w] ?? $w;
+    $primary = implode(' ', $expanded);
+    $toRoman = array_flip(SEARCH_ROMAN);
+    $swapped = [];
+    foreach ($expanded as $w) {
+        if (ctype_digit($w) && isset($toRoman[(int)$w])) $swapped[] = $toRoman[(int)$w];
+        elseif (isset(SEARCH_ROMAN[$w])) $swapped[] = (string)SEARCH_ROMAN[$w];
+        else $swapped[] = $w;
+    }
+    $alt = implode(' ', $swapped);
+    return $alt !== $primary ? [$primary, $alt] : [$primary];
+}
+
+/**
  * Smart Search Sorting Algorithm
- * Blends semantic title relevance with API-specific popularity metrics
- * to push major titles to the top and filter out obscure fan-clips/DLCs.
+ * Ranks by how well the title matches first (exact > starts with > contains), then by
+ * popularity on a log scale, so an exact title wins over a merely popular one (GTA VI over
+ * GTA V while VI is new), yet a popular sequel still beats an obscure exact namesake.
+ * Titles and query are compared normalised (see normalizeSearchTitle).
  */
 function applySmartSort($data, $type, $query)
 {
@@ -156,38 +213,36 @@ function applySmartSort($data, $type, $query)
     if (!isset($data[$dataKey]) || !is_array($data[$dataKey])) return $data;
 
     $items = $data[$dataKey];
-    $queryLower = strtolower(trim($query));
+    $q = normalizeSearchTitle($query);
 
     foreach ($items as &$item) {
-        $title = '';
+        $titles = [];
         $popularity = 0;
 
         if ($type === 'movie' || $type === 'tv') {
-            $title = $item['title'] ?? $item['name'] ?? '';
+            $titles = [$item['title'] ?? $item['name'] ?? '', $item['original_title'] ?? $item['original_name'] ?? ''];
             $popularity = $item['popularity'] ?? 0;
         } else if ($type === 'game') {
-            $title = $item['name'] ?? '';
+            $titles = [$item['name'] ?? ''];
             $popularity = $item['added'] ?? 0;
         } else if ($type === 'anime' || $type === 'manga') {
-            $title = $item['title'] ?? $item['title_english'] ?? '';
+            $titles = [$item['title'] ?? '', $item['title_english'] ?? ''];
             $popularity = $item['members'] ?? 0;
         } else if ($type === 'book') {
-            $title = $item['title'] ?? '';
+            $titles = [$item['title'] ?? ''];
             $popularity = ($item['readinglog_count'] ?? 0) + ($item['ratings_count'] ?? 0);
         }
 
-        $titleLower = strtolower($title);
-
-        $relevance = 1.0;
-        if ($titleLower === $queryLower) {
-            $relevance = 10.0;
-        } elseif (strpos($titleLower, $queryLower) === 0) {
-            $relevance = 5.0;
-        } elseif (strpos($titleLower, $queryLower) !== false) {
-            $relevance = 2.0;
+        $tier = 0;   // 3 exact, 2 starts with, 1 contains, 0 neither — best over the work's titles
+        foreach ($titles as $t) {
+            $t = normalizeSearchTitle($t);
+            if ($t === '' || $q === '') continue;
+            if ($t === $q) $tier = max($tier, 3);
+            elseif (strpos($t, $q) === 0) $tier = max($tier, 2);
+            elseif (strpos($t, $q) !== false) $tier = max($tier, 1);
         }
 
-        $item['_smart_score'] = $relevance * ($popularity + 1);
+        $item['_smart_score'] = $tier * 2 + log10(max(0, (float)$popularity) + 1);
     }
     unset($item);
 
@@ -198,7 +253,7 @@ function applySmartSort($data, $type, $query)
     foreach ($items as &$item) {
         unset($item['_smart_score']);
     }
-    
+
     $data[$dataKey] = array_slice($items, 0, 5);
 
     return $data;
@@ -638,7 +693,8 @@ switch ($type) {
     case 'game':
         // RAWG API - comprehensive game database (free and paid games)
         // Fetch 20 to give room for NSFW filtering and smart sorting
-        $url = "https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($query) . "&page_size=20";
+        $gameQueries = gameSearchQueries($query);
+        $url = "https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[0]) . "&page_size=20";
         break;
 
     case 'game_details':
@@ -1387,6 +1443,16 @@ if ($url === 'ANILIST_PRIMARY') {
 } else if ($url) {
     $response = fetchUrl($url);
     $data = json_decode($response, true);
+    // Games: also search the number-swapped text ("6" <-> "VI") and merge, de-duplicated by id
+    if ($type === 'game' && isset($gameQueries[1]) && is_array($data) && isset($data['results']) && is_array($data['results'])) {
+        $alt = json_decode(fetchUrl("https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[1]) . "&page_size=20"), true);
+        if (is_array($alt) && isset($alt['results']) && is_array($alt['results'])) {
+            $seen = array_flip(array_column($data['results'], 'id'));
+            foreach ($alt['results'] as $r) {
+                if (isset($r['id']) && !isset($seen[$r['id']])) { $data['results'][] = $r; $seen[$r['id']] = 1; }
+            }
+        }
+    }
 } else {
     echo json_encode(['error' => 'Unknown error']);
     exit;

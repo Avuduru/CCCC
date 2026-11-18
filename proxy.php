@@ -1006,42 +1006,51 @@ switch ($type) {
             exit;
         }
 
-        // 1. Try Google Translate endpoint with client=dict-chrome-ex
-        $dictUrl = "https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ar&dt=t&q=" . urlencode($text);
-        $response = fetchUrl($dictUrl, [], null, 5);
-        $data = json_decode($response, true);
+        // A real Arabic translation contains Arabic letters. Anything else is an error message
+        // dressed up as a translation (MyMemory answers "QUERY LENGTH LIMIT EXCEEDED…" with
+        // HTTP 200) and must never reach the card.
+        $isArabic = fn($t) => is_string($t) && trim($t) !== '' && preg_match('/[\x{0600}-\x{06FF}]/u', $t);
+        $ok = function ($t) {
+            echo json_encode(['responseStatus' => 200, 'responseData' => ['translatedText' => $t]]);
+            exit;
+        };
 
+        // 1. Google Translate (client=dict-chrome-ex). A long synopsis takes it 4–6 s from our
+        // server, so it gets 10 s: a translation is fetched once per work and cached in the browser.
+        $dictUrl = "https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ar&dt=t&q=" . urlencode($text);
+        $data = json_decode(fetchUrl($dictUrl, [], null, 10), true);
         if ($data && isset($data[0]) && is_array($data[0])) {
-            $translatedText = "";
+            $translatedText = '';
             foreach ($data[0] as $segment) {
-                if (isset($segment[0])) {
-                    $translatedText .= $segment[0];
-                }
+                if (isset($segment[0])) $translatedText .= $segment[0];
             }
-            if (!empty($translatedText)) {
-                echo json_encode([
-                    'responseStatus' => 200,
-                    'responseData' => [
-                        'translatedText' => $translatedText
-                    ]
-                ]);
-                exit;
-            }
+            if ($isArabic($translatedText)) $ok($translatedText);
         }
 
-        // 2. Fallback: Try MyMemory API
-        $mymemoryUrl = "https://api.mymemory.translated.net/get?q=" . urlencode($text) . "&langpair=en|ar";
-        $mmResponse = fetchUrl($mymemoryUrl, [], null, 5);
-        $mmData = json_decode($mmResponse, true);
-
-        if ($mmData && isset($mmData['responseData']['translatedText'])) {
-            echo json_encode([
-                'responseStatus' => 200,
-                'responseData' => [
-                    'translatedText' => $mmData['responseData']['translatedText']
-                ]
-            ]);
-            exit;
+        // 2. Fallback: MyMemory. It refuses more than 500 characters, so a long text goes in
+        // pieces cut at sentence ends (≤ 480 chars each); every piece must come back as Arabic.
+        $pieces = [];
+        $cur = '';
+        foreach (preg_split('/(?<=[.!?…])\s+/u', trim($text)) as $sentence) {
+            while (mb_strlen($sentence) > 480) {   // one very long sentence: cut it at a space
+                $cut = mb_strrpos(mb_substr($sentence, 0, 480), ' ') ?: 480;
+                $pieces[] = trim(($cur !== '' ? $cur . ' ' : '') . mb_substr($sentence, 0, $cut));
+                $cur = '';
+                $sentence = ltrim(mb_substr($sentence, $cut));
+            }
+            if ($cur !== '' && mb_strlen($cur) + 1 + mb_strlen($sentence) > 480) { $pieces[] = $cur; $cur = ''; }
+            $cur = $cur === '' ? $sentence : $cur . ' ' . $sentence;
+        }
+        if ($cur !== '') $pieces[] = $cur;
+        if (count($pieces) <= 6) {   // MyMemory's free quota is small; very long texts stay English
+            $out = [];
+            foreach ($pieces as $piece) {
+                $mm = json_decode(fetchUrl("https://api.mymemory.translated.net/get?q=" . urlencode($piece) . "&langpair=en|ar", [], null, 5), true);
+                $t = $mm['responseData']['translatedText'] ?? null;
+                if ((int)($mm['responseStatus'] ?? 0) !== 200 || !$isArabic($t)) { $out = null; break; }
+                $out[] = $t;
+            }
+            if ($out) $ok(implode(' ', $out));
         }
 
         echo json_encode(['error' => 'Translation failed']);

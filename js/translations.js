@@ -162,21 +162,40 @@ export function translateGenres(genreText) {
 }
 
 /**
- * Translate text using MyMemory API (free tier: 5000 chars/day)
- * @param {string} text - Text to translate
- * @returns {Promise<string>} - Translated text
+ * Translate a synopsis to Arabic through proxy.php (Google, then MyMemory). Returns the
+ * original text when no real Arabic translation comes back.
  */
+// A real translation to Arabic contains Arabic letters; anything else (an upstream error
+// message passed through as "translatedText") is shown and cached never.
+const looksArabic = (s) => typeof s === 'string' && /[؀-ۿ]/.test(s);
+
+// Cache key from the WHOLE text (the old key used only its first 50 characters, so two
+// synopses starting alike shared one translation).
+function textKey(text) {
+    let h = 5381;
+    for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+    return `tr2_${text.length}_${(h >>> 0).toString(36)}`;
+}
+
+// Once per browser: drop the old-style cache (it may hold an error message saved as a
+// translation, e.g. "QUERY LENGTH LIMIT EXCEEDED…").
+try {
+    if (!localStorage.getItem('tr2_migrated')) {
+        Object.keys(localStorage).filter(k => k.startsWith('trans_')).forEach(k => localStorage.removeItem(k));
+        localStorage.setItem('tr2_migrated', '1');
+    }
+} catch (e) { /* storage blocked: nothing cached anyway */ }
+
 export async function translateText(text) {
     if (!text || text.length === 0) return text;
     // The sources write in English, so the English site uses their text as is
     if (EN) return text;
 
-    // Check cache first
-    const cacheKey = `trans_${text.substring(0, 50)}`; // Use first 50 chars as key
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-        return cached;
-    }
+    const cacheKey = textKey(text);
+    try {
+        const cached = localStorage.getItem(cacheKey);
+        if (looksArabic(cached)) return cached;
+    } catch (e) { /* storage blocked */ }
 
     try {
         // Google Translate (GTX) via local proxy. The synopsis is sent base64url-encoded
@@ -184,19 +203,15 @@ export async function translateText(text) {
         // URL-encoding / XSS / SQLi rules can't false-positive on a synopsis (e.g. "90%").
         const b64url = btoa(unescape(encodeURIComponent(text)))
             .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        const url = `proxy.php?type=translate&q=${b64url}`;
-        const response = await fetch(url);
+        const response = await fetch(`proxy.php?type=translate&q=${b64url}`);
         const data = await response.json();
+        const translated = data && data.responseStatus === 200 && data.responseData ? data.responseData.translatedText : '';
 
-        if (data.responseStatus === 200 && data.responseData.translatedText) {
-            const translated = data.responseData.translatedText;
-            // Cache the translation
-            localStorage.setItem(cacheKey, translated);
+        if (looksArabic(translated)) {
+            try { localStorage.setItem(cacheKey, translated); } catch (e) { /* full or blocked */ }
             return translated;
         }
-
-        // Fallback to original if translation fails
-        return text;
+        return text;   // no usable translation: keep the original English
     } catch (error) {
         console.error('Translation failed:', error);
         return text; // Return original text on error

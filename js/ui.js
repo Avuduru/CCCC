@@ -8,6 +8,23 @@ import { initCard, renderCard, fitCard, scalePreview } from './card.js';
 
 // Cache for prefetched game covers
 const gameCoverCache = {};
+const coverPending = new Set();   // covers being fetched right now (one request per game)
+
+// Fetch a game's tall card cover (SteamGridDB, through our image proxy) ahead of the click.
+// Only the first result is fetched up front (the usual pick); the others wait for hover or
+// touch — each costs an API call, and 5 per search used up a visitor's limit 6× faster.
+function prefetchGameCover(searchName) {
+    if (!searchName || gameCoverCache[searchName] || coverPending.has(searchName)) return;
+    coverPending.add(searchName);
+    fetch(`proxy.php?query=${encodeURIComponent(searchName)}&type=game_cover`)
+        .then(resp => resp.json())
+        .then(data => {
+            const coverUrl = data && data.success && data.data && data.data.length > 0 ? data.data[0].url : '';
+            if (coverUrl) gameCoverCache[searchName] = `proxy.php?query=${encodeURIComponent(coverUrl)}&type=image_proxy`;
+        })
+        .catch(err => console.error('Failed to prefetch cover:', err))
+        .finally(() => coverPending.delete(searchName));
+}
 
 // DOM Elements
 const els = {
@@ -399,7 +416,7 @@ export function showSearchResults(data, type) {
     if (!results.length) {
         container.innerHTML = `<div class="search-result-item">${t('search.no_results')}</div>`;
     } else {
-        results.slice(0, 5).forEach(item => {
+        results.slice(0, 5).forEach((item, i) => {
             const title = item.title || item.name || item.title_english || (item.volumeInfo ? item.volumeInfo.title : 'No Title');
             // Neutral 2:3 tile for results without artwork
             let poster = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='69'%3E%3Crect width='46' height='69' fill='%23262a33'/%3E%3C/svg%3E";
@@ -425,21 +442,15 @@ export function showSearchResults(data, type) {
             div.addEventListener('click', () => selectItem(item, type));
             container.appendChild(div);
 
-            // Prefetch game covers in background for instant selection
+            // Card cover ahead of the click: the first result now, the rest on hover / touch
+            // (the small thumbnails above come with the search itself and are unaffected)
             if (type === 'game') {
                 const searchName = item.name || item.title;
-                if (searchName && !gameCoverCache[searchName]) {
-                    fetch(`proxy.php?query=${encodeURIComponent(searchName)}&type=game_cover`)
-                        .then(resp => resp.json())
-                        .then(data => {
-                            if (data.success && data.data && data.data.length > 0) {
-                                const coverUrl = data.data[0].url;
-                                if (coverUrl) {
-                                    gameCoverCache[searchName] = `proxy.php?query=${encodeURIComponent(coverUrl)}&type=image_proxy`;
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Failed to prefetch cover:', err));
+                if (i === 0) prefetchGameCover(searchName);
+                else {
+                    const early = () => prefetchGameCover(searchName);
+                    div.addEventListener('mouseenter', early, { once: true });
+                    div.addEventListener('touchstart', early, { once: true, passive: true });
                 }
             }
         });

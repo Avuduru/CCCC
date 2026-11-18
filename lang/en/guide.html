@@ -603,6 +603,10 @@
             .codex-tile-icon { width: 88px; height: 88px; }
             .codex-tile-icon img { width: 70px; height: 70px; }
             .tier-row { grid-template-columns: 1fr; gap: 6px; }
+            /* The three "free of" badges: 3 × 140px + gaps didn't fit a phone (sideways scroll at ≤360px) */
+            .exc-panel { padding: 28px 16px; }
+            .exc-icons-side { gap: 12px; flex-wrap: wrap; }
+            .exc-modifier img { width: clamp(60px, calc((100vw - 120px) / 3), 140px); height: auto; aspect-ratio: 1; }
         }
     </style>
     <link rel="stylesheet" href="/ltr.css">

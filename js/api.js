@@ -1,5 +1,6 @@
 import { config } from './config.js';
 import { state } from './state.js';
+import { t } from './i18n.js';
 import { showSearchResults } from './ui.js';
 
 export async function handleSearch() {
@@ -15,15 +16,32 @@ export async function handleSearch() {
 
     const type = state.type;
 
+    // Drop answers that arrive after the user switched type or changed the query
+    const stale = () => state.type !== type || searchQuery.value.trim() !== query;
     try {
         const resp = await fetch(`${config.WORKER_URL}?query=${encodeURIComponent(query)}&type=${type}`);
+        if (stale()) return;
+        // Decide by status, not body: the CDN's own 429/403 pages are HTML, not JSON
+        if (!resp.ok) {
+            showSearchMessage(resp.status === 429 ? t('search.busy') : t('search.failed'));
+            return;
+        }
         const data = await resp.json();
-
-        // Drop responses that arrive after the user switched type or changed the query
-        if (state.type !== type || searchQuery.value.trim() !== query) return;
-
+        if (stale()) return;
         if (data) showSearchResults(data, type);
     } catch (err) {
         console.error('Search Error:', err);
+        if (!stale()) showSearchMessage(navigator.onLine === false ? t('search.offline') : t('search.failed'));
     }
+}
+
+// One line in the results box instead of results (busy / failed / offline)
+function showSearchMessage(text) {
+    const box = document.getElementById('search-results');
+    box.innerHTML = '';
+    const line = document.createElement('div');
+    line.className = 'search-result-item search-msg';
+    line.textContent = text;
+    box.appendChild(line);
+    box.classList.remove('hidden');
 }

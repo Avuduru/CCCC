@@ -57,7 +57,22 @@
         .levels i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 
         .changelog { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-direction: column; gap: 14px; }
-        .changelog li { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 4px; }
+        .changelog > li { background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 4px; }
+        /* Colour = what a change touches, same colours as the guide: levels (red→yellow), belief (purple),
+           moral (red), games only (teal), exceptions (lime). */
+        .g-levels { --c: #ffa552; --cb: rgba(255,165,82,0.10); --cl: rgba(255,165,82,0.45); }
+        .g-belief { --c: #b07cff; --cb: rgba(176,124,255,0.10); --cl: rgba(176,124,255,0.45); }
+        .g-moral  { --c: #ff6b6b; --cb: rgba(255,90,90,0.10);   --cl: rgba(255,90,90,0.45); }
+        .g-games  { --c: #34d0b8; --cb: rgba(52,208,184,0.10);  --cl: rgba(52,208,184,0.45); }
+        .g-exc    { --c: #c8ff5e; --cb: rgba(200,255,94,0.10);  --cl: rgba(200,255,94,0.45); }
+        .cl-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 14px; font-family: var(--font-body); font-size: 15px; color: var(--text-1); }
+        .cl-legend span { display: inline-flex; align-items: center; gap: 7px; }
+        .cl-legend i { width: 11px; height: 11px; border-radius: 3px; background: var(--c); display: inline-block; }
+        .cl-items { list-style: none; padding: 0; margin: 2px 0 12px; display: flex; flex-direction: column; gap: 10px; }
+        .cl-items li { display: flex; align-items: flex-start; gap: 10px; padding-inline-start: 10px; border-inline-start: 3px solid var(--c); }
+        .cl-tag { flex: none; font-family: var(--font-body); font-size: 14px; font-weight: 700; line-height: 1; white-space: nowrap; padding: 6px 10px; margin-top: 3px; border-radius: 999px; color: var(--c); background: var(--cb); border: 1px solid var(--cl); }
+        .g-levels .cl-tag, .cl-legend .g-levels i { background: linear-gradient(90deg, #ff5a5a, #ff9a3c, #ffd84a); color: #0e1014; border-color: transparent; }
+        .cl-txt { flex: 1; min-width: 0; font-family: var(--font-body); font-size: 17px; line-height: 1.85; color: var(--text-1); }
         .cl-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
         .cl-ver { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--acc); }
         .cl-head time { font-family: var(--font-mono); font-size: 13px; color: var(--text-1); }
@@ -108,9 +123,9 @@
                 <h2>كيف يعمل</h2>
                 <p>لكل عنصر من الموجودات درجة من ثلاث درجات، بحسب حضوره في العمل وإمكانية تجنبه:</p>
                 <ul class="levels">
-                    <li><i style="background: #ff5a5a"></i>الدرجة الأولى · شديد</li>
-                    <li><i style="background: #ff9a3c"></i>الدرجة الثانية · متوسط</li>
-                    <li><i style="background: #ffd84a"></i>الدرجة الثالثة · خفيف</li>
+                    <li><i style="background: #ff5a5a"></i>الدرجة الأولى · أساسي</li>
+                    <li><i style="background: #ff9a3c"></i>الدرجة الثانية · متكرر</li>
+                    <li><i style="background: #ffd84a"></i>الدرجة الثالثة · عابر</li>
                 </ul>
                 <p>أما الموسيقى والألفاظ النابية والعلاقات العاطفية خارج الزواج، فلا درجات لها. استخدم رموز المستثنيات للإشارة إلى ما يخلو منه العمل.</p>
                 <p>التفاصيل في <a href="guide">دليل التصنيف المحافظ</a>.</p>
@@ -131,10 +146,28 @@
             <section id="changelog">
                 <h2>سجل التغييرات</h2>
                 <p>نسجّل هنا كل تغيير في دليل التصنيف يغيّر معنى التصنيف. ويُحفظ مع كل تصنيف رقم إصدار الدليل الذي صُنِّف وفقه، فلا تختلط التصنيفات القديمة بالجديدة.</p>
+                <div class="cl-legend"><span class="g-levels"><i></i>الدرجات</span><span class="g-belief"><i></i>محاذير عقدية</span><span class="g-moral"><i></i>محاذير أخلاقية</span><span class="g-games"><i></i>خاص بالألعاب</span><span class="g-exc"><i></i>المستثنيات</span></div>
                 <ol class="changelog">
                     <li>
+                        <div class="cl-head"><span class="cl-ver" dir="ltr">GUIDE.v2</span><time datetime="2026-11-18" dir="ltr">2026-11-18</time></div>
+                        <ul class="cl-items">
+                            <li class="g-levels"><span class="cl-tag">الدرجات</span><span class="cl-txt">صارت أسماؤها تصف حضور المحتوى لا شدته: أساسي ومتكرر وعابر، بدلًا من شديد ومتوسط وخفيف. وتشمل الدرجة الأولى ما يلازم العمل طوال عرضه.</span></li>
+                            <li class="g-belief"><span class="cl-tag">كفريات</span><span class="cl-txt">صار يشمل السخرية من الأنبياء، والدعوة إلى عقائد تخالف الإسلام، وتعبّد اللاعب لغير الله في الألعاب.</span></li>
+                            <li class="g-moral"><span class="cl-tag">جنس</span><span class="cl-txt">يقتصر على مشاهد العلاقة الجنسية، الصريحة أو المُشار إليها بوضوح. وانتقل التقبيل إلى «مفاسد».</span></li>
+                            <li class="g-moral"><span class="cl-tag">تعري</span><span class="cl-txt">صار يشمل الملابس الكاشفة، وحُدِّد للرجال بما بين السرة والركبة.</span></li>
+                            <li class="g-moral"><span class="cl-tag">مفاسد</span><span class="cl-txt">أُضيف الخمر، وصار يشمل التقبيل والإغراء، ولا يشمل التدخين.</span></li>
+                            <li class="g-moral"><span class="cl-tag">صادم</span><span class="cl-txt">حُدِّد بالعنف الدموي والأشلاء والتعذيب والانتحار والاغتصاب وقسوة اللاعب، دون «المشاهد المثيرة للاشمئزاز».</span></li>
+                        </ul>
+                    </li>
+                    <li>
                         <div class="cl-head"><span class="cl-ver" dir="ltr">GUIDE.v1</span><time datetime="2026-11-17" dir="ltr">2026-11-17</time></div>
-                        <p>الإصدار الأول عند الإطلاق: عشرة موجودات بثلاث درجات (شديد ومتوسط وخفيف)، وثلاثة رموز للمستثنيات (الموسيقى والألفاظ النابية والعلاقات العاطفية خارج الزواج).</p>
+                        <ul class="cl-items">
+                            <li class="g-levels"><span class="cl-tag">الدرجات</span><span class="cl-txt">الإصدار الأول عند الإطلاق، بثلاث درجات: شديد ومتوسط وخفيف.</span></li>
+                            <li class="g-belief"><span class="cl-tag">محاذير عقدية</span><span class="cl-txt">كفريات وسحر.</span></li>
+                            <li class="g-moral"><span class="cl-tag">محاذير أخلاقية</span><span class="cl-txt">جنس وتعري وشذوذ وصادم ومفاسد.</span></li>
+                            <li class="g-games"><span class="cl-tag">خاص بالألعاب</span><span class="cl-txt">إدمانيات وتبذير وقمار.</span></li>
+                            <li class="g-exc"><span class="cl-tag">المستثنيات</span><span class="cl-txt">الموسيقى والألفاظ النابية والعلاقات العاطفية خارج الزواج.</span></li>
+                        </ul>
                     </li>
                 </ol>
             </section>

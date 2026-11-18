@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "sha256": "1ca5c1f6b9a6895e2b641008814680b761ec839bb0d673ba1457e10614322864",
+  "history": [
+    {
+      "version": 1,
+      "date": "2026-11-17",
+      "kind": "meaning",
+      "note": "launch baseline",
+      "sha256": "7d40923c4ced64c7e708a9c8227e2a495564dda3ce9efbf1c4ae05d488fb7565"
+    },
+    {
+      "version": 2,
+      "date": "2026-11-18",
+      "kind": "meaning",
+      "sha256": "1ca5c1f6b9a6895e2b641008814680b761ec839bb0d673ba1457e10614322864"
+    }
+  ]
+}

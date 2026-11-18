@@ -244,6 +244,12 @@ def about_rules():
         ('<h2>مفتوح للجميع</h2>', '<h2>Open to everyone</h2>', 1),
         ('<p>المشروع <a href="https://github.com/Avuduru/CCCC" target="_blank" rel="noopener">مفتوح المصدر</a>، ويمكن لأي شخص استخدامه ومشاركة تصنيفاته.</p>',
          '<p>The project is <a href="https://github.com/Avuduru/CCCC" target="_blank" rel="noopener">open source</a>, and anyone can use it and share their ratings.</p>', 1),
+        # Changelog: add each new entry's English here, matching the Arabic in about.html
+        ('<h2>سجل التغييرات</h2>', '<h2>Changelog</h2>', 1),
+        ('<p>نسجّل هنا كل تغيير في دليل التصنيف يغيّر معنى التصنيف. ويُحفظ مع كل تصنيف رقم إصدار الدليل الذي صُنِّف وفقه، فلا تختلط التصنيفات القديمة بالجديدة.</p>',
+         '<p>Every change to the rating guide that changes what a rating means is listed here. Each rating is saved with the version of the guide it was made under, so older and newer ratings never get mixed up.</p>', 1),
+        ('<p>الإصدار الأول عند الإطلاق: عشرة موجودات بثلاث درجات (شديد ومتوسط وخفيف)، وثلاثة رموز للمستثنيات (الموسيقى والألفاظ النابية والعلاقات العاطفية خارج الزواج).</p>',
+         '<p>First version, at launch: ten content flags with three levels (severe, moderate, mild), and three exception badges (music, profanity, and romantic relationships outside marriage).</p>', 1),
         ('<a class="btn-primary" href="./">ابدأ التصنيف</a>', '<a class="btn-primary" href="/en">Start rating</a>', 1),
         ('<a class="btn-quiet" href="guide">دليل التصنيف المحافظ</a>', '<a class="btn-quiet" href="/en/guide">Rating guide</a>', 1),
     ]
@@ -292,6 +298,7 @@ def guide_rules():
         ('<span class="count">03</span>استغلال مالي وسلوكي</span>', '<span class="count">03</span>Spending and engagement</span>', 1),
         ('<h3>المستثنيات</h3>', '<h3>Exceptions</h3>', 1),
         ('STATUS MODIFIERS <strong>·</strong> +03', 'EXCEPTION BADGES <strong>·</strong> +03', 1),
+        ('<a href="about#changelog" title="سجل التغييرات">GUIDE.v1</a>', '<a href="/en/about#changelog" title="Changelog">GUIDE.v1</a>', 1),
     ]
     for ar, en in LEVELS:
         r.append((f'<div class="tier-title grade-title">{ar}</div>', f'<div class="tier-title grade-title">{en}</div>', 1))

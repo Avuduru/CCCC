@@ -37,7 +37,7 @@ ALLOWED_ARABIC_ATTR = re.compile(r'(src|href)="/assets/icons/[^"]*"')
 NAME_AR = 'التصنيف المحافظ للمحتوى الإبداعي'
 NAME_EN = 'Conservative Classification of Creative Content'
 FONTS_EN = ('<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700'
-            '&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">')
+            '&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=fallback" rel="stylesheet">')
 
 HEADER_BRAND = [
     # The small line becomes the Arabic name, the large line the English one
@@ -113,7 +113,7 @@ def common_head():
 # Page: the tool (index.html) ---------------------------------------------------------
 def index_rules():
     r = [
-        ('<link\n        href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap"\n        rel="stylesheet">', FONTS_EN, 1),
+        ('<link\n        href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=fallback"\n        rel="stylesheet">', FONTS_EN, 1),
         (f'<h1 class="brand-ar">{NAME_AR}</h1>', f'<h1 class="brand-ar">{NAME_EN}</h1>', 1),   # the tool page's main heading
         HEADER_BRAND[1] + (1,),
         ('<a class="status-about" href="/en" lang="en" hreflang="en">English</a>', '<a class="status-about" href="/" lang="ar" hreflang="ar">العربية</a>', 1),
@@ -219,7 +219,7 @@ def about_rules():
     return [
         ('<!-- Arabic uses the site\'s own Handjet files (style.v3.css); Google\'s copy broke letter joins on iOS -->',
          '<!-- Headings use the site\'s own Handjet files (style.v3.css); paragraphs use IBM Plex Sans (ltr.css) -->', 1),
-        ('<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">', FONTS_EN, 1),
+        ('<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=fallback" rel="stylesheet">', FONTS_EN, 1),
         *[(a, b, 1) for a, b in HEADER_BRAND],
         ('<a class="about-lang" href="/en/about" lang="en" hreflang="en">English</a>', '<a class="about-lang" href="/about" lang="ar" hreflang="ar">العربية</a>', 1),
         ('<a class="about-back" href="./">→ العودة إلى الأداة</a>', '<a class="about-back" href="/en">← Back to the tool</a>', 1),
@@ -308,7 +308,7 @@ def about_rules():
 # Page: guide -------------------------------------------------------------------------
 def guide_rules():
     r = [
-        ('<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">', FONTS_EN, 1),
+        ('<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=fallback" rel="stylesheet">', FONTS_EN, 1),
         ('href="style.v3.css?v=5"', 'href="/style.v3.css"', 1),
         # Mirror the few physical sides in the page's own styles
         ('            top: 0; bottom: 0; right: 0;\n            width: 4px;', '            top: 0; bottom: 0; left: 0;\n            width: 4px;', 1),

@@ -50,6 +50,14 @@ Everything else is static HTML/CSS/JS.
   totals only and a per-IP rate limit.
 - **Rate limits** (`rateLimited()`, per hashed visitor IP, counters in `data/ratelimit/`):
   240 API calls / 10 min, 400 images / 10 min, 30 rated works / 10 min.
+- **Rating integrity** — a new work's title is taken from its source by id (AniList, Jikan, TMDB, RAWG,
+  Open Library — `canonicalTitle()`), never from the browser (the card title is editable and the API can be
+  called directly); an id the source says doesn't exist is refused. If the source can't be reached the sent
+  title is kept (capped) so a real vote isn't lost — the residual gap. Manual entries keep their typed title
+  and are left out of the public `stats` top list.
+- **Stored IP hash** — `ipHash()` = HMAC-SHA256 keyed with `IP_HASH_SECRET`, so the stored hashes can't be
+  reversed by hashing every IPv4 address. Rows saved under the old plain SHA-256 move to the keyed hash the
+  next time that visitor rates (no double counting). Without the secret it falls back to plain SHA-256.
 - **Client IP** (`clientIp()`) — used for the above. Reads `TRUSTED_IP_HEADER` if set (e.g. `X-Real-IP`),
   else the last `X-Forwarded-For` entry, else `REMOTE_ADDR`; the value must parse as an IP. **Set
   `TRUSTED_IP_HEADER`** to whatever the host's edge guarantees to overwrite, so a client can't forge it.
@@ -94,6 +102,7 @@ primary defense; the edge is a second layer. If a legitimate request is ever blo
       modern browsers already refuse 1.0/1.1.*
 - [ ] **`TRUSTED_IP_HEADER`** set in the CranL Environment once support confirms which header carries
       the real client IP.
+- [ ] **`IP_HASH_SECRET`** set in the CranL Environment (`openssl rand -hex 32`), then redeploy.
 - [ ] **Database not reachable from the internet** — only from the app.
 - [ ] Rotate any API key ever pasted outside `.env` / the CranL dashboard.
 

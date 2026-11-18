@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS works (
 CREATE TABLE IF NOT EXISTS classifications (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     work_id         INT UNSIGNED NOT NULL,
-    ip_hash         CHAR(64) NOT NULL,               -- SHA-256 of client IP (never stored raw)
+    ip_hash         CHAR(64) NOT NULL,               -- HMAC-SHA256 of client IP, keyed with IP_HASH_SECRET (never stored raw)
 
     -- ── Mawjoodat ratings ────────────────────────────────────
     -- 0 = absent / not present
@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS classifications (
 
     FOREIGN KEY (work_id) REFERENCES works(id) ON DELETE CASCADE,
     UNIQUE KEY uq_vote (work_id, ip_hash),           -- one vote per person per work
+    INDEX idx_ip_recent (ip_hash, updated_at),       -- per-visitor rate limit (proxy.php adds it to older DBs)
     INDEX idx_work_id (work_id),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

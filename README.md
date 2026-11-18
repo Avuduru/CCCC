@@ -101,7 +101,7 @@ Conservative Classification of Creative Content (CCCC)
 
 ### الخصوصية
 
-عند تصدير بطاقة أو نسخها، يحفظ الموقع: العمل الذي صنّفته، والدرجات والشارات التي اخترتها، واسم المُصنِّف وتقييمه من 10 إن كتبهما، والنبذة إن كتبتها بنفسك أو عدّلتها، ولغة الموقع، وإصدار الدليل، وقيمةً مُجزّأة (SHA-256 hash) لعنوان IP بدلًا من العنوان نفسه؛ وذلك لاحتساب تصنيف واحد لكل شخص في كل عمل.
+عند تصدير بطاقة أو نسخها، يحفظ الموقع: العمل الذي صنّفته، والدرجات والشارات التي اخترتها، واسم المُصنِّف وتقييمه من 10 إن كتبهما، والنبذة إن كتبتها بنفسك أو عدّلتها، ولغة الموقع، وإصدار الدليل، وقيمةً مُجزّأة بمفتاح سري (HMAC-SHA256) لعنوان IP بدلًا من العنوان نفسه؛ وذلك لاحتساب تصنيف واحد لكل شخص في كل عمل.
 
 لا يطلب الموقع بريدًا إلكترونيًّا ولا يستخدم أدوات تحليل أو تتبّع. ويُحمّل بعض الخطوط من Google Fonts ومكتبة html2canvas من cdnjs.
 
@@ -217,7 +217,7 @@ Full details: [rating guide](https://muhafid.com/en/guide). The whole site is av
 
 ### Privacy
 
-When you export or copy a card, the site saves the work, the ratings and badges you picked, your classifier name and /10 score if you entered them, the synopsis if you wrote or edited it yourself, the site language, the guide version, and a hashed (SHA-256) version of your IP address — never the IP itself — so each person counts once per work.
+When you export or copy a card, the site saves the work, the ratings and badges you picked, your classifier name and /10 score if you entered them, the synopsis if you wrote or edited it yourself, the site language, the guide version, and a keyed hash (HMAC-SHA256) of your IP address — never the IP itself, and not reversible without the server's secret key — so each person counts once per work.
 
 No email, no analytics, no tracking. Some fonts load from Google Fonts and html2canvas from cdnjs.
 
@@ -329,6 +329,7 @@ To report a bug or suggest a change without code: `gh issue create --repo Avudur
 | `STEAMGRIDDB_KEY` | Game covers | [steamgriddb.com](https://www.steamgriddb.com) → Preferences → API |
 | `APP_ENV` | `local` on your machine, `production` on the server | — |
 | `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` | Saving classifications to MySQL (`DB_HOST` can include `:port`) | Your database |
+| `IP_HASH_SECRET` | Keys the stored visitor-IP hash so a leaked database can't be reversed into IPs. Generate once with `openssl rand -hex 32`; don't change it casually | You |
 | `TRUSTED_IP_HEADER` | *(optional)* the header your host's edge sets to the real client IP, e.g. `X-Real-IP` — used for vote dedup and rate limiting. Unset = last `X-Forwarded-For` entry | Ask your host |
 
 Anime, manga, books, HowLongToBeat, and translation need no keys. On the server, set these in the hosting dashboard instead of a `.env` file.

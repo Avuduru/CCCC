@@ -269,7 +269,7 @@ function showExportModal(url, file) {
         shareBtn.innerText = t('export_popup.share');
         shareBtn.onclick = async () => {
             try {
-                await navigator.share({ files: [file], title: state.meta.title || 'CCCC' });
+                await navigator.share({ files: [file], title: state.meta.title || 'CCCC', text: shareCaption() });
                 logClassification('export');
             } catch (e) {
                 if (e && e.name !== 'AbortError') console.error('Share failed:', e);
@@ -277,6 +277,7 @@ function showExportModal(url, file) {
         };
         body.appendChild(shareBtn);
     }
+    body.appendChild(captionActions());
 
     const instructions = document.createElement('p');
     instructions.innerText = canShare ? t('export_popup.or_hold_to_save') : t('export_popup.hold_to_save');
@@ -300,6 +301,69 @@ function showExportModal(url, file) {
     overlay.appendChild(content);
 
     document.body.appendChild(overlay);
+}
+
+// ---- Caption for the post that goes with the card -------------------------------
+// "تصنيفي لـ«{title}» #CCCC" / 'My rating of "{title}" #CCCC'; just "#CCCC" without a title.
+function shareCaption() {
+    const title = (state.meta.title || '').trim();
+    const placeholder = allValues('card.default.title').includes(title);
+    return title && !placeholder ? t('share.caption', { title }) : t('share.caption_untitled');
+}
+
+// Two buttons: open X with the caption filled in (the copied image is pasted by the user),
+// or copy the caption as text for any other app. Used in the Copy panel and the Export popup.
+function captionActions() {
+    const caption = shareCaption();
+    const row = document.createElement('div');
+    row.className = 'share-actions';
+
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'share-x';
+    x.innerText = t('share.post_x');
+    x.onclick = () => window.open('https://x.com/intent/post?text=' + encodeURIComponent(caption), '_blank', 'noopener');
+
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'share-text';
+    copy.innerText = t('share.copy_text');
+    copy.onclick = () => navigator.clipboard.writeText(caption)
+        .then(() => { copy.innerText = t('share.text_copied'); })
+        .catch(err => console.error('Caption copy failed:', err));
+
+    row.appendChild(x);
+    row.appendChild(copy);
+    return row;
+}
+
+// Small panel after a successful Copy: the caption + the two buttons. Closes itself after 20 s.
+let toastTimer = null;
+function showCaptionPanel() {
+    document.querySelector('.share-toast')?.remove();
+    clearTimeout(toastTimer);
+    const panel = document.createElement('div');
+    panel.className = 'share-toast';
+    panel.setAttribute('role', 'status');
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'share-close';
+    close.setAttribute('aria-label', t('share.close'));
+    close.innerText = '×';
+    close.onclick = () => panel.remove();
+
+    const hint = document.createElement('p');
+    hint.className = 'share-hint';
+    hint.innerText = t('share.copied_hint');
+
+    const cap = document.createElement('p');
+    cap.className = 'share-caption';
+    cap.innerText = shareCaption();
+
+    panel.append(close, hint, cap, captionActions());
+    document.body.appendChild(panel);
+    toastTimer = setTimeout(() => panel.remove(), 20000);
 }
 
 // A tap while an export/copy is still running (e.g. waiting for the synopsis)
@@ -371,6 +435,7 @@ export function handleCopyToClipboard() {
     .then(() => {
         logClassification('copy');
         copyBtn.innerText = t('actions.copied');
+        showCaptionPanel();
     })
     .catch(err => {
         console.error('Clipboard write failed:', err);

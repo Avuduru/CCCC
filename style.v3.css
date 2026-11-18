@@ -1207,3 +1207,31 @@ body {
     .modal-content { max-width: 95vw; }
     .grade-body { grid-template-columns: 1fr; }
 }
+
+/* Caption panel after Copy (and the same two buttons in the phone Export popup) */
+.share-toast {
+    position: fixed; z-index: 1000; left: 50%; transform: translateX(-50%); bottom: 24px;
+    width: min(92vw, 440px); box-sizing: border-box; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--ink-3); border: 1px solid var(--line-bright); border-radius: 10px;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55); font-family: var(--font-ar);
+}
+.share-toast .share-close {
+    position: absolute; top: 6px; inset-inline-end: 10px; background: none; border: 0;
+    color: var(--text-2); font-size: 22px; line-height: 1; cursor: pointer;
+}
+.share-hint { margin: 0; font-size: 15px; color: var(--text-1); }
+.share-caption {
+    margin: 0; padding: 8px 10px; font-size: 17px; color: var(--text-0); unicode-bidi: plaintext;
+    background: var(--ink-2); border: 1px solid var(--line); border-radius: 6px;
+}
+.share-actions { display: flex; gap: 8px; width: 100%; }
+.share-actions button {
+    flex: 1; font: inherit; font-family: var(--font-ar); font-weight: 700; font-size: 17px; line-height: 1;
+    padding: 11px 12px; border-radius: 6px; cursor: pointer;
+    background: var(--ink-4); color: var(--text-0); border: 1px solid var(--line-bright);
+}
+.share-actions .share-x { background: var(--acc); color: var(--ink-0); border-color: var(--acc-dim); }
+@media (max-width: 640px) {
+    .share-toast { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+}

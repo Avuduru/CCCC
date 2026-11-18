@@ -38,6 +38,15 @@ const STRINGS = {
         'export_popup.share': 'مشاركة',
         'export_popup.hold_to_save': 'لحفظ الصورة، اضغط عليها باستمرار',
         'export_popup.or_hold_to_save': 'أو احفظ الصورة بالضغط عليها باستمرار',
+        // Caption offered after Copy / Export, for the post that goes with the card
+        // \u2068…\u2069 isolate the title, so an English title can't scramble the Arabic order
+        'share.caption': 'تصنيفي لـ«\u2068{title}\u2069» \u200e#CCCC',   // \u200e keeps "#CCCC" from showing as "CCCC#"
+        'share.caption_untitled': '#CCCC',
+        'share.copied_hint': 'الصورة منسوخة، الصقها في منشورك',
+        'share.post_x': 'نشر على X',
+        'share.copy_text': 'نسخ النص',
+        'share.text_copied': 'تم نسخ النص ✓',
+        'share.close': 'إغلاق',
         'guide.section_fallback': 'القسم {n}',
         'list.sep': '، ',
         // Start panel: the card before a work is picked
@@ -82,6 +91,13 @@ const STRINGS = {
         'export_popup.share': 'Share',
         'export_popup.hold_to_save': 'Press and hold the image to save it',
         'export_popup.or_hold_to_save': 'Or press and hold the image to save it',
+        'share.caption': 'My rating of "\u2068{title}\u2069" #CCCC',
+        'share.caption_untitled': '#CCCC',
+        'share.copied_hint': 'Image copied, paste it into your post',
+        'share.post_x': 'Post on X',
+        'share.copy_text': 'Copy text',
+        'share.text_copied': 'Text copied ✓',
+        'share.close': 'Close',
         'guide.section_fallback': 'Section {n}',
         'list.sep': ', ',
         'intro.title': 'Start with a work you know',

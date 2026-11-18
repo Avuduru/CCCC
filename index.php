@@ -38,6 +38,12 @@ function inlineScriptHashes($html)
 }
 
 header('Content-Security-Policy: ' . cspFor());
+
+// Short fingerprint of a file's content, for ?v= (changes only when the file does)
+function contentVersion($path)
+{
+    return substr(hash_file('sha256', $path) ?: (string)@filemtime($path), 0, 10);
+}
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: SAMEORIGIN');
@@ -110,15 +116,19 @@ if ($file !== '' && file_exists($file . '.html')) {
 
     $html = file_get_contents($file . '.html');
 
-    // Cache busting: every local file the page references gets ?v=<last modified>.
-    // Caddy lets browsers keep any ?v= URL for a year (see Caddyfile), so each
-    // deploy changes the URLs of exactly the files that changed.
+    // Cache busting: every local file the page references gets ?v=<fingerprint of its
+    // content>. Caddy lets browsers keep any ?v= URL for a year (see Caddyfile). It is the
+    // content, not the modified time, because every deploy re-stamps every file: with
+    // times, each deploy made browsers download everything again (fonts included — the
+    // brief flash of the fallback font after a deploy). Now only changed files get new URLs.
+    // assets/fonts/ is left as-is: the <link rel="preload"> URLs must match style.v3.css's
+    // url(...) exactly (fonts get their own long cache in the Caddyfile).
     $html = preg_replace_callback(
         '/\b(href|src)="(?!https?:|\/\/|data:|#|mailto:)([^"?#]+\.(?:css|js|png|jpe?g|svg|ico|webp|gif|woff2?|ttf))(?:\?[^"]*)?"/',
         function ($m) {
             $path = ltrim($m[2], '/');
-            if (!is_file($path)) return $m[0];
-            return $m[1] . '="' . $m[2] . '?v=' . filemtime($path) . '"';
+            if (strpos($path, 'assets/fonts/') === 0 || !is_file($path)) return $m[0];
+            return $m[1] . '="' . $m[2] . '?v=' . contentVersion($path) . '"';
         },
         $html
     );
@@ -131,7 +141,7 @@ if ($file !== '' && file_exists($file . '.html')) {
         foreach ($it as $f) {
             if ($f->isFile() && substr($f->getFilename(), -3) === '.js') {
                 $p = '/' . str_replace('\\', '/', $f->getPathname());
-                $imports[$p] = $p . '?v=' . $f->getMTime();
+                $imports[$p] = $p . '?v=' . contentVersion($f->getPathname());
             }
         }
         ksort($imports);

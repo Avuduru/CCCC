@@ -34,9 +34,15 @@
 
     <link rel="icon" type="image/png" href="/assets/favicon.png">
     <link rel="apple-touch-icon" href="/assets/favicon.png">
+    <!-- Brand font (Handjet, self-hosted): fetched together with the stylesheet instead of after it,
+         so the first paint already uses it (no flash of the fallback font). Same URLs as style.v3.css;
+         index.php leaves assets/fonts/ unversioned so these match exactly. -->
+    <link rel="preload" href="/assets/fonts/Handjet-Bold.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/assets/fonts/Handjet-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="/assets/fonts/Handjet-Regular.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=fallback" rel="stylesheet">
     <link rel="stylesheet" href="/style.v3.css">
 
     <!-- Match main app topbar zoom -->

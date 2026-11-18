@@ -5,24 +5,44 @@
  * the corresponding .html file (like guide.html) without redirecting the URL.
  */
 
-// Security headers for every page this script serves.
-// CSP: scripts only from this site (inline ones included: the scale script, the import
-// map) and cdnjs (html2canvas, pinned with SRI); WebAssembly for the JPEG encoder; images
-// from anywhere over HTTPS (search thumbnails come straight from TMDB, RAWG, AniList...);
-// fetch() only to this site (proxy.php); no framing by other sites.
-header("Content-Security-Policy: default-src 'self'; "
-    . "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com; "
-    . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-    . "font-src 'self' https://fonts.gstatic.com data:; "
-    . "img-src 'self' data: blob: https:; "
-    . "connect-src 'self' data: blob:; "
-    . "worker-src 'self' blob:; "
-    . "frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'");
+// Security headers for every response this script serves.
+// CSP: scripts only from this site and cdnjs (html2canvas, pinned with SRI) — NO inline
+// script unless the page lists its exact SHA-256 (see cspFor() below: the HTML pages get
+// the hashes of their own inline scripts, the import map included); WebAssembly for the
+// JPEG encoder; images from anywhere over HTTPS (search thumbnails come straight from
+// TMDB, RAWG, AniList...); fetch() only to this site (proxy.php); no framing by other sites.
+function cspFor($scriptHashes = [])
+{
+    $hashes = $scriptHashes ? ' ' . implode(' ', array_map(fn($h) => "'sha256-$h'", $scriptHashes)) : '';
+    return "default-src 'self'; "
+        . "script-src 'self'$hashes 'wasm-unsafe-eval' https://cdnjs.cloudflare.com; "
+        . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        . "font-src 'self' https://fonts.gstatic.com data:; "
+        . "img-src 'self' data: blob: https:; "
+        . "connect-src 'self' data: blob:; "
+        . "worker-src 'self' blob:; "
+        . "frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'";
+}
+
+// SHA-256 (base64) of every inline script that runs: classic scripts and the import map.
+// JSON-LD and other data blocks don't execute, so they need no hash.
+function inlineScriptHashes($html)
+{
+    preg_match_all('#<script(?![^>]*\bsrc=)([^>]*)>(.*?)</script>#s', $html, $m, PREG_SET_ORDER);
+    $out = [];
+    foreach ($m as $s) {
+        if (preg_match('#type="(?!importmap|module|text/javascript)[^"]*"#i', $s[1])) continue;
+        $out[] = base64_encode(hash('sha256', $s[2], true));
+    }
+    return array_values(array_unique($out));
+}
+
+header('Content-Security-Policy: ' . cspFor());
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: SAMEORIGIN');
 header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()');
-header('Strict-Transport-Security: max-age=31536000');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 header_remove('X-Powered-By');
 // Pages are revalidated on every visit; this also stops a ?v= on a page URL from being
 // pinned in the edge cache by the server's long-cache rule for versioned files.
@@ -56,6 +76,13 @@ if (strpos($file, 'lang/') === 0) {
     $file = in_array($page, ['index', 'about', 'guide'], true) ? 'lang/en/' . $page : '';
 }
 
+// Pages (and the 404 page) answer GET and HEAD only; proxy.php has its own method rules.
+if ($file !== 'proxy.php' && !in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)) {
+    http_response_code(405);
+    header('Allow: GET, HEAD');
+    exit;
+}
+
 // Check if the corresponding .html file exists
 if ($file !== '' && file_exists($file . '.html')) {
     // Return standard 200 OK and serve the HTML content
@@ -74,7 +101,9 @@ if ($file !== '' && file_exists($file . '.html')) {
         $stamp = filemtime(__FILE__) . '-' . filemtime($file . '.html');
         $cacheFile = $cacheDir . '/' . str_replace('/', '_', $file) . '-' . $stamp . '.html';
         $age = @filemtime($cacheFile);
-        if ($age !== false && time() - $age < 600 && @readfile($cacheFile) !== false) {
+        if ($age !== false && time() - $age < 600 && ($cached = @file_get_contents($cacheFile)) !== false) {
+            header('Content-Security-Policy: ' . cspFor(inlineScriptHashes($cached)));
+            echo $cached;
             exit;
         }
     }
@@ -125,6 +154,7 @@ if ($file !== '' && file_exists($file . '.html')) {
         }
     }
 
+    header('Content-Security-Policy: ' . cspFor(inlineScriptHashes($html)));
     echo $html;
     exit;
 }

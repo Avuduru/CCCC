@@ -57,9 +57,14 @@ Everything else is static HTML/CSS/JS.
   with a `%`, quote or `<` never appears in the URL and can't false-positive the edge WAF. `proxy.php`
   decodes it; plain `?query=` still works.
 - **Response headers** — pages get a `Content-Security-Policy` (scripts from self + cdnjs only, pinned
-  with SRI), `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`,
-  `Permissions-Policy`, HSTS; `X-Powered-By` is removed. **New external scripts/fonts/fetch targets must
-  be added to the CSP in `index.php`.**
+  with SRI; **no `'unsafe-inline'` for scripts** — `index.php` lists the SHA-256 of each page's own inline
+  scripts, import map included, computed when the page is built, so an injected script is refused),
+  `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`,
+  HSTS (`includeSubDomains`); `X-Powered-By` is removed. Pages answer GET/HEAD only (405 otherwise).
+  **New external scripts/fonts/fetch targets must be added to the CSP in `index.php`.** Inline scripts
+  need nothing extra (hashed automatically); inline `on…=` handlers are not allowed and would be blocked.
+  Note: `local-router.php` (dev server) doesn't go through `index.php`, so it sends no CSP — test CSP
+  through `index.php`.
 - **Caching** — only versioned static files get the year-long immutable cache; pages (`no-cache`) and
   `proxy.php` (`no-store`) are never long-cached, so a `?v=` can't pin a dynamic response at the edge.
 - **File access** — the `Caddyfile` 404s dotfiles, `data/`, `Docs/`, `tools/`, `lang/` and config files.

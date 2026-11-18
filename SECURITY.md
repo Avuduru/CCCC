@@ -44,6 +44,10 @@ Everything else is static HTML/CSS/JS.
   **never rendered server-side**. ⚠️ Whatever later **displays** it (e.g. a community/consensus page)
   **must HTML-escape it** (stored-XSS risk lives in the display, not the storage) and should have a way
   to **hide/moderate** abuse, spam or personal info. Until such a page exists, the text is write-only.
+- **Per-work consensus (`type=lookup`)** — **switched off** (`LOOKUP_ENABLED = false`, returns 404).
+  No page uses it yet, and an open endpoint would let anyone harvest every work's ratings. Its
+  individual-rating rows (rater names) were removed; when the per-work pages arrive, re-enable it with
+  totals only and a per-IP rate limit.
 - **Rate limits** (`rateLimited()`, per hashed visitor IP, counters in `data/ratelimit/`):
   240 API calls / 10 min, 400 images / 10 min, 30 rated works / 10 min.
 - **Client IP** (`clientIp()`) — used for the above. Reads `TRUSTED_IP_HEADER` if set (e.g. `X-Real-IP`),

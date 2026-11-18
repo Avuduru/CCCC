@@ -490,6 +490,73 @@ function clientIp()
 }
 
 /**
+ * The visitor's address as stored: HMAC-SHA256 keyed with IP_HASH_SECRET (env), so a leaked
+ * database can't be reversed by hashing all ~4 billion IPv4 addresses. Without the secret it
+ * falls back to the plain SHA-256 used before (legacyIpHash), so nothing breaks before it's set.
+ */
+function ipHash()
+{
+    $secret = (string)getenv('IP_HASH_SECRET');
+    return strlen($secret) >= 16 ? hash_hmac('sha256', clientIp(), $secret) : legacyIpHash();
+}
+function legacyIpHash()
+{
+    return hash('sha256', clientIp());
+}
+
+/**
+ * The work's real title, from its source, by id — so the catalogue never stores a title the
+ * browser made up (the card title is editable, and the API can be called directly).
+ *   ['found' => true, 'title' => '…']  the source knows this id
+ *   ['found' => false]                 the source says this id doesn't exist -> reject the rating
+ *   null                               couldn't check (source down, no key) -> caller decides
+ */
+function canonicalTitle($type, $id)
+{
+    global $TMDB_KEY, $RAWG_KEY;
+    // fetchUrl() wraps any non-200 reply as {"error":"Upstream API returned status N", ...}:
+    // a 404 means "no such work", anything else (timeout, 429, 5xx) means "couldn't check".
+    $get = function ($url, $headers = [], $post = null) {
+        $d = json_decode((string)fetchUrl($url, $headers, $post, 4), true);
+        if (!is_array($d)) return [0, null];
+        if (isset($d['error']) && is_string($d['error']) && preg_match('/status (\d{3})/', $d['error'], $m)) return [(int)$m[1], null];
+        if (isset($d['error']) && is_string($d['error'])) return [0, null];   // network error
+        return [200, $d];
+    };
+    $found = fn($t) => ['found' => true, 'title' => (string)$t];
+    if (($type === 'anime' || $type === 'manga') && preg_match('/^anilist:(\d+)$/', $id, $m)) {
+        $q = json_encode(['query' => 'query($id:Int,$t:MediaType){Media(id:$id,type:$t){title{english romaji}}}',
+                          'variables' => ['id' => (int)$m[1], 't' => strtoupper($type)]]);
+        [$st, $d] = $get('https://graphql.anilist.co', ['Content-Type: application/json', 'Accept: application/json'], $q);
+        $t = $d['data']['Media']['title'] ?? null;
+        if ($t) return $found(($t['english'] ?? '') ?: ($t['romaji'] ?? ''));
+        return $st === 404 ? ['found' => false] : null;
+    }
+    if (($type === 'anime' || $type === 'manga') && preg_match('/^mal:(\d+)$/', $id, $m)) {
+        [$st, $d] = $get("https://api.jikan.moe/v4/$type/" . (int)$m[1]);
+        if (!empty($d['data'])) return $found(($d['data']['title_english'] ?? '') ?: ($d['data']['title'] ?? ''));
+        return $st === 404 ? ['found' => false] : null;
+    }
+    if (($type === 'movie' || $type === 'tv') && ctype_digit($id) && $TMDB_KEY) {
+        [$st, $d] = $get("https://api.themoviedb.org/3/$type/$id?api_key=$TMDB_KEY&language=en-US");
+        $t = $type === 'movie' ? ($d['title'] ?? '') : ($d['name'] ?? '');
+        if ($t !== '') return $found($t);
+        return $st === 404 ? ['found' => false] : null;
+    }
+    if ($type === 'game' && preg_match('/^[a-z0-9-]{1,200}$/i', $id) && $RAWG_KEY) {
+        [$st, $d] = $get("https://api.rawg.io/api/games/$id?key=$RAWG_KEY");
+        if (!empty($d['name'])) return $found($d['name']);
+        return $st === 404 ? ['found' => false] : null;
+    }
+    if ($type === 'book' && preg_match('#^/works/OL\d{1,12}W$#', $id)) {
+        [$st, $d] = $get("https://openlibrary.org$id.json");
+        if (!empty($d['title'])) return $found($d['title']);
+        return $st === 404 ? ['found' => false] : null;
+    }
+    return null;   // manual entries (and sources without a key): nothing to check against
+}
+
+/**
  * Sliding-window rate limit per visitor (hashed address), stored in data/ratelimit/.
  * Returns true when the visitor is over the limit for this bucket.
  */
@@ -502,7 +569,7 @@ function rateLimited($bucket, $limit, $windowSec)
     if (mt_rand(1, 200) === 1) {
         foreach (glob($dir . '/*') ?: [] as $f) if (@filemtime($f) < time() - 86400) @unlink($f);
     }
-    $fh = @fopen($dir . '/' . $bucket . '-' . substr(hash('sha256', clientIp()), 0, 32), 'c+');
+    $fh = @fopen($dir . '/' . $bucket . '-' . substr(ipHash(), 0, 32), 'c+');
     if (!$fh) return false;   // never block visitors because the limiter itself failed
     flock($fh, LOCK_EX);
     $now = time();
@@ -1036,8 +1103,25 @@ switch ($type) {
                 if ($syn !== '') $synopsis = function_exists('mb_substr') ? mb_substr($syn, 0, 2000) : substr($syn, 0, 4000);
             }
 
-            // SHA-256 of the visitor's address (clientIp: the edge-appended one) — never stored raw
-            $ipHash   = hash('sha256', clientIp());
+            // Keyed hash of the visitor's address (clientIp: the edge-appended one) — never stored raw
+            $ipHash   = ipHash();
+            // Once per deploy: an index for the per-visitor lookups below (rate limit, migration).
+            // Without it every save scanned the whole table. Guarded: never fails a save.
+            $idxFlag = $dataDir . '/.idx_ip_recent';
+            if (!is_file($idxFlag)) {
+                try {
+                    $has = $pdo->query("SHOW INDEX FROM classifications WHERE Key_name = 'idx_ip_recent'")->fetch();
+                    if (!$has) $pdo->exec("ALTER TABLE classifications ADD INDEX idx_ip_recent (ip_hash, updated_at)");
+                    @touch($idxFlag);
+                } catch (PDOException $e) { error_log('CCCC ip index not added: ' . $e->getMessage()); }
+            }
+            // After IP_HASH_SECRET is set, a returning visitor's old (unkeyed) rows move to the keyed
+            // hash the first time they rate again, so nobody is counted twice. IGNORE skips a row
+            // that would clash (the same work already saved under the keyed hash).
+            $legacyHash = legacyIpHash();
+            if ($legacyHash !== $ipHash) {
+                $pdo->prepare("UPDATE IGNORE classifications SET ip_hash = ? WHERE ip_hash = ?")->execute([$ipHash, $legacyHash]);
+            }
 
             // Rate limit: at most 30 different works per visitor per 10 minutes
             $recent = $pdo->prepare("SELECT COUNT(*) FROM classifications WHERE ip_hash = ? AND updated_at > (NOW() - INTERVAL 10 MINUTE)");
@@ -1049,7 +1133,24 @@ switch ($type) {
             }
 
             // ── 2. Upsert the work ───────────────────────────────────────
+            // A new work's title comes from its source, by id (canonicalTitle) — never from the
+            // browser: the card title is editable and the API can be called directly. An id the
+            // source says doesn't exist is refused. Manual entries keep the typed title; if the
+            // source can't be reached, the sent title is kept (capped) rather than losing the vote.
             // The title is set once, by the first vote; later voters can't rename a work.
+            if ($contentType !== 'manual') {
+                $exists = $pdo->prepare("SELECT 1 FROM works WHERE content_id = ? AND content_type = ?");
+                $exists->execute([$contentId, $contentType]);
+                if (!$exists->fetchColumn()) {
+                    $canon = canonicalTitle($contentType, $contentId);
+                    if ($canon && !$canon['found']) {
+                        http_response_code(400);
+                        echo json_encode(['error' => 'Unknown work']);
+                        exit;
+                    }
+                    if ($canon && $canon['title'] !== '') $title = substr($canon['title'], 0, 500);
+                }
+            }
             $pdo->prepare(
                 "INSERT INTO works (content_id, content_type, title)
                  VALUES (?, ?, ?)
@@ -1188,7 +1289,7 @@ switch ($type) {
                     $byType[$row['content_type']] = (int)$row['cnt'];
                 }
                 $top = [];
-                foreach ($pdo->query("SELECT title, content_type, rater_count FROM works ORDER BY rater_count DESC LIMIT 10") as $row) {
+                foreach ($pdo->query("SELECT title, content_type, rater_count FROM works WHERE content_type <> 'manual' ORDER BY rater_count DESC LIMIT 10") as $row) {
                     $top[] = $row;
                 }
                 $out = [

@@ -566,7 +566,7 @@ $logFile = $dataDir . '/classifications.jsonl';
 // Raise it by one whenever a guide change alters what a rating means, and add a dated
 // entry to the changelog on the About page (about.html, then tools/i18n/build_en.py).
 // It is set here, never taken from the request, so a client can't claim another version.
-const GUIDE_VERSION = 1;
+const GUIDE_VERSION = 2;
 
 // type=lookup (per-work consensus) stays off until the public per-work pages are built.
 const LOOKUP_ENABLED = false;

@@ -24,7 +24,7 @@ TEXT = {
                   'صنّف الأفلام والمسلسلات والأنمي والمانجا والألعاب والكتب بحسب ما تحتويه، لا بحسب رقم عمري، '
                   'واصنع بطاقة تصنيف جاهزة للمشاركة. مجاني ودون تسجيل.'),
         'guide': ('دليل التصنيف المحافظ: الدرجات والموجودات والمستثنيات — محافظ',
-                  'كيف تصنّف عملًا: الدرجات الثلاث (شديد ومتوسط وخفيف)، '
+                  'كيف تصنّف عملًا: الدرجات الثلاث (أساسي ومتكرر وعابر)، '
                   'والموجودات العشر، والمستثنيات (الموسيقى والألفاظ النابية والعلاقات العاطفية).'),
         'about': ('عن المشروع — محافظ (CCCC)',
                   'التصنيف المحافظ للمحتوى الإبداعي (CCCC) أداة مفتوحة المصدر تتيح للمستهلكين والمراجعين وصناع المحتوى '
@@ -37,7 +37,7 @@ TEXT = {
                   'Rate movies, TV, anime, manga, games and books by what they contain, not by age, '
                   'and make a share-ready rating card. Free, no sign-up.'),
         'guide': ('Rating guide: levels, content flags and exceptions — Muhafid',
-                  'How CCCC rates a work: three levels (severe, moderate, mild), ten content flags, '
+                  'How CCCC rates a work: three levels (core, recurring, passing), ten content flags, '
                   'and exception badges for music, profanity and romance.'),
         'about': ('About — Muhafid (CCCC)',
                   'CCCC is an open-source tool that lets viewers, reviewers and creators rate creative works '

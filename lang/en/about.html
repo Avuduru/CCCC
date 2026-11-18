@@ -78,6 +78,9 @@
         .cl-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
         .cl-ver { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--acc); }
         .cl-head time { font-family: var(--font-mono); font-size: 13px; color: var(--text-1); }
+        /* Decimal versions (v2.1…) = wording only, meaning unchanged: shown quieter */
+        .changelog > li.cl-minor { background: transparent; border-style: dashed; padding: 10px 16px 2px; }
+        .changelog > li.cl-minor .cl-ver { color: var(--text-1); }
 
         .about-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
         .about-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border-radius: 8px; text-decoration: none; font-size: 20px; font-weight: 700; }

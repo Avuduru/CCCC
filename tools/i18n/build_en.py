@@ -348,7 +348,8 @@ def guide_rules():
         ('<span class="count">03</span>استغلال مالي وسلوكي</span>', '<span class="count">03</span>Spending and engagement</span>', 1),
         ('<h3>المستثنيات</h3>', '<h3>Exceptions</h3>', 1),
         ('STATUS MODIFIERS <strong>·</strong> +03', 'EXCEPTION BADGES <strong>·</strong> +03', 1),
-        ('<a href="about#changelog" title="سجل التغييرات">GUIDE.v2</a>', '<a href="/en/about#changelog" title="Changelog">GUIDE.v2</a>', 1),
+        # version-agnostic, so a new GUIDE.v<N> or GUIDE.v<N>.<n> label needs no change here
+        ('<a href="about#changelog" title="سجل التغييرات">', '<a href="/en/about#changelog" title="Changelog">', 1),
     ]
     for ar, en in LEVELS:
         r.append((f'<div class="tier-title grade-title">{ar}</div>', f'<div class="tier-title grade-title">{en}</div>', 1))

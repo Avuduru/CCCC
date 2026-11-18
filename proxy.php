@@ -557,6 +557,55 @@ function canonicalTitle($type, $id)
 }
 
 /**
+ * Short server-side cache for search results (10 min): the same search ("one piece",
+ * "gta 6") is answered without calling AniList/TMDB/RAWG/Open Library again. Faster, saves
+ * our API quotas, and keeps us under AniList's per-IP rate limit (its failures pushed every
+ * anime search onto the Jikan fallback). Only non-empty results are kept. Best effort: a
+ * temp dir that can't be written just means no cache.
+ */
+const SEARCH_TYPES = ['movie', 'tv', 'game', 'anime', 'manga', 'book'];
+function searchCacheFile($type, $query)
+{
+    $q = preg_replace('/\s+/u', ' ', trim(mb_strtolower((string)$query, 'UTF-8')));
+    return sys_get_temp_dir() . '/cccc-search/' . hash('sha256', $type . '|' . $q) . '.json';
+}
+function searchCacheGet($type, $query)
+{
+    $f = searchCacheFile($type, $query);
+    $age = @filemtime($f);
+    return ($age !== false && time() - $age < 600) ? @file_get_contents($f) : false;
+}
+function searchCachePut($type, $query, $response)
+{
+    $d = json_decode((string)$response, true);
+    $key = ['anime' => 'data', 'manga' => 'data', 'book' => 'docs'][$type] ?? 'results';
+    if (!is_array($d) || isset($d['error']) || empty($d[$key])) return;
+    $f = searchCacheFile($type, $query);
+    $dir = dirname($f);
+    if (!is_dir($dir) && !@mkdir($dir, 0700, true)) return;
+    if (mt_rand(1, 200) === 1) {   // now and then, drop entries older than a day
+        foreach (glob($dir . '/*.json') ?: [] as $old) if (@filemtime($old) < time() - 86400) @unlink($old);
+    }
+    $tmp = $f . '.' . getmypid() . '.tmp';
+    if (@file_put_contents($tmp, $response) !== false) { @rename($tmp, $f) || @unlink($tmp); }
+}
+
+/**
+ * Jikan (the MyAnimeList fallback) is often down. After it fails, skip it for 5 minutes
+ * instead of making every anime/manga search wait for its timeout.
+ */
+function jikanDown()
+{
+    $age = @filemtime(sys_get_temp_dir() . '/cccc-jikan-down');
+    return $age !== false && time() - $age < 300;
+}
+function jikanMark($ok)
+{
+    $f = sys_get_temp_dir() . '/cccc-jikan-down';
+    $ok ? @unlink($f) : @touch($f);
+}
+
+/**
  * Sliding-window rate limit per visitor (hashed address), stored in data/ratelimit/.
  * Returns true when the visitor is over the limit for this bucket.
  */
@@ -734,6 +783,13 @@ if ((in_array($type, $apiTypes, true) && rateLimited('api', 240, 600))
     http_response_code(429);
     header('Retry-After: 60');
     echo json_encode(['error' => 'Too many requests']);
+    exit;
+}
+
+// Same search in the last 10 minutes: answer from the cache (see searchCacheGet)
+if (in_array($type, SEARCH_TYPES, true) && ($cached = searchCacheGet($type, $query)) !== false) {
+    header('X-Search-Cache: HIT');
+    echo $cached;
     exit;
 }
 
@@ -1534,10 +1590,17 @@ if ($url === 'ANILIST_PRIMARY') {
     
     // If AniList fails, times out, or returns 0 results, fall back to Jikan
     if (!$data || isset($data['error']) || empty($data['data'])) {
-        error_log("CCCC Warning: AniList GraphQL failed or returned empty. Falling back to Jikan API for: $query");
-        $jikanUrl = "https://api.jikan.moe/v4/$type?q=" . urlencode($query) . "&limit=20&genres_exclude=12";
-        $response = fetchUrl($jikanUrl, [], null, 3);
-        $data = json_decode($response, true);
+        if (jikanDown()) {
+            // Jikan failed in the last 5 minutes: don't wait on it again
+            $data = ['data' => []];
+            $response = json_encode($data);
+        } else {
+            error_log("CCCC Warning: AniList GraphQL failed or returned empty. Falling back to Jikan API for: $query");
+            $jikanUrl = "https://api.jikan.moe/v4/$type?q=" . urlencode($query) . "&limit=20&genres_exclude=12";
+            $response = fetchUrl($jikanUrl, [], null, 3);
+            $data = json_decode($response, true);
+            jikanMark(is_array($data) && isset($data['data']) && is_array($data['data']));
+        }
     } else {
         $response = json_encode($data);
     }
@@ -1577,4 +1640,5 @@ if (isset($data) && $data && !isset($data['error'])) {
     $response = json_encode($data);
 }
 
+if (in_array($type, SEARCH_TYPES, true) && isset($response)) searchCachePut($type, $query, $response);
 echo $response ?? json_encode(['error' => 'Unknown error']);

@@ -27,7 +27,7 @@ Everything else is static HTML/CSS/JS.
   `iaNNN.us.archive.org`), never as a starting point. Every redirect hop is re-checked, the connection
   is pinned to the IP that was checked (no DNS-rebinding swap), only raster images are returned, and
   each response carries `nosniff` + `Content-Security-Policy: default-src 'none'; sandbox`. 10 s timeout,
-  10 MB cap. **Adding a data source means adding its image host here**, or covers won't load.
+  5 MB cap; TMDB only in the sizes the site uses (w92–w1280, never `original`), since every relayed byte counts against the plan's monthly bandwidth. **Adding a data source means adding its image host here**, or covers won't load.
 - **Upstream parameters** — `movie_details`/`tv_details` take a numeric id only, `game_details` a slug,
   Open Library a `/works/OL…W` key. So a request can't be steered to other upstream endpoints.
 - **AniList** search text is passed as a GraphQL **variable**, never spliced into the query.
@@ -49,7 +49,7 @@ Everything else is static HTML/CSS/JS.
   individual-rating rows (rater names) were removed; when the per-work pages arrive, re-enable it with
   totals only and a per-IP rate limit.
 - **Rate limits** (`rateLimited()`, per hashed visitor IP, counters in `data/ratelimit/`):
-  240 API calls / 10 min, 400 images / 10 min, 30 rated works / 10 min.
+  240 API calls / 10 min, 100 images / 10 min, 30 rated works / 10 min.
 - **Rating integrity** — a new work's title is taken from its source by id (AniList, Jikan, TMDB, RAWG,
   Open Library — `canonicalTitle()`), never from the browser (the card title is editable and the API can be
   called directly); an id the source says doesn't exist is refused. If the source can't be reached the sent

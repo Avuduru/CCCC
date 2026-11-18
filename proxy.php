@@ -789,7 +789,7 @@ if (strlen($query) > $maxQuery) {
 $apiTypes = ['movie', 'tv', 'movie_details', 'tv_details', 'game', 'game_details', 'game_cover', 'hltb',
              'anime', 'manga', 'book', 'book_details', 'translate'];
 if ((in_array($type, $apiTypes, true) && rateLimited('api', 240, 600))
-    || ($type === 'image_proxy' && rateLimited('img', 400, 600))) {
+    || ($type === 'image_proxy' && rateLimited('img', 100, 600))) {
     http_response_code(429);
     header('Retry-After: 60');
     echo json_encode(['error' => 'Too many requests']);
@@ -889,7 +889,9 @@ switch ($type) {
         //    to the IP that was checked (no DNS-rebinding swap between check and fetch);
         //  - only raster images are passed on, with nosniff and a sandbox CSP, so a
         //    response can never run as a page on muhafid.com;
-        //  - 10 s timeout and a 10 MB cap.
+        //  - TMDB only in the sizes the site uses (w92–w1280): "original" files run to many MB,
+        //    and every byte we relay counts against the hosting plan's monthly bandwidth;
+        //  - 100 images per visitor per 10 minutes, 10 s timeout and a 5 MB cap.
         if (!function_exists('curl_init')) {
             http_response_code(500);
             echo json_encode(['error' => 'PHP cURL extension is not enabled']);
@@ -943,7 +945,7 @@ switch ($type) {
 
         $url = $query;
         $verifySSL = getenv('APP_ENV') !== 'local';
-        $maxBytes = 10 * 1024 * 1024;
+        $maxBytes = 5 * 1024 * 1024;
         $imageData = null;
         $contentType = '';
         for ($hop = 0; $hop < 4; $hop++) {
@@ -955,6 +957,10 @@ switch ($type) {
             }
             if ($hop === 0) $startHost = strtolower(rtrim($host, '.'));
             if (!$hostAllowed($host, $parts['path'] ?? '', $hop)) $refuse(403, 'Image host not allowed.');
+            if ($hop === 0 && strtolower(rtrim($host, '.')) === 'image.tmdb.org'
+                && !preg_match('#^/t/p/w(92|154|185|342|500|780|1280)/[A-Za-z0-9_-]+\.(jpg|png|webp)$#', $parts['path'] ?? '')) {
+                $refuse(403, 'Image size not allowed.');
+            }
             $port = (int)($parts['port'] ?? ($scheme === 'https' ? 443 : 80));
             if (!in_array($port, [80, 443], true)) $refuse(403, 'Image port not allowed.');
             $ip = $publicIp($host);

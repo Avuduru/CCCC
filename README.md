@@ -63,9 +63,9 @@ Conservative Classification of Creative Content (CCCC)
 
 ### نظام التصنيف
 
-يقوم التصنيف على ثلاثة عناصر: درجة الشدّة، والموجودات، والمستثنيات.
+يقوم التصنيف على ثلاثة عناصر: درجة الحضور، والموجودات، والمستثنيات.
 
-### مقياس الحضور
+#### مقياس الحضور
 
 | الدرجة | اللون | في الأعمال القصصية | في الألعاب |
 |:---:|:---:|---|---|
@@ -73,7 +73,7 @@ Conservative Classification of Creative Content (CCCC)
 | **الثانية · متكرر** | 🟧 برتقالي | يمكن تخطي المحتوى دون التأثير على فهم القصة، لكن تكرار التخطي يقطع تسلسلها. | يمكن إتمام اللعبة مع تجنب هذا المحتوى، لكن تجنبه يزيد صعوبتها ويغير التجربة. |
 | **الثالثة · عابر** | 🟨 أصفر | يظهر المحتوى نادرا، ويسهل تخطيه دون التأثير على فهم القصة. | يمكن تجاهل المحتوى أو اتباع طرق بديلة لإتمام اللعبة. |
 
-### الموجودات: ما قد يحتويه العمل
+#### الموجودات: ما قد يحتويه العمل
 
 | المجموعة | المحذور | الأيقونة (أساسي · متكرر · عابر) | الوصف |
 |---|---|---|---|
@@ -88,7 +88,7 @@ Conservative Classification of Creative Content (CCCC)
 |  | **تبذير** | <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B11.png" alt="تبذير · 1" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B12.png" alt="تبذير · 2" height="44"> <img src="assets/icons/%D8%AA%D8%A8%D8%B0%D9%8A%D8%B13.png" alt="تبذير · 3" height="44"> | ربط التقدم بالمال المنفق على عناصر داخل اللعبة. |
 |  | **قمار** | <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B11.png" alt="قمار · 1" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B12.png" alt="قمار · 2" height="44"> <img src="assets/icons/%D9%82%D9%85%D8%A7%D8%B13.png" alt="قمار · 3" height="44"> | آليات تشجع على شراء صناديق بمحتويات عشوائية أو دفع المال مقابل سحوبات عشوائية. |
 
-### المستثنيات: ما يخلو منه العمل
+#### المستثنيات: ما يخلو منه العمل
 
 يفترض نظام التصنيف وجود الموسيقى أو الأغاني، والألفاظ النابية، والعلاقات العاطفية خارج الزواج في العمل ما لم يشر التصنيف إلى خلاف ذلك. استخدم كل رمز من الرموز التالية فقط إذا كان العمل يخلو من المحتوى الذي يشير إليه.
 
@@ -101,7 +101,7 @@ Conservative Classification of Creative Content (CCCC)
 
 ### الخصوصية
 
-عند تصدير بطاقة أو نسخها، يحفظ الموقع: العمل الذي صنّفته، والدرجات والشارات التي اخترتها، واسم المُصنِّف إن كتبته، وقيمةً مُجزّأة (SHA-256 hash) لعنوان IP بدلًا من العنوان نفسه؛ وذلك لاحتساب تصنيف واحد لكل شخص في كل عمل.
+عند تصدير بطاقة أو نسخها، يحفظ الموقع: العمل الذي صنّفته، والدرجات والشارات التي اخترتها، واسم المُصنِّف وتقييمه من 10 إن كتبهما، والنبذة إن كتبتها بنفسك أو عدّلتها، ولغة الموقع، وإصدار الدليل، وقيمةً مُجزّأة (SHA-256 hash) لعنوان IP بدلًا من العنوان نفسه؛ وذلك لاحتساب تصنيف واحد لكل شخص في كل عمل.
 
 لا يطلب الموقع بريدًا إلكترونيًّا ولا يستخدم أدوات تحليل أو تتبّع. ويُحمّل بعض الخطوط من Google Fonts ومكتبة html2canvas من cdnjs.
 
@@ -140,9 +140,9 @@ Conservative Classification of Creative Content (CCCC)
 
 ## English
 
-> **In short:** Muhafid is a platform where you rate works you have already finished — games, anime, series, movies, manga, books — and tell others what they contain and how strong it is, so they can decide before starting, without spoilers. You mark the warnings and get a card to share. Ratings come from consumers, not an authority, and the project is open source.
+> **In short:** Muhafid is a platform where you rate works you have already finished — games, anime, series, movies, manga, books — and tell others what they contain and how present it is, so they can decide before starting, without spoilers. You mark the warnings and get a card to share. Ratings come from consumers, not an authority, and the project is open source.
 
-**Muhafid** is a free, open-source platform where you rate a movie, series, anime, game, manga, or book *after you have finished it*, recording what it contains and how strong each element is, so that others can decide before they watch, play, or read it — based on conservative Islamic values. Pick the work, mark what it contains and how strong it is, and get a clean card you can share.
+**Muhafid** is a free, open-source platform where you rate a movie, series, anime, game, manga, or book *after you have finished it*, recording what it contains and how present each element is, so that others can decide before they watch, play, or read it — based on conservative Islamic values. Pick the work, mark what it contains and how present it is, and get a clean card you can share.
 
 No account or sign-up needed.
 
@@ -170,7 +170,7 @@ Anime · Manga · Movies · TV series · Games · Books — plus **manual mode**
 
 1. Pick a content type and search for the title.
 2. The site fills in the cover, the synopsis, genres, score, and length (episodes, runtime, hours to beat, or pages). The Arabic site translates the synopsis and genres; the English site keeps them as the sources write them.
-3. Add the warnings that apply and set how strong each one is.
+3. Add the warnings that apply and set how present each one is.
 4. Mark what the work is *free of*.
 5. Add your name and score as the classifier (optional), then export the card as an image or copy it — wide (1920×1080) or tall (1200×1500).
 
@@ -217,7 +217,7 @@ Full details: [rating guide](https://muhafid.com/en/guide). The whole site is av
 
 ### Privacy
 
-When you export or copy a card, the site saves the work, the ratings and badges you picked, your classifier name if you typed one, and a hashed (SHA-256) version of your IP address — never the IP itself — so each person counts once per work.
+When you export or copy a card, the site saves the work, the ratings and badges you picked, your classifier name and /10 score if you entered them, the synopsis if you wrote or edited it yourself, the site language, the guide version, and a hashed (SHA-256) version of your IP address — never the IP itself — so each person counts once per work.
 
 No email, no analytics, no tracking. Some fonts load from Google Fonts and html2canvas from cdnjs.
 
@@ -268,6 +268,7 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `index.html` | The app |
 | `guide.html` | The rating guide (`/guide`) |
 | `about.html` | About the project (`/about`), ending with the dated **changelog** of rating-guide changes (`/about#changelog`) |
+| `local-router.php` | Clean URLs for the PHP dev server (`php -S … local-router.php`); production uses `index.php` + the `Caddyfile` |
 | `index.php` | Clean URLs (`/guide` → `guide.html`, `/en/guide` → `lang/en/guide.html`); adds `?v=<file time>` to every local CSS/JS/image link and an import map for the JS modules, so each deploy only refreshes the files that changed. The finished page is built once per deploy and kept in the system temp dir (`cccc-pages/`, 10-min safety TTL; skipped on the PHP dev server) |
 | `lang/en/` | The English pages (`/en`, `/en/guide`, `/en/about`), generated from the Arabic ones — don't edit them by hand (see below) |
 | `ltr.css` | Mirrors the layout left-to-right for the English pages (loaded only there) |
@@ -280,6 +281,9 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `tools/en-icons/` | Script that rebuilds the English icons from the Arabic ones (edit the labels, re-run) |
 | `tools/i18n/build_en.py` | Builds `lang/en/*.html` from the Arabic pages and holds their English wording |
 | `tools/i18n/seo.py` | Titles, descriptions, canonical/`hreflang` links, Open Graph / X cards and JSON-LD for every page in both languages |
+| `tools/guide_check.py` · `tools/guide_lock.json` | Guide integrity check and its lock (see "Changing the rating guide") |
+| `.github/workflows/guide-check.yml` | Runs the guide check and the English-sync check on every PR and push to `main` |
+| `SECURITY.md` | Security model, what's enforced where, and owner-side checklist |
 | `tools/og/make_og.py` · `assets/og/` | Renders the link-preview images (1200×630, Arabic and English) |
 | `robots.txt` · `sitemap.xml` | Search engines: everything but `proxy.php` may be crawled; the sitemap lists all six pages with their other-language versions |
 | `data/schema.sql` | Database schema |
@@ -292,9 +296,10 @@ You need PHP 8.4+ with the `curl` and `openssl` extensions (`pdo_mysql` only if 
 
 ```bash
 cp .env.example .env          # then add your API keys and set APP_ENV=local
-cp php.ini.example php.ini    # fix extension_dir if your PHP keeps extensions elsewhere
-php -c php.ini -S localhost:8080
+php -S localhost:8080 local-router.php   # local-router.php serves the clean URLs (/guide, /about, /en/…)
 ```
+
+On **Windows**, also `cp php.ini.example php.ini` (fix `extension_dir` if needed) and add `-c php.ini` to the `php` command.
 
 Open http://localhost:8080.
 
@@ -347,9 +352,7 @@ Ratings are live, so a change to what a category or level **means** must be trac
 
 **This is enforced.** `tools/guide_check.py` fingerprints the guide text (levels, content flags, exceptions) and stores it in `tools/guide_lock.json`. The **Guide integrity** GitHub Action runs it on every PR and push to `main`: it fails if the guide text changed without a lock, if `GUIDE_VERSION` and the locked version differ, if any `GUIDE.v<N>` label is stale, if the changelog is missing a version, or if the home page's guide modal disagrees with `guide.html`. It also checks that the English pages are in sync.
 
-Wording or layout changes that don't change what a rating means don't need a version bump or an entry, but they still have to be locked on purpose, with a reason: `python tools/guide_check.py --lock --wording-only "fix a typo in Magic"` (recorded in the lock's history).
-
-Versions are whole numbers (`GUIDE.v2`, `GUIDE.v3`): each one is stored with every rating (`guide_version`), and only meaning changes create one.
+**Versions:** a **whole number** (`v2` → `v3`) means the meaning changed; it's stored with every rating (`guide_version`) and gets a full changelog entry and a release. A **decimal** (`v2.1`, `v2.2`) means wording only: run `python tools/guide_check.py --lock --wording-only "fix a typo in Magic"`, set the `GUIDE.v` labels in `guide.html` to the new decimal, and add a short `class="cl-minor"` entry at the top of the changelog. Ratings keep storing the whole number, since what they mean didn't change. The next whole version resets the decimal.
 
 The stored `synopsis` is **user-generated text**: it's kept as plain text (control chars stripped, capped) and is never rendered server-side. Anything that later displays it must HTML-escape it and have a way to hide abuse — see `SECURITY.md`.
 

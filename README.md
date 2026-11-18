@@ -282,6 +282,7 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `tools/i18n/build_en.py` | Builds `lang/en/*.html` from the Arabic pages and holds their English wording |
 | `tools/i18n/seo.py` | Titles, descriptions, canonical/`hreflang` links, Open Graph / X cards and JSON-LD for every page in both languages |
 | `tools/guide_check.py` · `tools/guide_lock.json` | Guide integrity check and its lock (see "Changing the rating guide") |
+| `tools/upstream_check.py` · `.github/workflows/upstream-check.yml` | Health check of every outside service (AniList, Jikan, TMDB, RAWG, Open Library, HLTB, translate, image proxy), direct and through the site; runs every 6 h on GitHub and emails on failure. Run it by hand before blaming the site: `python tools/upstream_check.py` |
 | `.github/workflows/guide-check.yml` | Runs the guide check and the English-sync check on every PR and push to `main` |
 | `SECURITY.md` | Security model, what's enforced where, and owner-side checklist |
 | `tools/og/make_og.py` · `assets/og/` | Renders the link-preview images (1200×630, Arabic and English) |

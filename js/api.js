@@ -7,7 +7,8 @@ export async function handleSearch() {
     const searchResults = document.getElementById('search-results');
 
     const query = searchQuery.value.trim();
-    if (!query) {
+    // One character is just the start of typing: wait for more (saves the sources' rate limits)
+    if ([...query].length < 2) {
         searchResults.classList.add('hidden');
         return;
     }

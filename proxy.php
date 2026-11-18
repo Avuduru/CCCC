@@ -278,7 +278,7 @@ function hltbHeaders($extra = [])
 /**
  * Low-level HLTB request. Returns ['code' => int, 'body' => string|null].
  */
-function hltbRequest($url, $postBody = null, $extraHeaders = [], $timeout = 8)
+function hltbRequest($url, $postBody = null, $extraHeaders = [], $timeout = 5)
 {
     if (!function_exists('curl_init')) return ['code' => 0, 'body' => null]; // PHP cURL extension not enabled
     $verifySSL = getenv('APP_ENV') !== 'local';
@@ -591,18 +591,27 @@ function searchCachePut($type, $query, $response)
 }
 
 /**
- * Jikan (the MyAnimeList fallback) is often down. After it fails, skip it for 5 minutes
- * instead of making every anime/manga search wait for its timeout.
+ * Back-off for outside services (AniList, Jikan, …): after a failure, skip that service for a
+ * while instead of making every request wait for its timeout — and, for AniList, instead of
+ * hammering it while it has us rate-limited (it allows 30 requests/min per IP in its current
+ * degraded mode, answers 429 + a 1-minute timeout, and may block IPs that keep going).
+ * State is one small file per service in the temp dir holding the time it may be used again.
  */
-function jikanDown()
+function upstreamDown($name)
 {
-    $age = @filemtime(sys_get_temp_dir() . '/cccc-jikan-down');
-    return $age !== false && time() - $age < 300;
+    $until = (int)@file_get_contents(sys_get_temp_dir() . "/cccc-down-$name");
+    return $until > time();
 }
-function jikanMark($ok)
+function upstreamMark($name, $ok, $cooldown = 300)
 {
-    $f = sys_get_temp_dir() . '/cccc-jikan-down';
-    $ok ? @unlink($f) : @touch($f);
+    $f = sys_get_temp_dir() . "/cccc-down-$name";
+    $ok ? @unlink($f) : @file_put_contents($f, (string)(time() + $cooldown));
+}
+// Status code inside fetchUrl()'s wrapped error ("Upstream API returned status 429"), else 0
+function upstreamStatus($response)
+{
+    $d = json_decode((string)$response, true);
+    return (is_array($d) && is_string($d['error'] ?? null) && preg_match('/status (\d{3})/', $d['error'], $m)) ? (int)$m[1] : 0;
 }
 
 /**
@@ -634,7 +643,7 @@ function rateLimited($bucket, $limit, $windowSec)
     return $limited;
 }
 
-function fetchUrl($url, $headers = [], $postData = null, $timeout = 10)
+function fetchUrl($url, $headers = [], $postData = null, $timeout = 6)
 {
     if (empty($url))
         return json_encode(['error' => 'No URL provided']);
@@ -648,6 +657,7 @@ function fetchUrl($url, $headers = [], $postData = null, $timeout = 10)
         // Masquerade as a real browser to prevent blocks
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, min(3, $timeout));   // a host that doesn't answer fails fast
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : false);
@@ -786,6 +796,14 @@ if ((in_array($type, $apiTypes, true) && rateLimited('api', 240, 600))
     exit;
 }
 
+// One character ("O", "ا") is just someone starting to type: answer empty, don't spend an
+// upstream call (AniList allows 30 a minute for the whole site)
+if (in_array($type, SEARCH_TYPES, true) && mb_strlen(trim((string)$query), 'UTF-8') < 2) {
+    $key = ['anime' => 'data', 'manga' => 'data', 'book' => 'docs'][$type] ?? 'results';
+    echo json_encode([$key => []]);
+    exit;
+}
+
 // Same search in the last 10 minutes: answer from the cache (see searchCacheGet)
 if (in_array($type, SEARCH_TYPES, true) && ($cached = searchCacheGet($type, $query)) !== false) {
     header('X-Search-Cache: HIT');
@@ -836,14 +854,14 @@ switch ($type) {
         $searchUrl = "https://www.steamgriddb.com/api/v2/search/autocomplete/" . urlencode($query);
         $headers = ["Authorization: Bearer $STEAMGRIDDB_KEY"];
 
-        $searchResponse = fetchUrl($searchUrl, $headers);
+        $searchResponse = fetchUrl($searchUrl, $headers, null, 5);
         $searchData = json_decode($searchResponse, true);
 
         if ($searchData && isset($searchData['success']) && $searchData['success'] && !empty($searchData['data'])) {
             $gameId = (int)$searchData['data'][0]['id'];
             // Fetch vertical grids (600x900)
             $gridUrl = "https://www.steamgriddb.com/api/v2/grids/game/$gameId?dimensions=600x900&styles=alternate,material,white_logo";
-            $gridResponse = fetchUrl($gridUrl, $headers);
+            $gridResponse = fetchUrl($gridUrl, $headers, null, 5);
             echo $gridResponse;
             exit;
         } else {
@@ -990,7 +1008,7 @@ switch ($type) {
 
         // 1. Try Google Translate endpoint with client=dict-chrome-ex
         $dictUrl = "https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ar&dt=t&q=" . urlencode($text);
-        $response = fetchUrl($dictUrl);
+        $response = fetchUrl($dictUrl, [], null, 5);
         $data = json_decode($response, true);
 
         if ($data && isset($data[0]) && is_array($data[0])) {
@@ -1013,7 +1031,7 @@ switch ($type) {
 
         // 2. Fallback: Try MyMemory API
         $mymemoryUrl = "https://api.mymemory.translated.net/get?q=" . urlencode($text) . "&langpair=en|ar";
-        $mmResponse = fetchUrl($mymemoryUrl);
+        $mmResponse = fetchUrl($mymemoryUrl, [], null, 5);
         $mmData = json_decode($mmResponse, true);
 
         if ($mmData && isset($mmData['responseData']['translatedText'])) {
@@ -1547,12 +1565,16 @@ function fetchAniListFallback($query, $type) {
         'Accept: application/json'
     ];
 
+    if (upstreamDown('anilist')) return ['error' => 'AniList cooling down'];
     $response = fetchUrl('https://graphql.anilist.co', $headers, $payload, 3);
     $anilistData = json_decode($response, true);
 
     if (!$anilistData || isset($anilistData['error'])) {
+        // 429 = AniList's rate limit (1-minute timeout); anything else = down/slow for now
+        upstreamMark('anilist', false, upstreamStatus($response) === 429 ? 65 : 30);
         return ['error' => $anilistData['error'] ?? 'AniList API Error'];
     }
+    upstreamMark('anilist', true);
 
     $jikanFormat = ['data' => []];
 
@@ -1590,7 +1612,7 @@ if ($url === 'ANILIST_PRIMARY') {
     
     // If AniList fails, times out, or returns 0 results, fall back to Jikan
     if (!$data || isset($data['error']) || empty($data['data'])) {
-        if (jikanDown()) {
+        if (upstreamDown('jikan')) {
             // Jikan failed in the last 5 minutes: don't wait on it again
             $data = ['data' => []];
             $response = json_encode($data);
@@ -1599,7 +1621,7 @@ if ($url === 'ANILIST_PRIMARY') {
             $jikanUrl = "https://api.jikan.moe/v4/$type?q=" . urlencode($query) . "&limit=20&genres_exclude=12";
             $response = fetchUrl($jikanUrl, [], null, 3);
             $data = json_decode($response, true);
-            jikanMark(is_array($data) && isset($data['data']) && is_array($data['data']));
+            upstreamMark('jikan', is_array($data) && isset($data['data']) && is_array($data['data']), 300);
         }
     } else {
         $response = json_encode($data);
@@ -1609,7 +1631,7 @@ if ($url === 'ANILIST_PRIMARY') {
     $data = json_decode($response, true);
     // Games: also search the number-swapped text ("6" <-> "VI") and merge, de-duplicated by id
     if ($type === 'game' && isset($gameQueries[1]) && is_array($data) && isset($data['results']) && is_array($data['results'])) {
-        $alt = json_decode(fetchUrl("https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[1]) . "&page_size=20"), true);
+        $alt = json_decode(fetchUrl("https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[1]) . "&page_size=20", [], null, 5), true);
         if (is_array($alt) && isset($alt['results']) && is_array($alt['results'])) {
             $seen = array_flip(array_column($data['results'], 'id'));
             foreach ($alt['results'] as $r) {

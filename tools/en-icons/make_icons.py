@@ -42,7 +42,9 @@ async function draw(spec) {
     x.fillStyle = '#000'; x.fillRect(50, spec.stripTop + 2, spec.w - 100, 280 - spec.stripTop - 2);   // inside the rounded corners
     x.fillStyle = spec.green; x.fillRect(34, 24, spec.w - 68, 48); x.fillRect(80, 70, spec.w - 140, 10);   // Arabic top line + its tails
     const ts = fit(spec.top, spec.w - 90, F.max); setFont(ts); const ty = center(spec.top, 48);
-    x.lineJoin = 'round'; x.lineWidth = Math.max(5, ts * 0.22); x.strokeStyle = '#000'; x.strokeText(spec.top, spec.w / 2, ty);
+    // Same outline as the Figma originals: a 6 px stroke whose inner half is hidden under the fill = 3 px of black
+    // outside the letters, sharp (mitred) corners.
+    x.lineJoin = 'miter'; x.miterLimit = 4; x.lineWidth = 6; x.strokeStyle = '#000'; x.strokeText(spec.top, spec.w / 2, ty);
     x.fillStyle = '#fff'; x.fillText(spec.top, spec.w / 2, ty);
     maxW = spec.w - 96; cy = spec.stripTop + 20;
   } else {

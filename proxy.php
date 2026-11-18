@@ -568,6 +568,9 @@ $logFile = $dataDir . '/classifications.jsonl';
 // It is set here, never taken from the request, so a client can't claim another version.
 const GUIDE_VERSION = 1;
 
+// type=lookup (per-work consensus) stays off until the public per-work pages are built.
+const LOOKUP_ENABLED = false;
+
 $query = isset($_GET['query']) ? $_GET['query'] : '';
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 
@@ -1194,7 +1197,15 @@ switch ($type) {
         exit;
 
     case 'lookup':
-        // Return consensus ratings for a specific work (for the future Letterboxd page)
+        // Consensus ratings for one work, kept for the future per-work pages. Switched off
+        // until those pages exist: no page uses it, and it would let anyone harvest every
+        // work's ratings. When re-enabling, keep it to totals (no names, no individual rows)
+        // and add a per-IP rate limit like `log`.
+        if (!LOOKUP_ENABLED) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not available']);
+            exit;
+        }
         // Usage: proxy.php?type=lookup&query=CONTENT_ID&content_type=anime
         $lookupId   = $query;
         $lookupType = is_string($_GET['content_type'] ?? null) ? $_GET['content_type'] : '';
@@ -1270,16 +1281,6 @@ switch ($type) {
                 }
             }
 
-            // Individual classifications (for detail page)
-            $stmt = $pdo->prepare(
-                "SELECT kufr, sex, nudity, vices, magic, lgbt, gore, addiction, lootbox, p2w,
-                        badge_nomusic, badge_noprofanity, badge_noaffairs,
-                        classifier, orientation, DATE(updated_at) AS date
-                 FROM classifications WHERE work_id = ? ORDER BY updated_at DESC"
-            );
-            $stmt->execute([$workId]);
-            $individuals = $stmt->fetchAll();
-
             echo json_encode([
                 'found'           => true,
                 'work'            => [
@@ -1290,8 +1291,7 @@ switch ($type) {
                 ],
                 'consensus'       => $consensus,
                 'badges'          => $badgeOut,
-                'severity_score'  => $scoreTotal,
-                'classifications' => $individuals
+                'severity_score'  => $scoreTotal
             ], JSON_UNESCAPED_UNICODE);
 
         } catch (PDOException $e) {

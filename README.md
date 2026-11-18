@@ -340,10 +340,16 @@ Ratings are live, so a change to what a category or level **means** must be trac
 
 1. Edit the guide (`guide.html`) and anything else the change touches.
 2. Raise `GUIDE_VERSION` in `proxy.php` by one, and update the `GUIDE.v<N>` labels in `guide.html` (the footer label links to the changelog).
-3. Add a dated entry at the top of the **Changelog** list at the end of `about.html` (`<section id="changelog">`): the new `GUIDE.v<N>`, the date, and one plain sentence on what changed and which ratings it affects.
+3. Add a dated entry at the top of the **Changelog** list at the end of `about.html` (`<section id="changelog">`): the new `GUIDE.v<N>`, the date, and one line per change, each tagged with what it touches (`g-levels`, `g-belief`, `g-moral`, `g-games`, `g-exc` — the guide's colours).
 4. Add the English for every new Arabic string in `tools/i18n/build_en.py` (`about_rules()` / `guide_rules()`), then run `python tools/i18n/build_en.py`.
+5. Lock the new version: `python tools/guide_check.py --lock`, then `python tools/guide_check.py`.
+6. After merge, publish a GitHub Release tagged `guide-v<N>` with the changelog text.
 
-Wording or layout changes that don't change what a rating means don't need a version bump or an entry.
+**This is enforced.** `tools/guide_check.py` fingerprints the guide text (levels, content flags, exceptions) and stores it in `tools/guide_lock.json`. The **Guide integrity** GitHub Action runs it on every PR and push to `main`: it fails if the guide text changed without a lock, if `GUIDE_VERSION` and the locked version differ, if any `GUIDE.v<N>` label is stale, if the changelog is missing a version, or if the home page's guide modal disagrees with `guide.html`. It also checks that the English pages are in sync.
+
+Wording or layout changes that don't change what a rating means don't need a version bump or an entry, but they still have to be locked on purpose, with a reason: `python tools/guide_check.py --lock --wording-only "fix a typo in Magic"` (recorded in the lock's history).
+
+Versions are whole numbers (`GUIDE.v2`, `GUIDE.v3`): each one is stored with every rating (`guide_version`), and only meaning changes create one.
 
 The stored `synopsis` is **user-generated text**: it's kept as plain text (control chars stripped, capped) and is never rendered server-side. Anything that later displays it must HTML-escape it and have a way to hide abuse — see `SECURITY.md`.
 

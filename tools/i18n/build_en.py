@@ -224,7 +224,7 @@ def about_rules():
         ('<a class="about-lang" href="/en/about" lang="en" hreflang="en">English</a>', '<a class="about-lang" href="/about" lang="ar" hreflang="ar">العربية</a>', 1),
         ('<a class="about-back" href="./">→ العودة إلى الأداة</a>', '<a class="about-back" href="/en">← Back to the tool</a>', 1),
         ('<h1>عن المشروع</h1>', '<h1>About</h1>', 1),
-        ('<p class="lead">التصنيف المحافظ للمحتوى الإبداعي (CCCC) أداة تتيح للمستهلكين والمراجعين وصناع المحتوى، ولأي جهة أخرى، تصنيف الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقم عمري.</p>',
+        ('<p class="lead">التصنيف المحافظ للمحتوى الإبداعي (CCCC) أداة تتيح للمتابعين والمراجعين وصناع المحتوى، ولأي جهة أخرى، تصنيف الأعمال الإبداعية بحسب ما تحتويه، لا بحسب رقم عمري.</p>',
          '<p class="lead">CCCC (Conservative Classification of Creative Content) lets viewers, reviewers, creators and anyone else rate creative works by what they contain, not by age.</p>', 1),
         ('<h2>لماذا أنشأناه</h2>', '<h2>Why we built it</h2>', 1),
         ('<p>تخبرك التصنيفات العمرية بالسنّ المناسبة للعمل، لكنها لا تخبرك بما يحتويه. والمجتمعات المحافظة لا تسأل "هل يناسب هذا العمل من هم فوق الثالثة عشرة؟"، بل تسأل "هل يخلو من الكفريات والسحر والتعرّي؟". ولأن أنظمة التصنيف الحالية لا تجيب عن هذا السؤال، خصوصًا في الأنمي والمانجا والألعاب، رأينا أن من واجبنا تصميم أداة تجيب عنه.</p>',

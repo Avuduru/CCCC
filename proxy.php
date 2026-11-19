@@ -563,37 +563,98 @@ function canonicalTitle($type, $id)
 }
 
 /**
- * Short server-side cache for search results (10 min): the same search ("one piece",
- * "gta 6") is answered without calling AniList/TMDB/RAWG/Open Library again. Faster, saves
- * our API quotas, and keeps us under AniList's per-IP rate limit (its failures pushed every
- * anime search onto the Jikan fallback). Only non-empty results are kept. Best effort: a
- * temp dir that can't be written just means no cache.
+ * Server-side cache for answers from outside services, in the temp dir (best effort: a dir
+ * that can't be written just means no cache). Saves API quotas and time:
+ *  - searches: 10 min; game searches 24 h (RAWG's free plan is 20,000 calls a month) when the
+ *    search fully succeeded, otherwise 10 min so a gap heals quickly; only non-empty results;
+ *  - game details 7 days; the chosen SteamGridDB cover 7 days ("none found" 1 day).
+ * CACHE_VERSION is part of every key: bump it when filtering/sorting/slimming changes, so old
+ * answers are never served. Each bucket keeps at most CACHE_MAX_FILES (oldest dropped first).
  */
+const CACHE_VERSION = 2;
+const CACHE_MAX_FILES = 3000;
 const SEARCH_TYPES = ['movie', 'tv', 'game', 'anime', 'manga', 'book'];
-function searchCacheFile($type, $query)
+function cacheFile($bucket, $key)
 {
-    $q = preg_replace('/\s+/u', ' ', trim(mb_strtolower((string)$query, 'UTF-8')));
-    return sys_get_temp_dir() . '/cccc-search/' . hash('sha256', $type . '|' . $q) . '.json';
+    return sys_get_temp_dir() . "/cccc-cache/$bucket/" . hash('sha256', CACHE_VERSION . '|' . $key) . '.json';
 }
+function cacheGet($bucket, $key, $ttl)
+{
+    $f = cacheFile($bucket, $key);
+    $m = @filemtime($f);
+    return ($m !== false && time() - $m < $ttl) ? @file_get_contents($f) : false;
+}
+// $keepFor < $ttl stores an entry that expires early (it's back-dated, so cacheGet sees it old)
+function cachePut($bucket, $key, $body, $ttl, $keepFor = null)
+{
+    $f = cacheFile($bucket, $key);
+    $dir = dirname($f);
+    if (!is_dir($dir) && !@mkdir($dir, 0700, true)) return;
+    if (mt_rand(1, 50) === 1) cachePrune($dir, $ttl);
+    $tmp = $f . '.' . getmypid() . '.tmp';
+    if (@file_put_contents($tmp, $body) === false) return;
+    if (!@rename($tmp, $f)) { @unlink($tmp); return; }
+    if ($keepFor !== null && $keepFor < $ttl) @touch($f, time() - ($ttl - $keepFor));
+}
+function cachePrune($dir, $ttl)
+{
+    $files = [];
+    foreach (glob($dir . '/*.json') ?: [] as $f) {
+        $m = @filemtime($f);
+        if ($m === false) continue;
+        if ($m < time() - $ttl) @unlink($f); else $files[$f] = $m;
+    }
+    if (count($files) > CACHE_MAX_FILES) {           // still too many: drop the oldest fifth
+        asort($files);
+        foreach (array_slice(array_keys($files), 0, count($files) - (int)(CACHE_MAX_FILES * 0.8)) as $f) @unlink($f);
+    }
+}
+function searchKey($type, $query)
+{
+    return $type . '|' . preg_replace('/\s+/u', ' ', trim(mb_strtolower((string)$query, 'UTF-8')));
+}
+function searchTtl($type) { return $type === 'game' ? 86400 : 600; }
 function searchCacheGet($type, $query)
 {
-    $f = searchCacheFile($type, $query);
-    $age = @filemtime($f);
-    return ($age !== false && time() - $age < 600) ? @file_get_contents($f) : false;
+    return cacheGet('search', searchKey($type, $query), searchTtl($type));
 }
-function searchCachePut($type, $query, $response)
+function searchCachePut($type, $query, $response, $complete = true)
 {
     $d = json_decode((string)$response, true);
     $key = ['anime' => 'data', 'manga' => 'data', 'book' => 'docs'][$type] ?? 'results';
     if (!is_array($d) || isset($d['error']) || empty($d[$key])) return;
-    $f = searchCacheFile($type, $query);
-    $dir = dirname($f);
-    if (!is_dir($dir) && !@mkdir($dir, 0700, true)) return;
-    if (mt_rand(1, 200) === 1) {   // now and then, drop entries older than a day
-        foreach (glob($dir . '/*.json') ?: [] as $old) if (@filemtime($old) < time() - 86400) @unlink($old);
-    }
-    $tmp = $f . '.' . getmypid() . '.tmp';
-    if (@file_put_contents($tmp, $response) !== false) { @rename($tmp, $f) || @unlink($tmp); }
+    cachePut('search', searchKey($type, $query), $response, searchTtl($type), $complete ? null : 600);
+}
+
+/**
+ * Per-visitor budget for calls that reach RAWG (searches not answered by the cache, the
+ * number-swapped second search, game details). Real use stays far below; one script can't
+ * spend the site's monthly RAWG quota.
+ */
+function rawgAllowed()
+{
+    return !rateLimited('rawg', 30, 600) && !rateLimited('rawgday', 100, 86400);
+}
+function rawgBusy()
+{
+    http_response_code(429);
+    header('Retry-After: 600');
+    echo json_encode(['error' => 'Too many requests']);
+    exit;
+}
+// Only the fields the site uses from a RAWG game (search result or details): a search answer
+// drops from ~32 KB to ~2 KB, for the cache and for the visitor's download
+function slimRawgGame($g, $details = false)
+{
+    $out = [
+        'id' => $g['id'] ?? null, 'slug' => $g['slug'] ?? '', 'name' => $g['name'] ?? '',
+        'released' => $g['released'] ?? null, 'background_image' => $g['background_image'] ?? null,
+        'metacritic' => $g['metacritic'] ?? null, 'playtime' => $g['playtime'] ?? null,
+        'platforms' => array_map(fn($p) => ['platform' => ['name' => $p['platform']['name'] ?? '']], array_values(array_filter($g['platforms'] ?? [], 'is_array'))),
+        'genres' => array_map(fn($x) => ['name' => $x['name'] ?? ''], array_values(array_filter($g['genres'] ?? [], 'is_array'))),
+    ];
+    if ($details) $out['description_raw'] = $g['description_raw'] ?? '';
+    return $out;
 }
 
 /**
@@ -813,6 +874,7 @@ if (in_array($type, SEARCH_TYPES, true) && mb_strlen(trim((string)$query), 'UTF-
 // Same search in the last 10 minutes: answer from the cache (see searchCacheGet)
 if (in_array($type, SEARCH_TYPES, true) && ($cached = searchCacheGet($type, $query)) !== false) {
     header('X-Search-Cache: HIT');
+    header('X-Cache: HIT');
     echo $cached;
     exit;
 }
@@ -841,6 +903,7 @@ switch ($type) {
         // RAWG API - comprehensive game database (free and paid games)
         // Fetch 20 to give room for NSFW filtering and smart sorting
         $gameQueries = gameSearchQueries($query);
+        if (!rawgAllowed()) rawgBusy();
         $url = "https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[0]) . "&page_size=20";
         break;
 
@@ -852,11 +915,32 @@ switch ($type) {
             echo json_encode(['error' => 'Invalid game id']);
             exit;
         }
-        $url = "https://api.rawg.io/api/games/$query?key=$RAWG_KEY";
-        break;
+        $detKey = strtolower((string)$query);
+        if (($cached = cacheGet('game_details', $detKey, 604800)) !== false) {
+            header('X-Cache: HIT');
+            echo $cached;
+            exit;
+        }
+        if (!rawgAllowed()) rawgBusy();
+        $raw = json_decode((string)fetchUrl("https://api.rawg.io/api/games/$query?key=$RAWG_KEY"), true);
+        if (!is_array($raw) || empty($raw['name'])) {
+            echo json_encode(['error' => is_array($raw) && isset($raw['error']) ? 'Upstream error' : 'Game not found']);
+            exit;
+        }
+        $out = json_encode(slimRawgGame($raw, true));
+        cachePut('game_details', $detKey, $out, 604800);
+        echo $out;
+        exit;
 
     case 'game_cover':
-        // SteamGridDB - Search for game ID first
+        // SteamGridDB: the chosen cover per game is cached 7 days ("none found" 1 day)
+        $coverKey = normalizeSearchTitle($query);
+        if (($cached = cacheGet('game_cover', $coverKey, 604800)) !== false) {
+            header('X-Cache: HIT');
+            echo $cached;
+            exit;
+        }
+        // Search for the game's SteamGridDB id first
         $searchUrl = "https://www.steamgriddb.com/api/v2/search/autocomplete/" . urlencode($query);
         $headers = ["Authorization: Bearer $STEAMGRIDDB_KEY"];
 
@@ -867,11 +951,24 @@ switch ($type) {
             $gameId = (int)$searchData['data'][0]['id'];
             // Fetch vertical grids (600x900)
             $gridUrl = "https://www.steamgriddb.com/api/v2/grids/game/$gameId?dimensions=600x900&styles=alternate,material,white_logo";
-            $gridResponse = fetchUrl($gridUrl, $headers, null, 5);
-            echo $gridResponse;
+            $grids = json_decode((string)fetchUrl($gridUrl, $headers, null, 5), true);
+            if (!is_array($grids) || empty($grids['success'])) {
+                echo json_encode(['success' => false, 'error' => 'Upstream error']);   // not cached
+                exit;
+            }
+            $keep = array_map(fn($g) => ['url' => $g['url'] ?? '', 'thumb' => $g['thumb'] ?? '', 'width' => $g['width'] ?? null, 'height' => $g['height'] ?? null],
+                              array_slice(array_values(array_filter($grids['data'] ?? [], 'is_array')), 0, 3));
+            $out = json_encode(['success' => true, 'data' => $keep]);
+            cachePut('game_cover', $coverKey, $out, 604800, $keep ? null : 86400);
+            echo $out;
+            exit;
+        } elseif (is_array($searchData) && !empty($searchData['success'])) {
+            $out = json_encode(['success' => false, 'error' => 'Game not found']);
+            cachePut('game_cover', $coverKey, $out, 604800, 86400);              // "none found": 1 day
+            echo $out;
             exit;
         } else {
-            echo json_encode(['success' => false, 'error' => 'Game not found']);
+            echo json_encode(['success' => false, 'error' => 'Upstream error']);   // not cached
             exit;
         }
         break;
@@ -1716,9 +1813,19 @@ if ($url === 'ANILIST_PRIMARY') {
 } else if ($url) {
     $response = fetchUrl($url);
     $data = json_decode($response, true);
-    // Games: also search the number-swapped text ("6" <-> "VI") and merge, de-duplicated by id
+    // Games: also search the number-swapped text ("6" <-> "VI") and merge, de-duplicated by id.
+    // Skipped when the first search already has the exact title (tested: the second one then
+    // only adds spin-offs). If it was needed but failed or was over budget, the answer is
+    // cached 10 min instead of 24 h.
+    $searchComplete = true;
+    $exactFirst = false;
     if ($type === 'game' && isset($gameQueries[1]) && is_array($data) && isset($data['results']) && is_array($data['results'])) {
-        $alt = json_decode(fetchUrl("https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[1]) . "&page_size=20", [], null, 5), true);
+        $want = normalizeSearchTitle($query);
+        foreach ($data['results'] as $r) if (normalizeSearchTitle($r['name'] ?? '') === $want) { $exactFirst = true; break; }
+    }
+    if ($type === 'game' && isset($gameQueries[1]) && !$exactFirst && is_array($data) && isset($data['results']) && is_array($data['results'])) {
+        $alt = rawgAllowed() ? json_decode(fetchUrl("https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[1]) . "&page_size=20", [], null, 5), true) : null;
+        if (!is_array($alt) || !isset($alt['results']) || !is_array($alt['results'])) $searchComplete = false;
         if (is_array($alt) && isset($alt['results']) && is_array($alt['results'])) {
             $seen = array_flip(array_column($data['results'], 'id'));
             foreach ($alt['results'] as $r) {
@@ -1745,9 +1852,12 @@ if (isset($data) && $data && !isset($data['error'])) {
     if (in_array($type, ['movie', 'tv', 'game', 'anime', 'manga', 'book'])) {
         $data = applySmartSort($data, $type, $query);
     }
+    if ($type === 'game' && isset($data['results']) && is_array($data['results'])) {
+        $data = ['results' => array_map('slimRawgGame', $data['results'])];
+    }
 
     $response = json_encode($data);
 }
 
-if (in_array($type, SEARCH_TYPES, true) && isset($response)) searchCachePut($type, $query, $response);
+if (in_array($type, SEARCH_TYPES, true) && isset($response)) searchCachePut($type, $query, $response, $searchComplete ?? true);
 echo $response ?? json_encode(['error' => 'Unknown error']);

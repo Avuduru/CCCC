@@ -499,6 +499,16 @@ body {
     color: var(--acc);
 }
 
+/* Data-source credit under the search box (Games tab only): required, kept quiet */
+.data-credit {
+    flex-basis: 100%;
+    margin-top: -6px;
+    font: 10px/1.2 var(--font-mono);
+    color: var(--text-3);
+    text-decoration: none;
+}
+.data-credit:hover, .data-credit:focus-visible { color: var(--text-1); text-decoration: underline; }
+
 /* ─── Search Wrappers ─── */
 .search-wrapper {
     flex: 1;

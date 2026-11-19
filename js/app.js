@@ -3,6 +3,12 @@ import { initPhone, syncTypeChips } from './phone.js';
 import { handleSearch } from './api.js';
 import { handleExport, handleCopyToClipboard } from './export.js';
 import { debounce } from './utils.js';
+
+// RAWG's credit link under the search box: only while the Games tab is selected
+function syncDataCredit() {
+    const credit = document.getElementById('data-credit');
+    if (credit) credit.hidden = state.type !== 'game';
+}
 import { state } from './state.js';
 import { config } from './config.js';
 import { setDragState } from './interact.js';
@@ -23,6 +29,7 @@ function init() {
     initUI();
     setupEventListeners();
     initPhone();
+    syncDataCredit();
     // Silently preload stickers in the background to prevent click delay
     setTimeout(preloadStickers, 500);
 }
@@ -93,6 +100,7 @@ function setupEventListeners() {
 
             // Update State
             state.type = item.dataset.value;
+            syncDataCredit();
 
             // RESET STATE GLOBALLY
             state.ratings = {};

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>CCCC Live</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='none' stroke='%23c8ff5e' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo"><i style="--c:#e5484d"></i><i style="--c:#f5a524"></i><i style="--c:#f2d53c"></i><i style="--c:#c8ff5e"></i></span>
+    <div>
+      <div class="kicker">MUHAFID.COM</div>
+      <h1>Live dashboard</h1>
+    </div>
+  </div>
+  <nav class="ranges" id="ranges">
+    <button data-r="24h">24h</button><button data-r="7d" class="on">7 days</button><button data-r="30d">30 days</button><button data-r="90d">90 days</button>
+  </nav>
+  <div class="live"><span class="dot" id="live-dot"></span><span id="updated">Loading…</span><span class="ring" id="ring"></span></div>
+</header>
+
+<div id="errors" class="errors hidden"></div>
+
+<main>
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid two">
+    <article class="card wide-left">
+      <header><h2>Visitors and ratings</h2><span class="sub" id="trend-sub"></span></header>
+      <div class="chart tall"><canvas id="trend"></canvas></div>
+    </article>
+    <article class="card">
+      <header><h2>Funnel</h2><span class="sub">visitors who…</span></header>
+      <div id="funnel" class="funnel"></div>
+    </article>
+  </section>
+
+  <section class="grid two">
+    <article class="card wide-left">
+      <header><h2>Where visitors are</h2><span class="sub" id="map-sub"></span></header>
+      <div id="map" class="map"></div>
+      <div id="map-tip" class="tip hidden"></div>
+    </article>
+    <article class="card">
+      <header><h2>Countries</h2></header>
+      <ol id="countries" class="rank"></ol>
+    </article>
+  </section>
+
+  <section class="grid three">
+    <article class="card">
+      <header><h2>Came from</h2></header>
+      <ol id="refs" class="rank"></ol>
+    </article>
+    <article class="card">
+      <header><h2>Devices</h2></header>
+      <div class="chart donut"><canvas id="sizes"></canvas></div>
+      <div id="systems" class="chips"></div>
+      <div id="browsers" class="chips"></div>
+    </article>
+    <article class="card">
+      <header><h2>Search by type</h2><span class="sub">searched · picked · no results</span></header>
+      <div class="chart"><canvas id="types"></canvas></div>
+    </article>
+  </section>
+
+  <section class="grid two">
+    <article class="card wide-left">
+      <header><h2>New ratings per day</h2><span class="sub">last 90 days, by type</span></header>
+      <div class="chart"><canvas id="ratings-daily"></canvas></div>
+    </article>
+    <article class="card">
+      <header><h2>Ratings by type</h2><span class="sub">all time</span></header>
+      <div class="chart donut"><canvas id="by-type"></canvas></div>
+      <div id="splits" class="splits"></div>
+    </article>
+  </section>
+
+  <section class="grid two">
+    <article class="card wide-left">
+      <header><h2>What raters mark</h2><span class="sub" id="tiles-sub">share of all ratings</span></header>
+      <div id="tiles" class="tiles"></div>
+    </article>
+    <article class="card">
+      <header><h2>Most rated</h2><span class="sub">all time</span></header>
+      <ol id="top" class="rank"></ol>
+    </article>
+  </section>
+
+  <section class="grid two-rev">
+    <article class="card">
+      <header><h2>Pages</h2></header>
+      <ol id="pages" class="rank"></ol>
+    </article>
+    <article class="card">
+      <header><h2>Services</h2><span class="sub" id="health-sub"></span></header>
+      <ul id="health" class="health"></ul>
+    </article>
+  </section>
+</main>
+
+<footer class="foot">Visits: GoatCounter (<span id="gc-tz">its time zone</span>) · Ratings: muhafid.com database (<span id="db-now">DB clock</span>) · refreshes every minute · home network only</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" integrity="sha384-su5kReKyYlIFrI62mbQRKXHzFobMa7BHp1cK6julLPbnYcCW9NIZKJiTODjLPeDh" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js" integrity="sha384-9dCJK6nh7skY14HrcvlLYlFga9/MehJjL9ONWRflmiXNRuf8p2jiF4Y5PR881PTq" crossorigin="anonymous"></script>
+<script src="app.js"></script>
+</body>
+</html>

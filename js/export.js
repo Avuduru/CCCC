@@ -277,7 +277,9 @@ function showExportModal(url, file) {
         };
         body.appendChild(shareBtn);
     }
-    body.appendChild(captionActions());
+    // With Share, X gets the photo + caption from the phone's share menu; a text-only
+    // "Post on X" next to it looked like the quick way and lost the picture. Keep Copy text.
+    body.appendChild(captionActions({ withX: !canShare }));
 
     const instructions = document.createElement('p');
     instructions.innerText = canShare ? t('export_popup.or_hold_to_save') : t('export_popup.hold_to_save');
@@ -312,8 +314,9 @@ function shareCaption() {
 }
 
 // Two buttons: open X with the caption filled in (the copied image is pasted by the user),
-// or copy the caption as text for any other app. Used in the Copy panel and the Export popup.
-function captionActions() {
+// or copy the caption as text for any other app. Used in the Copy panel and the Export popup
+// (there without X when the phone's Share menu is offered).
+function captionActions({ withX = true } = {}) {
     const caption = shareCaption();
     const row = document.createElement('div');
     row.className = 'share-actions';
@@ -332,7 +335,7 @@ function captionActions() {
         .then(() => { copy.innerText = t('share.text_copied'); })
         .catch(err => console.error('Caption copy failed:', err));
 
-    row.appendChild(x);
+    if (withX) row.appendChild(x);
     row.appendChild(copy);
     return row;
 }

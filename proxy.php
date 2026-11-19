@@ -64,12 +64,30 @@ function getDB()
         }
 
         $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
-        $pdo = new PDO($dsn, $user, $pass, [
+        $opts = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
-        ]);
-        return $pdo;
+            PDO::ATTR_TIMEOUT            => 5,
+        ];
+        // Encrypt the connection. CranL's DB certificate is self-signed and regenerated, so it
+        // can't be verified or pinned: this protects against eavesdropping, not impersonation.
+        // DB_TLS: "prefer" (default) falls back to plain if TLS fails, "require" never does,
+        // "off" skips TLS (local dev DBs without it).
+        $tls = strtolower(getenv('DB_TLS') ?: 'prefer');
+        if ($tls !== 'off') {
+            $tlsOpts = $opts + [
+                PDO::MYSQL_ATTR_SSL_CA                 => '',
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+            ];
+            try {
+                return new PDO($dsn, $user, $pass, $tlsOpts);
+            } catch (PDOException $e) {
+                if ($tls === 'require') throw $e;
+                error_log('CCCC DB TLS failed, using a plain connection: ' . $e->getMessage());
+            }
+        }
+        return new PDO($dsn, $user, $pass, $opts);
     } catch (PDOException $e) {
         // Log to error_log but never expose credentials to the client
         error_log('CCCC DB connection failed: ' . $e->getMessage());

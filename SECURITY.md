@@ -105,7 +105,11 @@ primary defense; the edge is a second layer. If a legitimate request is ever blo
 - [ ] **`TRUSTED_IP_HEADER`** set in the CranL Environment once support confirms which header carries
       the real client IP.
 - [ ] **`IP_HASH_SECRET`** set in the CranL Environment (`openssl rand -hex 32`), then redeploy.
-- [ ] **Database not reachable from the internet** — only from the app.
+- [x] **Database not reachable from the internet** — CranL applied an IP allowlist (app IP only), 2026-11-19.
+      Side effect: a desktop DB client (DBeaver) needs its own IP added by CranL support.
+- [ ] **DB connection encrypted** — `getDB()` uses TLS by default (`DB_TLS=prefer`). Once live and saves
+      work, set `DB_TLS=require` in the CranL Environment so it can never fall back to plain. The
+      certificate isn't verified (self-signed, regenerated), so this stops eavesdropping, not impersonation.
 - [ ] Rotate any API key ever pasted outside `.env` / the CranL dashboard.
 
 ## Audit history

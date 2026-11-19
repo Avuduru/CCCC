@@ -733,6 +733,27 @@ function igdbSearch($text)
     $q = str_replace(['"', '\\'], '', (string)$text);
     $d = igdbQuery('games', 'search "' . $q . '"; fields ' . IGDB_FIELDS . '; where game_type = ' . IGDB_GAME_TYPES
         . ' & version_parent = null; limit 20;');
+    return igdbResults($d);
+}
+
+/**
+ * IGDB's search only matches whole words, so half-typed text ("Resident Ev", "minecraf") finds
+ * nothing. This second try asks for games whose name (or another of their names) contains every
+ * typed word, most-rated first. Dots are dropped first so "S.T.A.L.K.E.R." stays one word.
+ */
+function igdbContains($text)
+{
+    $t = preg_replace('/[^\p{L}\p{N}]+/u', ' ', str_replace('.', '', (string)$text));
+    $words = array_slice(array_filter(explode(' ', $t), fn($w) => mb_strlen($w) >= 2), 0, 6);
+    if (!$words) return [];
+    $cond = implode(' & ', array_map(fn($w) => '(name ~ *"' . $w . '"* | alternative_names.name ~ *"' . $w . '"*)', $words));
+    $d = igdbQuery('games', 'fields ' . IGDB_FIELDS . '; where game_type = ' . IGDB_GAME_TYPES
+        . ' & version_parent = null & ' . $cond . '; sort total_rating_count desc; limit 20;');
+    return igdbResults($d);
+}
+
+function igdbResults($d)
+{
     if ($d === null) return null;
     $out = [];
     foreach ($d as $g) {
@@ -1037,6 +1058,12 @@ switch ($type) {
                 foreach ($alt ?? [] as $r) if (!isset($seen[$r['id']])) { $igdb[] = $r; $seen[$r['id']] = 1; }
             }
         }
+        if ($igdb === []) {
+            $igdb = igdbContains($query);
+            if ($igdb === null) $searchComplete = false;
+        }
+        // RAWG only when IGDB found nothing both ways (typos, Arabic names, IGDB-missing games)
+        // or is down; that RAWG answer is cached and counted like any other.
         if (!empty($igdb)) {
             header('X-Game-Source: igdb');
             $data = ['results' => $igdb];

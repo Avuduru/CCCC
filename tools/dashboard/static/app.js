@@ -392,18 +392,24 @@ function renderPages(data) {
 }
 
 async function renderHealth() {
-  $('#health-sub').textContent = 'checking…';
   try {
     const h = await fetch('/api/health').then((r) => r.json());
+    if (!h.checks?.length) { $('#health-sub').textContent = 'first check running…'; setTimeout(renderHealth, 15000); return; }
     const groups = [...new Set(h.checks.map((c) => c.group))];
     $('#health').innerHTML = groups.map((g) => `<li class="hg">${esc(g)}</li>` + h.checks.filter((c) => c.group === g).map((c) => {
-      const cls = !c.ok ? 'bad' : (c.ms > 3000 ? 'slow' : '');
-      let note = c.note || '';
-      if (c.name === 'Last deploy' && c.ok) { const d = new Date(note); if (!isNaN(d)) note = d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-      return `<li class="${cls}"><span class="s"></span><span class="n">${esc(c.name)}<small>${esc(note)}</small></span><span class="m">${c.ms != null && c.name !== 'Last deploy' ? fmt(c.ms) + ' ms' : ''}</span></li>`;
+      const cls = c.ok === false ? (c.owner === 'theirs' ? 'slow' : 'bad') : c.ok === null ? 'na' : (c.ms > 4000 ? 'slow' : '');
+      const tag = c.ok === false && c.owner === 'theirs' ? '<span class="tag">outside</span>' : '';
+      return `<li class="${cls}"><span class="s"></span><span class="n">${esc(c.name)}${tag}<small>${esc(c.note || '')}</small></span><span class="m">${c.ms != null ? fmt(c.ms) + ' ms' : ''}</span></li>`;
     }).join('')).join('');
-    const when = new Date(h.checked).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    $('#health-sub').innerHTML = h.failed ? `<span style="color:#ff8a8d">${h.failed} failing</span> · ${when}` : `all ${h.checks.length} OK · ${when}`;
+    const when = h.checked ? new Date(h.checked).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+    const alerts = h.alerts_on ? 'phone alerts on' : '<span style="color:#f5a524">phone alerts off</span>';
+    $('#health-sub').innerHTML = (h.failed ? `<span style="color:#ff8a8d">${h.failed} failing</span>` : `all OK`) + ` · ${when} · ${alerts}`;
+    // banner at the top when something of ours is down
+    const banner = $('#errors');
+    if (h.ours_failing?.length) { banner.textContent = 'Site problem: ' + h.ours_failing.join(' · '); banner.classList.remove('hidden'); banner.dataset.health = '1'; }
+    else if (banner.dataset.health) { banner.classList.add('hidden'); delete banner.dataset.health; }
+    $('#sent').innerHTML = (h.sent || []).length ? h.sent.map((n) => `<li><span class="when">${new Date(n.at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+      <b>${esc(n.title)}</b><span class="msg">${esc(n.message)}</span>${n.delivered === false ? '<span class="tag">not sent</span>' : ''}</li>`).join('') : '<li class="empty">No alerts yet</li>';
   } catch { $('#health-sub').textContent = 'could not check'; }
 }
 
@@ -466,7 +472,7 @@ setInterval(() => {
   $('#ring').style.setProperty('--p', `${((REFRESH - countdown) / REFRESH) * 100}%`);
   if (countdown === 0) load();
 }, 1000);
-setInterval(renderHealth, 10 * 60 * 1000);
+setInterval(renderHealth, 2 * 60 * 1000);
 window.addEventListener('resize', () => { if (lastData) { d3.select('#map').selectAll('svg').remove(); renderMap(lastData); } });
 
 load();

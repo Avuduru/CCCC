@@ -45,6 +45,9 @@ const STRINGS = {
         // \u2068…\u2069 isolate the title, so an English title can't scramble the Arabic order
         'share.caption': 'تصنيفي لـ«\u2068{title}\u2069» \u200e#CCCC',   // \u200e keeps "#CCCC" from showing as "CCCC#"
         'share.caption_untitled': '#CCCC',
+        // With a score: title alone on line 1, then "تقييمي: 9/10 #CCCC" (\u2066…\u2069 keep "9/10" from turning into "10/9")
+        'share.caption_title': 'تصنيفي لـ«\u2068{title}\u2069»',
+        'share.caption_score': 'تقييمي: \u2066{score}/10\u2069 \u200e#CCCC',
         'share.copied_hint': 'الصورة منسوخة، الصقها في منشورك',
         'share.post_x': 'نشر على X',
         'share.copy_text': 'نسخ النص',
@@ -99,6 +102,8 @@ const STRINGS = {
         'export_popup.or_hold_to_save': 'Or press and hold the image to save it',
         'share.caption': 'My rating of "\u2068{title}\u2069" #CCCC',
         'share.caption_untitled': '#CCCC',
+        'share.caption_title': 'My rating of "\u2068{title}\u2069"',
+        'share.caption_score': 'My score: {score}/10 #CCCC',
         'share.copied_hint': 'Image copied, paste it into your post',
         'share.post_x': 'Post on X',
         'share.copy_text': 'Copy text',

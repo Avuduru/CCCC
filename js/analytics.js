@@ -5,6 +5,9 @@
 //   no-results-<type>  a search that still shows "no results" 3 s later, once per page view
 //   picked-<type>      a search result was chosen
 //   share / post-x / copy-text   the share buttons after Export / Copy
+//   save-failed / save-rejected-<code>   saving a rating failed (5xx or no connection) / was refused (4xx)
+//   export-failed / copy-failed          making the card image failed
+//   js-error                              an uncaught error in this site's own scripts, once per page view
 const counted = new Set();
 
 export function countEvent(name, { oncePerPage = false } = {}) {
@@ -14,3 +17,11 @@ export function countEvent(name, { oncePerPage = false } = {}) {
     counted.add(name);
     try { gc.count({ path: name, title: name, event: true }); } catch { /* counting must never break the site */ }
 }
+
+// Uncaught errors, only from this site's own files (browser extensions and other sites' scripts are ignored).
+const ours = (url) => typeof url === 'string' && url.startsWith(location.origin + '/');
+window.addEventListener('error', (e) => { if (ours(e.filename)) countEvent('js-error', { oncePerPage: true }); });
+window.addEventListener('unhandledrejection', (e) => {
+    const stack = String(e.reason?.stack || '');
+    if (stack.includes(location.origin + '/')) countEvent('js-error', { oncePerPage: true });
+});

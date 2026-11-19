@@ -79,8 +79,9 @@ Everything else is static HTML/CSS/JS.
   `[a-z0-9-]`). Then `index.php` adds our own copy of `count.v5.js` (`js/vendor/goatcounter/`, ISC, no
   third-party script) to every page and allows only `https://<code>.goatcounter.com` in `connect-src`.
   No cookies; sends path, referrer, screen size and a bot flag. Events (`js/analytics.js`): `searched-<type>`,
-  `no-results-<type>`, `picked-<type>`, `share`, `post-x`, `copy-text` — names only, never the search text or
-  the work. Exports/copies are counted in the DB (`classifications.action`), not here.
+  `no-results-<type>`, `picked-<type>`, `share`, `post-x`, `copy-text`, and health signals `save-failed`,
+  `save-rejected-<code>`, `export-failed`, `copy-failed`, `js-error` (own scripts only) — names only, never the
+  search text, the work or the error text. Exports/copies are counted in the DB (`classifications.action`), not here.
 - **Caching** — only versioned static files get the year-long immutable cache; pages (`no-cache`) and
   `proxy.php` (`no-store`) are never long-cached, so a `?v=` can't pin a dynamic response at the edge.
 - **File access** — the `Caddyfile` 404s dotfiles, `data/`, `Docs/`, `tools/`, `lang/` and config files.

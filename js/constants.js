@@ -32,6 +32,8 @@ export const CATEGORIES = {
 
 // Card sticker for a content flag at level 1–3, or an exception badge (level 0)
 export function iconSrc(cat, level) {
-    if (EN) return level ? `/assets/icons/en/${cat.id}${level}.png` : `/assets/icons/en/${cat.id}.png`;
+    // ?v= makes the CDN cache them like every other versioned file (without it each one went
+    // to the server, ~1 s apiece on a first visit to /en). Bump it when the icons change.
+    if (EN) return level ? `/assets/icons/en/${cat.id}${level}.png?v=2` : `/assets/icons/en/${cat.id}.png?v=2`;
     return `assets/icons/${cat.icon}${level}.png?v=2`;
 }

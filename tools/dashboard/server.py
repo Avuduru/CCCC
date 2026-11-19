@@ -4,11 +4,12 @@
 Pulls three sources and serves one page that refreshes itself every minute:
   * GoatCounter API  (visits, events, countries, referrers, devices) — needs a read-only key
   * muhafid.com/proxy.php?type=stats  (ratings: totals, per day/hour, tiles; public, counts only)
-  * a few quick service checks (site, deploy time, AniList, Kitsu, Open Library)
+  * a background monitor (monitor.py): checks the site all day and sends phone alerts (ntfy)
 
 Standard library only (Python 3.9+). Config comes from dash.env next to this file (or the file
 named by $DASH_ENV): GOATCOUNTER_API_KEY (required), GOATCOUNTER_CODE (default kureiji),
-SITE (default https://muhafid.com), BIND (default 0.0.0.0), PORT (default 8090).
+SITE (default https://muhafid.com), BIND (default 0.0.0.0), PORT (default 8090),
+NTFY_TOPIC (phone alerts; empty = off), ALERT_TZ (default America/New_York), HEARTBEAT_HOUR (default 9).
 The key is only ever sent to GoatCounter; it never reaches the browser or the logs.
 """
 import concurrent.futures as cf
@@ -58,7 +59,6 @@ RANGES = {  # name -> (length, GoatCounter grouping)
     '90d': (timedelta(days=90), 'day'),
 }
 DATA_TTL = 60      # seconds; the page refreshes every minute
-HEALTH_TTL = 600   # deep service check at most every 10 minutes (only while the page is open)
 
 
 class SourceError(Exception):
@@ -160,154 +160,6 @@ def collect(rng):
     }
 
 
-# Search titles for the through-the-site checks (same idea as tools/upstream_check.py): a random
-# title is usually not in the site's 10-minute search cache, so the check reaches the real source.
-POOL = {
-    'anime': ['naruto', 'frieren', 'one piece', 'bleach', 'monster', 'mushishi', 'haikyuu', 'trigun', 'dorohedoro', 'kingdom'],
-    'manga': ['berserk', 'vagabond', 'monster', 'vinland saga', 'blame', 'pluto', 'dorohedoro', 'kingdom', 'akira', 'gantz'],
-    'movie': ['dune', 'inception', 'interstellar', 'the matrix', 'heat', 'alien', 'arrival', 'gravity', 'up', 'jaws'],
-    'tv': ['breaking bad', 'dark', 'the office', 'severance', 'chernobyl', 'fargo', 'lost', 'friends', 'sherlock', 'dexter'],
-    'game': ['elden ring', 'minecraft', 'hollow knight', 'hades', 'celeste', 'portal', 'doom', 'tetris', 'outer wilds', 'inside'],
-    'book': ['dune', 'the hobbit', '1984', 'frankenstein', 'dracula', 'emma', 'ulysses', 'beloved', 'it', 'carrie'],
-}
-GAME_FRESH_EVERY = 3600   # a fresh (uncached) game search at most hourly: RAWG's free plan is 20k calls/month
-_last_game_fresh = [0.0]
-
-
-def health():
-    """Deep check, run only while the page is open (cached HEALTH_TTL). Read-only: never saves a rating."""
-    import base64
-    import random
-    checks = []
-    api = f'{SITE}/proxy.php?'
-
-    def add(group, name, fn):
-        try:
-            ok, ms, note = fn()
-        except Exception as e:
-            ok, ms, note = False, None, type(e).__name__
-        checks.append({'group': group, 'name': name, 'ok': bool(ok), 'ms': ms, 'note': note})
-
-    def site_json(params, timeout=20):
-        s, b, h, ms = fetch(api + urllib.parse.urlencode(params), timeout=timeout)
-        try:
-            d = json.loads(b)
-        except ValueError:
-            d = None
-        return s, d, h, ms
-
-    def count(d):
-        if not isinstance(d, dict):
-            return 0
-        for k in ('results', 'data', 'docs'):
-            if isinstance(d.get(k), list):
-                return len(d[k])
-        return 0
-
-    # --- the site itself
-    def home():
-        s, _, _, ms = fetch(f'{SITE}/', timeout=15)
-        return s == 200, ms, f'HTTP {s}'
-
-    def database():
-        s, d, _, ms = site_json({'type': 'stats'})
-        src = (d or {}).get('source')
-        return src == 'mysql', ms, f'source: {src}' if src else f'HTTP {s}'
-
-    def deploy():
-        s, _, h, ms = fetch(f'{SITE}/js/app.js', timeout=15, method='HEAD')
-        return s == 200, ms, h.get('Last-Modified', '?')
-
-    def counter():
-        t0 = time.monotonic()
-        gc('stats/sizes', start=iso(datetime.now(timezone.utc) - timedelta(hours=1)),
-           end=iso(datetime.now(timezone.utc) + timedelta(hours=1)))
-        return True, int((time.monotonic() - t0) * 1000), 'API OK'
-
-    # --- every search type, through the site
-    poster = {}
-
-    def search(typ):
-        def fn():
-            fresh = typ != 'game' or time.time() - _last_game_fresh[0] > GAME_FRESH_EVERY
-            q = random.choice(POOL[typ]) if fresh else 'elden ring'
-            if typ == 'game' and fresh:
-                _last_game_fresh[0] = time.time()
-            s, d, h, ms = site_json({'type': typ, 'query': q})
-            n = count(d)
-            hit = (h.get('X-Search-Cache') or '').upper() == 'HIT'
-            if typ == 'movie':
-                for r in (d or {}).get('results', []):
-                    if r.get('poster_path'):
-                        poster['url'] = 'https://image.tmdb.org/t/p/w185' + r['poster_path']
-                        break
-            return s == 200 and n > 0, ms, f'"{q}": {n} results' + (' (cached)' if hit else '')
-        return fn
-
-    # --- features that cards depend on
-    def translate():
-        q = base64.urlsafe_b64encode(b'A story about friendship.').decode().rstrip('=')
-        s, d, _, ms = site_json({'type': 'translate', 'q': q})
-        return s == 200 and isinstance(d, dict) and 'error' not in d, ms, f'HTTP {s}'
-
-    def hltb():
-        s, d, _, ms = site_json({'type': 'hltb', 'query': 'Elden Ring'})
-        return s == 200 and bool((d or {}).get('success')), ms, f'HTTP {s}'
-
-    def cover():
-        s, d, _, ms = site_json({'type': 'game_cover', 'query': 'Elden Ring'})
-        return s == 200 and bool((d or {}).get('success')), ms, f'HTTP {s}'
-
-    def movie_details():
-        s, d, _, ms = site_json({'type': 'movie_details', 'query': '550'})
-        return s == 200 and bool((d or {}).get('title')), ms, f'HTTP {s}'
-
-    def image_proxy():
-        url = poster.get('url')
-        if not url:
-            return False, None, 'no poster from the movie search to test with'
-        s, _, h, ms = fetch(api + urllib.parse.urlencode({'type': 'image_proxy', 'query': url}), timeout=20)
-        ctype = h.get('Content-Type', '')
-        return s == 200 and ctype.startswith('image/'), ms, ctype or f'HTTP {s}'
-
-    # --- sources on their own (tells "the site is broken" apart from "the source is down")
-    def anilist():
-        s, _, h, ms = fetch('https://graphql.anilist.co', timeout=10, method='POST',
-                            data=json.dumps({'query': '{Media(id:1){id}}'}).encode(),
-                            headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
-        lim = h.get('X-RateLimit-Limit')
-        return s == 200, ms, f'HTTP {s}' + (f', limit {lim}/min' + (' (degraded)' if lim and int(lim) < 90 else '') if lim else '')
-
-    def kitsu():
-        s, _, _, ms = fetch('https://kitsu.io/api/edge/anime?page%5Blimit%5D=1', timeout=10,
-                            headers={'Accept': 'application/vnd.api+json'})
-        return s == 200, ms, f'HTTP {s}'
-
-    def openlibrary():
-        s, _, _, ms = fetch('https://openlibrary.org/search.json?q=dune&limit=1', timeout=12)
-        return s == 200, ms, f'HTTP {s}'
-
-    def google_tr():
-        s, _, _, ms = fetch('https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ar&dt=t&q=hello', timeout=10)
-        return s == 200, ms, f'HTTP {s}'
-
-    groups = [
-        ('Site', [('Home page', home), ('Database', database), ('Last deploy', deploy), ('GoatCounter', counter)]),
-        ('Search', [(t.capitalize() if t != 'tv' else 'TV', search(t)) for t in POOL]),
-        ('Cards', [('Movie details', movie_details), ('Translation', translate), ('HowLongToBeat', hltb),
-                   ('Game cover (SteamGridDB)', cover)]),
-        ('Sources', [('AniList', anilist), ('Kitsu', kitsu), ('Open Library', openlibrary), ('Google Translate', google_tr)]),
-    ]
-    jobs = [(g, n, f) for g, items in groups for n, f in items]
-    with cf.ThreadPoolExecutor(max_workers=6) as ex:
-        list(ex.map(lambda j: add(*j), jobs))
-    add('Cards', 'Image proxy', image_proxy)        # needs the movie search's poster
-    order = [(g, n) for g, n, _ in jobs] + [('Cards', 'Image proxy')]
-    checks.sort(key=lambda c: order.index((c['group'], c['name'])))
-    failed = sum(1 for c in checks if not c['ok'])
-    return {'checked': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'failed': failed, 'checks': checks}
-
-
 _cache, _lock = {}, threading.Lock()
 _key_locks = {}
 
@@ -366,7 +218,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self.send_json({'error': type(e).__name__}, 502)
         if path == '/api/health':
-            return self.send_json(cached('health', HEALTH_TTL, health))
+            return self.send_json(MONITOR.snapshot())
         self.send(404, b'Not found', 'text/plain; charset=utf-8')
 
     def log_message(self, format, *args):  # quiet: only errors reach the journal
@@ -374,7 +226,23 @@ class Handler(BaseHTTPRequestHandler):
             super().log_message(format, *args)
 
 
+import monitor as _monitor  # noqa: E402  (needs fetch/gc defined above)
+MONITOR = _monitor.Monitor(fetch, gc, SITE, CONF)
+
 if __name__ == '__main__':
+    import sys
+    if '--test-alert' in sys.argv:          # send one test notification and exit
+        ok = MONITOR.notify('muhafid: test alert', 'If you can read this on your phone, alerts work.', priority=3, tags=['bell'])
+        print('sent' if ok else ('NTFY_TOPIC is not set' if not MONITOR.topic else 'could not reach ntfy'))
+        sys.exit(0 if ok else 1)
+    if '--check-once' in sys.argv:          # run every check once, print, exit (no alerts sent)
+        MONITOR.topic = ''
+        MONITOR.run_once(deep=True)
+        for c in MONITOR.snapshot()['checks']:
+            mark = {True: 'OK  ', False: 'FAIL', None: 'n/a '}[c['ok']]
+            print(f"{mark} {c['group']:<9} {c['name']:<28} {c['owner']:<6} {c['ms']:>6} ms  {c['note']}")
+        sys.exit(0)
+    MONITOR.start()
     if not GC_KEY:
         print('Warning: GOATCOUNTER_API_KEY is not set; visit numbers will be missing.', flush=True)
     srv = ThreadingHTTPServer((BIND, PORT), Handler)

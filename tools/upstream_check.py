@@ -72,24 +72,34 @@ def count(d):
     return 0
 
 
-print(f'DIRECT — upstream services on their own')
+# Outside services on their own are WARN-only: when one is down it isn't ours to fix, and the
+# through-the-site checks below then don't fail for it either. Only a site failure while its
+# source is fine counts as FAIL (that's ours). This keeps the scheduled run from crying wolf.
+down = set()
+
+
+def direct(name, status, secs, ok, note=''):
+    if not ok:
+        down.add(name)
+    report(name, status, secs, ok, note, fatal=False)
+
+
+print(f'DIRECT — upstream services on their own (outside services: WARN only)')
 st, s, b, h = call('https://graphql.anilist.co',
                    json.dumps({'query': '{Media(id:21){id title{romaji}}}'}).encode(),
                    {'Content-Type': 'application/json', 'Accept': 'application/json'})
 lim = h.get('X-RateLimit-Limit') or h.get('x-ratelimit-limit')
-report('AniList', st, s, st == 200, f'rate limit {lim}/min' + (' (DEGRADED: normal is 90)' if lim and int(lim) < 90 else ''))
+direct('AniList', st, s, st == 200, f'rate limit {lim}/min' + (' (DEGRADED: normal is 90)' if lim and int(lim) < 90 else ''))
 st, s, b, h = call('https://kitsu.io/api/edge/anime?filter%5Btext%5D=naruto&page%5Blimit%5D=1', headers={'Accept': 'application/vnd.api+json'}, timeout=8)
-report('Kitsu (anime backup #1)', st, s, st == 200 and bool((jget(b) or {}).get('data')), 'down: only matters while AniList fails' if st != 200 else '', fatal=False)
-st, s, b, h = call('https://api.jikan.moe/v4/anime/21', timeout=8)
-report('Jikan (anime backup #2)', st, s, st == 200, 'down: only matters while AniList fails' if st != 200 else '', fatal=False)
+direct('Kitsu', st, s, st == 200 and bool((jget(b) or {}).get('data')), 'anime backup: only matters while AniList fails' if st != 200 else '')
 st, s, b, h = call('https://openlibrary.org/search.json?q=dune&limit=1')
-report('Open Library', st, s, st == 200 and count(jget(b)) > 0)
+direct('Open Library', st, s, st == 200 and count(jget(b)) > 0)
 st, s, b, h = call('https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ar&dt=t&q=hello')
-report('Google Translate', st, s, st == 200)
+direct('Google Translate', st, s, st == 200)
 st, s, b, h = call('https://api.mymemory.translated.net/get?q=hello&langpair=en|ar')
-report('MyMemory (translate fallback)', st, s, st == 200)
+direct('MyMemory', st, s, st == 200, 'translate fallback' + (' (429 here is usually GitHub\'s shared IP)' if st == 429 else ''))
 st, s, b, h = call('https://howlongtobeat.com/')
-report('HowLongToBeat', st, s, st == 200)
+direct('HowLongToBeat', st, s, st == 200)
 
 print(f'\nTHROUGH THE SITE — {SITE}/proxy.php')
 # Searches are cached (10 min; game searches 24 h), so a cached answer proves nothing about the
@@ -118,7 +128,9 @@ for typ, titles in pool.items():
     if cached and st == 200 and n > 0:
         report(f'search {typ}: "{q}"', st, s, False, f'{n} results, all 4 tries from the cache: upstream not verified', fatal=False)
     else:
-        report(f'search {typ}: "{q}"', st, s, st == 200 and n > 0, f'{n} results' + (f' (fresh on try {attempt + 1})' if attempt else ''))
+        theirs = {'book': {'Open Library'} <= down, 'anime': {'AniList', 'Kitsu'} <= down, 'manga': {'AniList', 'Kitsu'} <= down}.get(typ, False)
+        report(f'search {typ}: "{q}"', st, s, st == 200 and n > 0, f'{n} results' + (f' (fresh on try {attempt + 1})' if attempt else '')
+               + (' (source down, not ours)' if theirs and not n else ''), fatal=not theirs)
     if typ == 'movie' and d and not img:
         for r in d.get('results', []):
             if r.get('poster_path'):
@@ -141,7 +153,9 @@ for name, params, check in [
     note = '' if check(d) else (b[:80].decode(errors='replace') if b else '')
     if (h.get('X-Cache') or h.get('x-cache') or '').upper() == 'HIT':
         note = (note + ' (cache)').strip()
-    report(name, st, s, st == 200 and check(d), note)
+    theirs = (name.startswith('hltb') and 'HowLongToBeat' in down) or (name == 'translate' and {'Google Translate', 'MyMemory'} <= down) \
+        or (name.startswith('book_details') and 'Open Library' in down)
+    report(name, st, s, st == 200 and check(d), note + (' (source down, not ours)' if theirs else ''), fatal=not theirs)
 
 if img:
     st, s, b, h = call(api + urllib.parse.urlencode({'type': 'image_proxy', 'query': img}))

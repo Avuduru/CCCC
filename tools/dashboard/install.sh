@@ -17,15 +17,20 @@ id dash >/dev/null 2>&1 || useradd --system --home "$DIR" --shell /usr/sbin/nolo
 mkdir -p "$DIR/static"
 
 echo "Downloading the dashboard ($REF)…"
-for f in server.py static/index.html static/app.js static/style.css; do
+for f in server.py monitor.py static/index.html static/app.js static/style.css; do
   curl -fsSL "$BASE/$f" -o "$DIR/$f.new"
   mv "$DIR/$f.new" "$DIR/$f"
 done
-python3 -m py_compile "$DIR/server.py"
+python3 -m py_compile "$DIR/server.py" "$DIR/monitor.py"
 
 # Config: created once, never overwritten. The key is added by hand (see below).
 if [ ! -f "$DIR/dash.env" ]; then
   printf 'GOATCOUNTER_API_KEY=\nGOATCOUNTER_CODE=kureiji\nSITE=https://muhafid.com\nPORT=8090\n' > "$DIR/dash.env"
+fi
+# Phone alerts (ntfy): a random private topic name, created once. Anyone who knows it can read
+# the alerts, so it's long and random. ALERT_TZ / HEARTBEAT_HOUR = when the daily summary comes.
+if ! grep -q '^NTFY_TOPIC=' "$DIR/dash.env"; then
+  printf 'NTFY_TOPIC=cccc-%s\nALERT_TZ=America/New_York\nHEARTBEAT_HOUR=9\n' "$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" >> "$DIR/dash.env"
 fi
 
 # Code belongs to root (the service can read it, not change it); only root + the service read the key.
@@ -33,7 +38,7 @@ chown -R root:root "$DIR"
 chown root:dash "$DIR/dash.env"
 chmod 640 "$DIR/dash.env"
 chmod 755 "$DIR" "$DIR/static"
-chmod 644 "$DIR/server.py" "$DIR"/static/*
+chmod 644 "$DIR/server.py" "$DIR/monitor.py" "$DIR"/static/*
 rm -rf "$DIR/__pycache__"
 
 cat > "$UNIT" <<EOF
@@ -50,6 +55,7 @@ Environment=PYTHONDONTWRITEBYTECODE=1
 ExecStart=/usr/bin/python3 $DIR/server.py
 Restart=always
 RestartSec=5
+StateDirectory=cccc-dash
 NoNewPrivileges=yes
 ProtectSystem=full
 ProtectHome=yes
@@ -78,6 +84,10 @@ if systemctl is-active --quiet cccc-dash; then
   IP=$(hostname -I | awk '{print $1}')
   echo
   echo "Dashboard running:  http://${IP}:8090"
+  TOPIC=$(grep '^NTFY_TOPIC=' "$DIR/dash.env" | cut -d= -f2-)
+  echo "Phone alerts: install the free 'ntfy' app, tap +, subscribe to this topic (keep it private):"
+  echo "    $TOPIC"
+  echo "Test it:  runuser -u dash -- env DASH_ENV=$DIR/dash.env python3 $DIR/server.py --test-alert"
   if ! grep -q '^GOATCOUNTER_API_KEY=.' "$DIR/dash.env"; then
     echo "Next: add the GoatCounter key:  nano $DIR/dash.env   then:  systemctl restart cccc-dash"
   fi

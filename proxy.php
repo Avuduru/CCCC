@@ -532,6 +532,12 @@ function canonicalTitle($type, $id)
         if ($t) return $found(($t['english'] ?? '') ?: ($t['romaji'] ?? ''));
         return $st === 404 ? ['found' => false] : null;
     }
+    if (($type === 'anime' || $type === 'manga') && preg_match('/^kitsu:(\d+)$/', $id, $m)) {
+        [$st, $d] = $get("https://kitsu.io/api/edge/$type/" . (int)$m[1], ['Accept: application/vnd.api+json']);
+        $a = $d['data']['attributes'] ?? null;
+        if ($a) return $found(($a['titles']['en'] ?? '') ?: ($a['canonicalTitle'] ?? ''));
+        return $st === 404 ? ['found' => false] : null;
+    }
     if (($type === 'anime' || $type === 'manga') && preg_match('/^mal:(\d+)$/', $id, $m)) {
         [$st, $d] = $get("https://api.jikan.moe/v4/$type/" . (int)$m[1]);
         if (!empty($d['data'])) return $found(($d['data']['title_english'] ?? '') ?: ($d['data']['title'] ?? ''));
@@ -903,6 +909,7 @@ switch ($type) {
             'media.rawg.io',                                         // RAWG key art
             'cdn2.steamgriddb.com', 'cdn.steamgriddb.com',           // SteamGridDB covers
             's4.anilist.co',                                         // AniList covers
+            'media.kitsu.app',                                       // Kitsu covers (anime/manga backup)
             'cdn.myanimelist.net',                                   // Jikan / MAL covers
             'covers.openlibrary.org',                                // Open Library covers
             'books.google.com', 'books.googleusercontent.com',       // Google Books thumbnails
@@ -1119,7 +1126,7 @@ switch ($type) {
 
         // The work's id must look like the ids the site itself sends for that type
         $idPatterns = [
-            'anime' => '/^(anilist|mal):\d{1,10}$/', 'manga' => '/^(anilist|mal):\d{1,10}$/',
+            'anime' => '/^(anilist|kitsu|mal):\d{1,10}$/', 'manga' => '/^(anilist|kitsu|mal):\d{1,10}$/',
             'movie' => '/^\d{1,10}$/', 'tv' => '/^\d{1,10}$/',
             'game'  => '/^[a-z0-9-]{1,200}$/i',
             'book'  => '#^/works/OL\d{1,12}W$#',
@@ -1621,13 +1628,78 @@ function fetchAniListFallback($query, $type) {
     return $jikanFormat;
 }
 
+/**
+ * Kitsu search (backup when AniList fails), normalized to the same shape as AniList/Jikan
+ * results. Free, no key. Adult titles are dropped (nsfw flag or R18 age rating).
+ */
+const KITSU_GENRES = ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance',
+    'Science Fiction', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller', 'Psychological', 'Mecha',
+    'Music', 'Historical', 'Military', 'Martial Arts', 'Samurai', 'Magic', 'School', 'Space', 'Super Power',
+    'Mahou Shoujo', 'Shounen', 'Shoujo', 'Seinen', 'Josei', 'Isekai', 'Police', 'Crime', 'Detective',
+    'Post Apocalypse', 'Cyberpunk', 'Parody', 'Kids'];
+function fetchKitsu($query, $type) {
+    if (upstreamDown('kitsu')) return ['error' => 'Kitsu cooling down'];
+    $url = "https://kitsu.io/api/edge/$type?filter%5Btext%5D=" . urlencode($query)
+         . '&page%5Blimit%5D=20&include=categories&fields%5Bcategories%5D=title';
+    $response = fetchUrl($url, ['Accept: application/vnd.api+json'], null, 4);
+    $d = json_decode($response, true);
+    if (!is_array($d) || !isset($d['data']) || !is_array($d['data'])) {
+        upstreamMark('kitsu', false, 30);
+        return ['error' => 'Kitsu API Error'];
+    }
+    upstreamMark('kitsu', true);
+
+    $catName = [];
+    foreach ($d['included'] ?? [] as $inc) {
+        if (($inc['type'] ?? '') === 'categories') $catName[$inc['id']] = $inc['attributes']['title'] ?? '';
+    }
+    $out = ['data' => []];
+    foreach ($d['data'] as $item) {
+        $a = $item['attributes'] ?? [];
+        if (!empty($a['nsfw']) || ($a['ageRating'] ?? '') === 'R18') continue;
+        $title = ($a['titles']['en'] ?? '') ?: (($a['canonicalTitle'] ?? '') ?: ($a['titles']['en_jp'] ?? 'Unknown Title'));
+        // Kitsu "categories" mix genres with loose tags ("Earth", "Slavery"): keep real genres only
+        $genres = [];
+        foreach ($item['relationships']['categories']['data'] ?? [] as $c) {
+            $name = $catName[$c['id'] ?? ''] ?? '';
+            if ($name !== '' && in_array($name, KITSU_GENRES, true)) $genres[] = ['name' => $name];
+            if (count($genres) >= 5) break;
+        }
+        $poster = $a['posterImage'] ?? [];
+        $out['data'][] = [
+            'mal_id' => (int)$item['id'],          // a Kitsu id — see id_source
+            'id_source' => 'kitsu',
+            'title' => $title,
+            'title_english' => $a['titles']['en'] ?? '',
+            'images' => ['jpg' => [
+                'image_url' => $poster['small'] ?? ($poster['medium'] ?? ''),
+                'small_image_url' => $poster['small'] ?? ($poster['medium'] ?? ''),
+                'large_image_url' => $poster['large'] ?? ($poster['original'] ?? ''),
+            ]],
+            'synopsis' => strip_tags($a['synopsis'] ?? ''),
+            'score' => isset($a['averageRating']) ? round((float)$a['averageRating'] / 10, 2) : 0,
+            'episodes' => $a['episodeCount'] ?? 0,
+            'chapters' => $a['chapterCount'] ?? 0,
+            'volumes' => $a['volumeCount'] ?? 0,
+            'genres' => $genres,
+            'members' => $a['userCount'] ?? 0,   // popularity, for SmartSort
+        ];
+    }
+    return $out;
+}
+
 if ($url === 'ANILIST_PRIMARY') {
     // --- REVERSED WATERFALL: ANILIST FIRST ---
     $data = fetchAniListFallback($query, $type);
     
-    // If AniList fails, times out, or returns 0 results, fall back to Jikan
+    // If AniList fails, times out, or returns 0 results: Kitsu, then Jikan
     if (!$data || isset($data['error']) || empty($data['data'])) {
-        if (upstreamDown('jikan')) {
+        $kitsu = fetchKitsu($query, $type);
+        if (!isset($kitsu['error']) && !empty($kitsu['data'])) {
+            error_log("CCCC Warning: AniList failed or empty, answered by Kitsu for: $query");
+            $data = $kitsu;
+            $response = json_encode($data);
+        } elseif (upstreamDown('jikan')) {
             // Jikan failed in the last 5 minutes: don't wait on it again
             $data = ['data' => []];
             $response = json_encode($data);

@@ -109,7 +109,7 @@ Conservative Classification of Creative Content (CCCC)
 
 يعتمد محافظ على هذه الخدمات لجلب معلومات الأعمال، دون أن تربطه بأيٍّ منها علاقة رسمية:
 
-- **الأنمي والمانجا:** [AniList](https://anilist.co)، و[Jikan](https://jikan.moe) (MyAnimeList) بديلًا احتياطيًّا
+- **الأنمي والمانجا:** [AniList](https://anilist.co)، ثم [Kitsu](https://kitsu.io) و[Jikan](https://jikan.moe) (MyAnimeList) بديلَين احتياطيَّين
 - **الأفلام والمسلسلات:** [TMDB](https://www.themoviedb.org) — يستخدم هذا الموقع واجهة TMDB البرمجية، لكنه غير معتمد أو مُصادَق عليه من TMDB.
 - **الألعاب:** [RAWG](https://rawg.io) للمعلومات، و[SteamGridDB](https://www.steamgriddb.com) للأغلفة، و[HowLongToBeat](https://howlongtobeat.com) لساعات إنهاء القصة الرئيسية
 - **الكتب:** [Open Library](https://openlibrary.org)
@@ -225,7 +225,7 @@ No email, no analytics, no tracking. Some fonts load from Google Fonts and html2
 
 Muhafid uses these services and is not affiliated with any of them:
 
-- **Anime & manga:** [AniList](https://anilist.co), with [Jikan](https://jikan.moe) (MyAnimeList) as a backup
+- **Anime & manga:** [AniList](https://anilist.co), with [Kitsu](https://kitsu.io) then [Jikan](https://jikan.moe) (MyAnimeList) as backups
 - **Movies & TV:** [TMDB](https://www.themoviedb.org) — This product uses the TMDB API but is not endorsed or certified by TMDB.
 - **Games:** [RAWG](https://rawg.io) for game info, [SteamGridDB](https://www.steamgriddb.com) for covers, [HowLongToBeat](https://howlongtobeat.com) for main-story hours
 - **Books:** [Open Library](https://openlibrary.org)
@@ -282,7 +282,7 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `tools/i18n/build_en.py` | Builds `lang/en/*.html` from the Arabic pages and holds their English wording |
 | `tools/i18n/seo.py` | Titles, descriptions, canonical/`hreflang` links, Open Graph / X cards and JSON-LD for every page in both languages |
 | `tools/guide_check.py` · `tools/guide_lock.json` | Guide integrity check and its lock (see "Changing the rating guide") |
-| `tools/upstream_check.py` · `.github/workflows/upstream-check.yml` | Health check of every outside service (AniList, Jikan, TMDB, RAWG, Open Library, HLTB, translate, image proxy), direct and through the site; runs every 6 h on GitHub and emails on failure. Run it by hand before blaming the site: `python tools/upstream_check.py` |
+| `tools/upstream_check.py` · `.github/workflows/upstream-check.yml` | Health check of every outside service (AniList, Kitsu, Jikan, TMDB, RAWG, Open Library, HLTB, translate, image proxy), direct and through the site; runs every 6 h on GitHub and emails on failure. Run it by hand before blaming the site: `python tools/upstream_check.py` |
 | `.github/workflows/guide-check.yml` | Runs the guide check and the English-sync check on every PR and push to `main` |
 | `SECURITY.md` | Security model, what's enforced where, and owner-side checklist |
 | `tools/og/make_og.py` · `assets/og/` | Renders the link-preview images (1200×630, Arabic and English) |
@@ -364,7 +364,7 @@ The stored `synopsis` is **user-generated text**: it's kept as plain text (contr
 - **HowLongToBeat has no official API.** `proxy.php` reads the current search endpoint from HowLongToBeat's own website code and caches it for 24 hours, so it keeps working when they move it. If they change the request format itself, `searchHltb()` needs an update.
 - **Caching:** only versioned **static files** (`*.css`, `*.js`, images, fonts, `*.wasm`, `*.json` with `?v=`) are cached for a year; the `?v=` list of extensions is in the `Caddyfile`. Pages and `proxy.php` are never long-cached (a `?v=` on them would otherwise let the edge cache a dynamic response under an attacker-chosen URL). Pages send `no-cache`, `proxy.php` sends `no-store`.
 - **Translate:** the frontend sends the synopsis to `proxy.php?type=translate` **base64url-encoded** in `q=` (only `A–Z a–z 0–9 _ -`), so a synopsis with a `%`, quote or `<` can't trip the edge WAF's URL-encoding / XSS / SQLi rules. `proxy.php` decodes `q`; plain `?query=` still works as a fallback. See `SECURITY.md`.
-- **Security:** see **[`SECURITY.md`](SECURITY.md)** for the full model. In short: `proxy.php?type=image_proxy` only fetches from the image hosts in `$allowedImageHosts` (TMDB, RAWG, SteamGridDB, AniList, MyAnimeList, Open Library, Google Books; archive.org only as Open Library's own redirect), re-checks every redirect, and only passes on real images. **If you add a data source, add its image host there**, or its covers won't load. Detail endpoints accept only plain ids/slugs, no response can contain an API key (output filter), and pages are served with a Content-Security-Policy (`index.php`): new external scripts, fonts or fetch targets must be added to it. Per-visitor rate limits (`rateLimited()` in `proxy.php`, counters in `data/ratelimit/`): 240 API calls and 100 images per 10 minutes (TMDB images only in sizes w92–w1280, 5 MB max), 30 rated works per 10 minutes. In production the site is also behind the host's edge WAF (OWASP Core Rule Set, in Block mode).
+- **Security:** see **[`SECURITY.md`](SECURITY.md)** for the full model. In short: `proxy.php?type=image_proxy` only fetches from the image hosts in `$allowedImageHosts` (TMDB, RAWG, SteamGridDB, AniList, Kitsu, MyAnimeList, Open Library, Google Books; archive.org only as Open Library's own redirect), re-checks every redirect, and only passes on real images. **If you add a data source, add its image host there**, or its covers won't load. Detail endpoints accept only plain ids/slugs, no response can contain an API key (output filter), and pages are served with a Content-Security-Policy (`index.php`): new external scripts, fonts or fetch targets must be added to it. Per-visitor rate limits (`rateLimited()` in `proxy.php`, counters in `data/ratelimit/`): 240 API calls and 100 images per 10 minutes (TMDB images only in sizes w92–w1280, 5 MB max), 30 rated works per 10 minutes. In production the site is also behind the host's edge WAF (OWASP Core Rule Set, in Block mode).
 - **Search and link previews:** each page's `<head>` has a block between `<!-- SEO -->` and `<!-- /SEO -->`. Edit the wording in `tools/i18n/seo.py`, run it (it rewrites the Arabic pages), then run `tools/i18n/build_en.py` for the English ones. Keep descriptions under ~155 characters so Google shows them whole. Add new pages to `sitemap.xml`.
 - **English site:** the Arabic pages are the source. After changing `index.html`, `guide.html` or `about.html`, run `python tools/i18n/build_en.py`: it rebuilds `lang/en/` and stops with the exact text it couldn't translate if the Arabic changed (add the English wording to the script, then run it again). `--check` only reports whether `lang/en/` is up to date. Text the scripts show (buttons, card placeholders, length pills) lives in `js/i18n.js`. On `/en` the genres and synopsis come straight from the sources, untranslated.
 - **English icons:** `python tools/en-icons/make_icons.py` (needs Playwright) repaints the label areas of the Arabic icons and writes `assets/icons/en/`. Change a word in `LABELS` and re-run.

@@ -50,7 +50,7 @@ Everything else is static HTML/CSS/JS.
   totals only and a per-IP rate limit.
 - **Rate limits** (`rateLimited()`, per hashed visitor IP, counters in `data/ratelimit/`):
   240 API calls / 10 min, 100 images / 10 min, 30 rated works / 10 min.
-- **Rating integrity** — a new work's title is taken from its source by id (AniList, Jikan, TMDB, RAWG,
+- **Rating integrity** — a new work's title is taken from its source by id (AniList, Kitsu, Jikan, TMDB, RAWG,
   Open Library — `canonicalTitle()`), never from the browser (the card title is editable and the API can be
   called directly); an id the source says doesn't exist is refused. If the source can't be reached the sent
   title is kept (capped) so a real vote isn't lost — the residual gap. Manual entries keep their typed title

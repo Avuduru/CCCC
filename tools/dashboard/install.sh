@@ -85,8 +85,10 @@ if systemctl is-active --quiet cccc-dash; then
   echo
   echo "Dashboard running:  http://${IP}:8090"
   TOPIC=$(grep '^NTFY_TOPIC=' "$DIR/dash.env" | cut -d= -f2-)
-  echo "Phone alerts: install the free 'ntfy' app, tap +, subscribe to this topic (keep it private):"
-  echo "    $TOPIC"
+  echo "Phone alerts, either or both:"
+  echo "  Telegram: put TELEGRAM_BOT_TOKEN=... in $DIR/dash.env, message your bot, then run:"
+  echo "            DASH_ENV=$DIR/dash.env python3 $DIR/server.py --telegram-setup   (then restart)"
+  echo "  ntfy app: subscribe to this topic (keep it private):  $TOPIC"
   echo "Test it:  runuser -u dash -- env DASH_ENV=$DIR/dash.env python3 $DIR/server.py --test-alert"
   if ! grep -q '^GOATCOUNTER_API_KEY=.' "$DIR/dash.env"; then
     echo "Next: add the GoatCounter key:  nano $DIR/dash.env   then:  systemctl restart cccc-dash"

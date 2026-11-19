@@ -11,7 +11,8 @@ the Caddyfile blocks `/tools` on the site). Refreshes every minute.
   a stuck deploy (GitHub `main` newer than the live files), the export libraries, real visitors' failures
   (GoatCounter events `save-failed`, `export-failed`, `copy-failed`, `js-error`, refused saves), "ratings
   stopped" and "visit counter not receiving". Searches retry a second title before failing.
-- **Phone alerts** (ntfy, `NTFY_TOPIC`): our problems after 2 failed runs, security at once (urgent), outside
+- **Phone alerts** — Telegram (`TELEGRAM_BOT_TOKEN` from @BotFather + `TELEGRAM_CHAT_ID`, found by
+  `server.py --telegram-setup` after messaging the bot; low-priority messages arrive silently) and/or ntfy (`NTFY_TOPIC`): our problems after 2 failed runs, security at once (urgent), outside
   services only after ~1 h (low); one batched message, "recovered" when it clears, a reminder every 6 h,
   nothing while the home internet is down, and a daily summary at `HEARTBEAT_HOUR` — if it stops arriving,
   the monitor itself is down.

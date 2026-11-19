@@ -9,7 +9,7 @@ Pulls three sources and serves one page that refreshes itself every minute:
 Standard library only (Python 3.9+). Config comes from dash.env next to this file (or the file
 named by $DASH_ENV): GOATCOUNTER_API_KEY (required), GOATCOUNTER_CODE (default kureiji),
 SITE (default https://muhafid.com), BIND (default 0.0.0.0), PORT (default 8090),
-NTFY_TOPIC (phone alerts; empty = off), ALERT_TZ (default America/New_York), HEARTBEAT_HOUR (default 9).
+TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID and/or NTFY_TOPIC (phone alerts; empty = off), ALERT_TZ (default America/New_York), HEARTBEAT_HOUR (default 9).
 The key is only ever sent to GoatCounter; it never reaches the browser or the logs.
 """
 import concurrent.futures as cf
@@ -233,8 +233,30 @@ if __name__ == '__main__':
     import sys
     if '--test-alert' in sys.argv:          # send one test notification and exit
         ok = MONITOR.notify('muhafid: test alert', 'If you can read this on your phone, alerts work.', priority=3, tags=['bell'])
-        print('sent' if ok else ('NTFY_TOPIC is not set' if not MONITOR.topic else 'could not reach ntfy'))
+        print('sent' if ok else ('no alert channel is set (Telegram or ntfy)' if not MONITOR.alerts_on else 'could not deliver'))
         sys.exit(0 if ok else 1)
+    if '--telegram-setup' in sys.argv:      # find your chat id: message the bot first, then run this as root
+        if not MONITOR.tg_token:
+            print('Put TELEGRAM_BOT_TOKEN=... in dash.env first.'); sys.exit(1)
+        st, body, _, _ = fetch(f'https://api.telegram.org/bot{MONITOR.tg_token}/getUpdates', timeout=15)
+        if st != 200:
+            print(f'Telegram refused the token (HTTP {st}). Check TELEGRAM_BOT_TOKEN.'); sys.exit(1)
+        chats = {}
+        for u in json.loads(body).get('result', []):
+            c = (u.get('message') or {}).get('chat') or {}
+            if c.get('type') == 'private':
+                chats[str(c['id'])] = ' '.join(filter(None, [c.get('first_name'), c.get('last_name')])) + (f" (@{c['username']})" if c.get('username') else '')
+        if not chats:
+            print('No messages yet: open your bot in Telegram, press Start (or send "hi"), then run this again.'); sys.exit(1)
+        if len(chats) > 1:
+            print('More than one person messaged the bot:'); [print(f'  {k}  {v}') for k, v in chats.items()]
+            print('Put the right one in dash.env as TELEGRAM_CHAT_ID=...'); sys.exit(1)
+        cid, who = next(iter(chats.items()))
+        env = Path(os.environ.get('DASH_ENV', HERE / 'dash.env'))
+        lines = [l for l in env.read_text(encoding='utf-8').splitlines() if not l.startswith('TELEGRAM_CHAT_ID=')]
+        env.write_text('\n'.join(lines + [f'TELEGRAM_CHAT_ID={cid}']) + '\n', encoding='utf-8')
+        print(f'Saved: alerts will go to {who}. Now: systemctl restart cccc-dash')
+        sys.exit(0)
     if '--check-once' in sys.argv:          # run every check once, print, exit (no alerts sent)
         MONITOR.run_once(deep=True, dry=True)
         for c in MONITOR.snapshot()['checks']:

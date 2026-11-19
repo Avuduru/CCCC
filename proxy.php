@@ -1488,7 +1488,10 @@ switch ($type) {
         exit;
 
     case 'stats':
-        // Return aggregate stats — from MySQL if available, JSONL fallback
+        // Return aggregate stats — from MySQL if available, JSONL fallback.
+        // Counts only (no names, no IPs, no per-work ratings). Cached 60 s: the owner's
+        // dashboard polls it, and it is public.
+        if (($hit = cacheGet('stats', 'stats', 60)) !== false) { echo $hit; exit; }
         $pdo = getDB();
 
         if ($pdo) {
@@ -1532,7 +1535,50 @@ switch ($type) {
                     }
                     $out['by_guide_version'] = $byGuide;
                 } catch (PDOException $e) { /* column not added yet */ }
-                echo json_encode($out);
+                // Activity over time, in the database's clock (db_now tells the reader which).
+                // new = first rating of a work by that person (created_at); updated = a re-export.
+                try {
+                    $out['db_now'] = $pdo->query("SELECT DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')")->fetchColumn();
+                    $daily = [];
+                    foreach ($pdo->query(
+                        "SELECT DATE(c.created_at) AS d, w.content_type AS t, c.action AS a, COUNT(*) AS n
+                         FROM classifications c JOIN works w ON w.id = c.work_id
+                         WHERE c.created_at >= CURDATE() - INTERVAL 89 DAY
+                         GROUP BY d, t, a ORDER BY d") as $row) {
+                        $d = $row['d'];
+                        $daily[$d] ??= ['day' => $d, 'new' => 0, 'by_type' => [], 'by_action' => []];
+                        $daily[$d]['new'] += (int)$row['n'];
+                        $daily[$d]['by_type'][$row['t']] = ($daily[$d]['by_type'][$row['t']] ?? 0) + (int)$row['n'];
+                        $daily[$d]['by_action'][$row['a']] = ($daily[$d]['by_action'][$row['a']] ?? 0) + (int)$row['n'];
+                    }
+                    $out['daily'] = array_values($daily);
+                    $hourly = [];
+                    foreach ($pdo->query(
+                        "SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:00') AS h, COUNT(*) AS n FROM classifications
+                         WHERE created_at >= NOW() - INTERVAL 48 HOUR GROUP BY h ORDER BY h") as $row) {
+                        $hourly[] = ['hour' => $row['h'], 'new' => (int)$row['n']];
+                    }
+                    $out['hourly'] = $hourly;
+                    $out['updated_24h'] = (int)$pdo->query(
+                        "SELECT COUNT(*) FROM classifications WHERE updated_at >= NOW() - INTERVAL 24 HOUR AND updated_at > created_at")->fetchColumn();
+                    $out['by_action'] = [];
+                    foreach ($pdo->query("SELECT action, COUNT(*) AS n FROM classifications GROUP BY action") as $row) {
+                        $out['by_action'][$row['action']] = (int)$row['n'];
+                    }
+                    $out['by_orientation'] = [];
+                    foreach ($pdo->query("SELECT orientation, COUNT(*) AS n FROM classifications GROUP BY orientation") as $row) {
+                        $out['by_orientation'][$row['orientation']] = (int)$row['n'];
+                    }
+                    // How often each tile is marked (any level) and each badge given, across all ratings
+                    $cols = ['kufr', 'sex', 'nudity', 'vices', 'magic', 'lgbt', 'gore', 'addiction', 'lootbox', 'p2w'];
+                    $sel = implode(', ', array_map(fn($c) => "SUM($c > 0) AS $c", $cols))
+                         . ', SUM(badge_nomusic) AS nomusic, SUM(badge_noprofanity) AS noprofanity, SUM(badge_noaffairs) AS noaffairs, COUNT(*) AS total';
+                    $r = $pdo->query("SELECT $sel FROM classifications")->fetch();
+                    $out['tiles'] = array_map('intval', $r);
+                } catch (PDOException $e) { error_log('CCCC stats timeline: ' . $e->getMessage()); }
+                $json = json_encode($out);
+                cachePut('stats', 'stats', $json, 60);
+                echo $json;
             } catch (PDOException $e) {
                 error_log('CCCC stats error: ' . $e->getMessage());
                 echo json_encode(['error' => 'Database error']);

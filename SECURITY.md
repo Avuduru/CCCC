@@ -44,6 +44,11 @@ Everything else is static HTML/CSS/JS.
   **never rendered server-side**. ⚠️ Whatever later **displays** it (e.g. a community/consensus page)
   **must HTML-escape it** (stored-XSS risk lives in the display, not the storage) and should have a way
   to **hide/moderate** abuse, spam or personal info. Until such a page exists, the text is write-only.
+  All typed text (classifier name, card title, manual id, synopsis) goes through `cleanText()` in `proxy.php`
+  before storage: control characters and invisible direction controls (U+202A–E overrides, U+2066–9
+  isolates, BOM; LRM/RLM in one-line fields) are removed, so stored text can't be made to display reversed
+  or reordered; it is then cut by **letters**, not bytes (a byte cut split Arabic letters and the DB refused
+  the rating).
 - **Per-work consensus (`type=lookup`)** — **switched off** (`LOOKUP_ENABLED = false`, returns 404).
   No page uses it yet, and an open endpoint would let anyone harvest every work's ratings. Its
   individual-rating rows (rater names) were removed; when the per-work pages arrive, re-enable it with

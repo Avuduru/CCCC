@@ -110,7 +110,7 @@ Conservative Classification of Creative Content (CCCC)
 يعتمد محافظ على هذه الخدمات لجلب معلومات الأعمال، دون أن تربطه بأيٍّ منها علاقة رسمية:
 
 - **الأنمي والمانجا:** [AniList](https://anilist.co)، ثم [Kitsu](https://kitsu.io) بديلًا احتياطيًّا
-- **الأفلام والمسلسلات:** [TMDB](https://www.themoviedb.org) — يستخدم هذا الموقع واجهة TMDB البرمجية، لكنه غير معتمد أو مُصادَق عليه من TMDB.
+- **الأفلام والمسلسلات:** [TMDB](https://www.themoviedb.org) — يستخدم الموقع بيانات TMDB، دون أن يكون معتمدًا منها.
 - **الألعاب:** [RAWG](https://rawg.io) للمعلومات، و[SteamGridDB](https://www.steamgriddb.com) للأغلفة، و[HowLongToBeat](https://howlongtobeat.com) لساعات إنهاء القصة الرئيسية
 - **الكتب:** [Open Library](https://openlibrary.org)
 - **الترجمة إلى العربية:** Google Translate، و[MyMemory](https://mymemory.translated.net) بديلًا احتياطيًّا

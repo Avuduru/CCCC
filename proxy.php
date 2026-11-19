@@ -523,6 +523,32 @@ function legacyIpHash()
 }
 
 /**
+ * Clean text a visitor typed before it is stored (classifier name, card title, manual id, synopsis):
+ *  - drops control characters and the invisible direction controls that can make text display
+ *    reversed or reordered (U+202A–202E embeddings/overrides, U+2066–2069 isolates, BOM U+FEFF;
+ *    in one-line fields also the LRM/RLM/ALM marks U+200E/200F/061C);
+ *  - one-line fields: any run of whitespace becomes one space; multi-line: tidy line breaks;
+ *  - cuts to $max LETTERS. The old byte cut (substr) counted each Arabic letter as 2 and could split
+ *    one in half — the database then refused the whole rating.
+ * ZWJ/ZWNJ (U+200C/200D) stay: they are real joining controls in Arabic-script text.
+ */
+function cleanText($s, $max, $multiline = false)
+{
+    $s = (string)$s;
+    if (!mb_check_encoding($s, 'UTF-8')) $s = mb_convert_encoding($s, 'UTF-8', 'UTF-8');
+    $s = preg_replace('/[\x{202A}-\x{202E}\x{2066}-\x{2069}\x{FEFF}\x{0080}-\x{009F}]/u', '', $s);
+    if ($multiline) {
+        $s = preg_replace('/\r\n?/', "\n", $s);
+        $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $s);
+        $s = preg_replace('/\n{3,}/', "\n\n", $s);
+    } else {
+        $s = preg_replace('/[\x{200E}\x{200F}\x{061C}]/u', '', $s);
+        $s = preg_replace('/[\x00-\x1F\x7F\s]+/u', ' ', $s);
+    }
+    return mb_substr(trim($s), 0, $max, 'UTF-8');
+}
+
+/**
  * The work's real title, from its source, by id — so the catalogue never stores a title the
  * browser made up (the card title is editable, and the API can be called directly).
  *   ['found' => true, 'title' => '…']  the source knows this id
@@ -1302,10 +1328,15 @@ switch ($type) {
             $lvl = function ($k) use ($ratings) { $v = (int)($ratings[$k] ?? 0); return ($v >= 0 && $v <= 3) ? $v : 0; };
             $badges  = is_array($input['badges'])  ? $input['badges']  : [];
 
-            $contentId   = substr((string)($input['content_id'] ?? 'manual'), 0, 255);
+            $contentId   = cleanText($input['content_id'] ?? 'manual', 255);
             $contentType = $input['content_type'];
-            $title       = substr((string)($input['title'] ?? ''), 0, 500);
-            $classifier  = substr((string)($input['classifier'] ?? ''), 0, 100);
+            $title       = cleanText($input['title'] ?? '', 500);
+            $classifier  = cleanText($input['classifier'] ?? '', 100);
+            if ($contentType === 'manual' && mb_strlen($contentId) <= strlen('manual:')) {
+                http_response_code(400);   // the title was nothing but invisible characters
+                echo json_encode(['error' => 'Invalid content id']);
+                exit;
+            }
             $orientation = in_array($input['orientation'] ?? '', ['horizontal','vertical']) ? $input['orientation'] : 'horizontal';
             $action      = in_array($input['action'] ?? '', ['export','copy','rate']) ? $input['action'] : 'export';
             // Classifier's own /10 score (optional) and which site the rating came from
@@ -1320,8 +1351,8 @@ switch ($type) {
             $customSyn = !empty($input['custom_synopsis']) ? 1 : 0;
             $synopsis = null;
             if ($customSyn && isset($input['synopsis']) && is_string($input['synopsis'])) {
-                $syn = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', trim($input['synopsis']));
-                if ($syn !== '') $synopsis = function_exists('mb_substr') ? mb_substr($syn, 0, 2000) : substr($syn, 0, 4000);
+                $syn = cleanText($input['synopsis'], 2000, true);
+                if ($syn !== '') $synopsis = $syn;
             }
 
             // Keyed hash of the visitor's address (clientIp: the edge-appended one) — never stored raw
@@ -1369,7 +1400,7 @@ switch ($type) {
                         echo json_encode(['error' => 'Unknown work']);
                         exit;
                     }
-                    if ($canon && $canon['title'] !== '') $title = substr($canon['title'], 0, 500);
+                    if ($canon && $canon['title'] !== '') $title = cleanText($canon['title'], 500);
                 }
             }
             $pdo->prepare(

@@ -9,7 +9,7 @@
 set -euo pipefail
 
 REF="${1:-main}"
-BASE="https://raw.githubusercontent.com/Avuduru/CCCC/${REF}/tools/dashboard"
+REPO=Avuduru/CCCC
 DIR=/opt/cccc-dash
 FILES="server.py monitor.py static/index.html static/app.js static/style.css"
 UNIT=/etc/systemd/system/cccc-dash.service
@@ -17,6 +17,13 @@ UNIT=/etc/systemd/system/cccc-dash.service
 [ "$(id -u)" -eq 0 ] || { echo "Run this as root."; exit 1; }
 command -v python3 >/dev/null || { apt-get update && apt-get -y install python3; }
 command -v curl >/dev/null || { apt-get update && apt-get -y install curl ca-certificates; }
+
+# GitHub caches files by branch name for ~5 min (right after a merge it once served the previous
+# installer). Ask the API which exact commit the branch is at and download that commit's files:
+# a new commit = a new address, so a copy is never stale. Falls back to the branch name.
+SHA=$(curl -fsSL -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$REPO/commits/$REF" 2>/dev/null \
+      | python3 -c 'import json,sys; print(json.load(sys.stdin)["sha"])' 2>/dev/null || true)
+BASE="https://raw.githubusercontent.com/$REPO/${SHA:-$REF}/tools/dashboard"
 
 # Always run the newest installer: fetch it first and, if it changed, save it over this file and
 # re-run it (an old installer once missed a new file and the dashboard failed to start).
@@ -36,7 +43,7 @@ id dash >/dev/null 2>&1 || useradd --system --home "$DIR" --shell /usr/sbin/nolo
 mkdir -p "$DIR/static"
 
 # 1. Download everything into a temporary folder and check it before touching the live files.
-echo "Downloading the dashboard ($REF)…"
+echo "Downloading the dashboard ($REF${SHA:+ @ ${SHA:0:7}})…"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/static"

@@ -5,7 +5,7 @@
     python tools/upstream_check.py http://127.0.0.1:8095
 
 Two parts:
-  1. DIRECT: each upstream API on its own (AniList, Jikan, Open Library, Google Translate,
+  1. DIRECT: each upstream API on its own (AniList, Kitsu, Jikan, Open Library, Google Translate,
      MyMemory, HowLongToBeat). Shows AniList's live rate limit (x-ratelimit-limit), since a
      lowered limit is what took anime search down on 2026-11-18. TMDB, RAWG and SteamGridDB
      need the server's keys, so they're only checked through the site.
@@ -14,7 +14,7 @@ Two parts:
      and whether the answer came from the 10-minute search cache.
 
 A line is FAIL when the call errors or returns nothing where something is expected, SLOW
-when it takes over 4 s, WARN for a fallback that's down (Jikan — often down, only used when
+when it takes over 4 s, WARN for a fallback that's down (Kitsu / Jikan — only used when
 AniList fails). Exit code 1 if anything FAILs (the scheduled GitHub job then emails
 the owner). Uses only the standard library. ~25 requests per run; read-only (never rates).
 """
@@ -75,8 +75,10 @@ st, s, b, h = call('https://graphql.anilist.co',
                    {'Content-Type': 'application/json', 'Accept': 'application/json'})
 lim = h.get('X-RateLimit-Limit') or h.get('x-ratelimit-limit')
 report('AniList', st, s, st == 200, f'rate limit {lim}/min' + (' (DEGRADED: normal is 90)' if lim and int(lim) < 90 else ''))
+st, s, b, h = call('https://kitsu.io/api/edge/anime?filter%5Btext%5D=naruto&page%5Blimit%5D=1', headers={'Accept': 'application/vnd.api+json'}, timeout=8)
+report('Kitsu (anime backup #1)', st, s, st == 200 and bool((jget(b) or {}).get('data')), 'down: only matters while AniList fails' if st != 200 else '', fatal=False)
 st, s, b, h = call('https://api.jikan.moe/v4/anime/21', timeout=8)
-report('Jikan (MAL fallback)', st, s, st == 200, 'down: only matters while AniList fails' if st != 200 else '', fatal=False)
+report('Jikan (anime backup #2)', st, s, st == 200, 'down: only matters while AniList fails' if st != 200 else '', fatal=False)
 st, s, b, h = call('https://openlibrary.org/search.json?q=dune&limit=1')
 report('Open Library', st, s, st == 200 and count(jget(b)) > 0)
 st, s, b, h = call('https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ar&dt=t&q=hello')

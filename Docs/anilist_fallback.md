@@ -3,7 +3,7 @@
 ## Overview
 The application previously used the MyAnimeList database (via the unofficial Jikan API) as its primary source for fetching anime and manga data. However, due to frequent Jikan server outages and strict rate limits, the architecture has been reversed.
 
-We now use **AniList GraphQL** as the primary, ultra-stable data source, and keep **Jikan** as the secondary fallback.
+We now use **AniList GraphQL** as the primary data source, **Kitsu** (free JSON:API, no key; added 2026-11-19 while Jikan was down) as the second, and **Jikan** as the last fallback.
 
 ## How It Works (The Reversed Waterfall)
 
@@ -12,7 +12,7 @@ We now use **AniList GraphQL** as the primary, ultra-stable data source, and kee
 2. **Data Normalization:** 
    Because the frontend (`ui.js`) was originally built to read Jikan's JSON schema, `proxy.php` automatically normalizes the AniList data in the backend. It maps AniList fields (like `coverImage.extraLarge`) to perfectly match the Jikan format (like `images.jpg.large_image_url`). The frontend receives the data instantly without knowing it came from AniList.
 3. **Failure Detection & Fallback (Jikan):** 
-   If AniList experiences a rare outage or returns 0 results, `proxy.php` intercepts this and immediately fires a secondary fallback request to `api.jikan.moe`.
+   If AniList experiences an outage or returns 0 results, `proxy.php` asks Kitsu (`fetchKitsu()`, same normalized shape, ids `kitsu:<n>`, genres kept only from the `KITSU_GENRES` list since Kitsu's categories mix in loose tags). If Kitsu also fails or is empty, it asks `api.jikan.moe`. Each upstream has a cool-down after a failure (`upstreamDown/upstreamMark`).
 4. **Seamless Delivery:** 
    The user reliably receives their search results from either the primary or secondary database.
 
@@ -21,7 +21,7 @@ AniList supports native content filtering. In the GraphQL query payload, we expl
 ```graphql
 isAdult: false
 ```
-This guarantees that Hentai and R-18+ content is stripped out at the database level. If the system falls back to Jikan, it appends `&genres_exclude=12` to maintain the same level of filtering.
+This guarantees that Hentai and R-18+ content is stripped out at the database level. Kitsu results are dropped when flagged `nsfw` or rated `R18`. If the system falls back to Jikan, it appends `&genres_exclude=12` to maintain the same level of filtering.
 
 ## Configuration & API Keys
 **No API Keys are required.**

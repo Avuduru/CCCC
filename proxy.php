@@ -557,8 +557,13 @@ function canonicalTitle($type, $id)
         return $st === 404 ? ['found' => false] : null;
     }
     if (($type === 'anime' || $type === 'manga') && preg_match('/^mal:(\d+)$/', $id, $m)) {
-        [$st, $d] = $get("https://api.jikan.moe/v4/$type/" . (int)$m[1]);
-        if (!empty($d['data'])) return $found(($d['data']['title_english'] ?? '') ?: ($d['data']['title'] ?? ''));
+        // Older ratings saved with a MyAnimeList id (from Jikan, whose public API shut down on
+        // 2026-10-01): AniList knows every work by its MAL id too.
+        $q = json_encode(['query' => 'query($id:Int,$t:MediaType){Media(idMal:$id,type:$t){title{english romaji}}}',
+                          'variables' => ['id' => (int)$m[1], 't' => strtoupper($type)]]);
+        [$st, $d] = $get('https://graphql.anilist.co', ['Content-Type: application/json', 'Accept: application/json'], $q);
+        $t = $d['data']['Media']['title'] ?? null;
+        if ($t) return $found(($t['english'] ?? '') ?: ($t['romaji'] ?? ''));
         return $st === 404 ? ['found' => false] : null;
     }
     if (($type === 'movie' || $type === 'tv') && ctype_digit($id) && $TMDB_KEY) {
@@ -589,7 +594,7 @@ function canonicalTitle($type, $id)
  * CACHE_VERSION is part of every key: bump it when filtering/sorting/slimming changes, so old
  * answers are never served. Each bucket keeps at most CACHE_MAX_FILES (oldest dropped first).
  */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;   // 3: book searches slimmed to the fields the site uses
 const CACHE_MAX_FILES = 3000;
 const SEARCH_TYPES = ['movie', 'tv', 'game', 'anime', 'manga', 'book'];
 function cacheFile($bucket, $key)
@@ -631,7 +636,8 @@ function searchKey($type, $query)
 {
     return $type . '|' . preg_replace('/\s+/u', ' ', trim(mb_strtolower((string)$query, 'UTF-8')));
 }
-function searchTtl($type) { return $type === 'game' ? 86400 : 600; }
+// Games and books barely change: 24 h (saves RAWG quota, and rides out Open Library's slow spells)
+function searchTtl($type) { return in_array($type, ['game', 'book'], true) ? 86400 : 600; }
 function searchCacheGet($type, $query)
 {
     return cacheGet('search', searchKey($type, $query), searchTtl($type));
@@ -728,7 +734,7 @@ function rateLimited($bucket, $limit, $windowSec)
     return $limited;
 }
 
-function fetchUrl($url, $headers = [], $postData = null, $timeout = 6)
+function fetchUrl($url, $headers = [], $postData = null, $timeout = 6, $connectTimeout = null)
 {
     if (empty($url))
         return json_encode(['error' => 'No URL provided']);
@@ -742,7 +748,8 @@ function fetchUrl($url, $headers = [], $postData = null, $timeout = 6)
         // Masquerade as a real browser to prevent blocks
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, min(3, $timeout));   // a host that doesn't answer fails fast
+        // A host that doesn't answer fails fast (3 s), unless the caller knows the source is slow to connect
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $connectTimeout ?? min(3, $timeout));
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : false);
@@ -1025,7 +1032,6 @@ switch ($type) {
             'cdn2.steamgriddb.com', 'cdn.steamgriddb.com',           // SteamGridDB covers
             's4.anilist.co',                                         // AniList covers
             'media.kitsu.app',                                       // Kitsu covers (anime/manga backup)
-            'cdn.myanimelist.net',                                   // Jikan / MAL covers
             'covers.openlibrary.org',                                // Open Library covers
             'books.google.com', 'books.googleusercontent.com',       // Google Books thumbnails
         ];
@@ -1186,13 +1192,17 @@ switch ($type) {
 
     case 'anime':
     case 'manga':
-        // We use AniList as the primary source now, with Jikan as fallback
+        // AniList is the source, Kitsu the backup (see the waterfall below)
         $url = 'ANILIST_PRIMARY';
         break;
 
     case 'book':
-        // Open Library API - completely free, no key needed, no rate limits
-        $url = "https://openlibrary.org/search.json?q=" . urlencode($query) . "&limit=20";
+        // Open Library API - free, no key. Only the fields the site uses: answers 2-4x faster and
+        // ~90% smaller (measured 2026-11-19). Open Library is often slow to connect from CranL,
+        // so books get a longer connect timeout (see OPENLIBRARY_TIMEOUT below).
+        // Its general search refuses queries under 3 letters ("It", "Up"): search by title then.
+        $url = "https://openlibrary.org/search.json?" . (mb_strlen($query, 'UTF-8') < 3 ? 'title=' : 'q=') . urlencode($query) . "&limit=20"
+             . "&fields=key,title,cover_i,first_publish_year,ratings_average,ratings_count,readinglog_count,number_of_pages_median,first_sentence";
         break;
 
     case 'book_details':
@@ -1202,7 +1212,7 @@ switch ($type) {
             echo json_encode(['error' => 'Invalid work key']);
             exit;
         }
-        $work = json_decode(fetchUrl('https://openlibrary.org' . $query . '.json'), true);
+        $work = json_decode(fetchUrl('https://openlibrary.org' . $query . '.json', [], null, 10, 6), true);
         $desc = $work['description'] ?? '';
         if (is_array($desc)) $desc = $desc['value'] ?? '';
         if (is_string($desc) && $desc !== '') {
@@ -1855,29 +1865,24 @@ if ($url === 'ANILIST_PRIMARY') {
     // --- REVERSED WATERFALL: ANILIST FIRST ---
     $data = fetchAniListFallback($query, $type);
     
-    // If AniList fails, times out, or returns 0 results: Kitsu, then Jikan
+    // If AniList fails, times out, or returns 0 results: Kitsu. (Jikan was the third backup until
+    // its public API shut down on 2026-10-01.)
     if (!$data || isset($data['error']) || empty($data['data'])) {
         $kitsu = fetchKitsu($query, $type);
         if (!isset($kitsu['error']) && !empty($kitsu['data'])) {
             error_log("CCCC Warning: AniList failed or empty, answered by Kitsu for: $query");
             $data = $kitsu;
-            $response = json_encode($data);
-        } elseif (upstreamDown('jikan')) {
-            // Jikan failed in the last 5 minutes: don't wait on it again
-            $data = ['data' => []];
-            $response = json_encode($data);
         } else {
-            error_log("CCCC Warning: AniList GraphQL failed or returned empty. Falling back to Jikan API for: $query");
-            $jikanUrl = "https://api.jikan.moe/v4/$type?q=" . urlencode($query) . "&limit=20&genres_exclude=12";
-            $response = fetchUrl($jikanUrl, [], null, 3);
-            $data = json_decode($response, true);
-            upstreamMark('jikan', is_array($data) && isset($data['data']) && is_array($data['data']), 300);
+            $data = ['data' => []];
         }
+        $response = json_encode($data);
     } else {
         $response = json_encode($data);
     }
 } else if ($url) {
-    $response = fetchUrl($url);
+    // Open Library: up to 6 s to connect / 10 s in all (it answered in 3-4 s at times, and the
+    // old 3 s connect limit turned those into empty book results)
+    $response = $type === 'book' ? fetchUrl($url, [], null, 10, 6) : fetchUrl($url);
     $data = json_decode($response, true);
     // Games: also search the number-swapped text ("6" <-> "VI") and merge, de-duplicated by id.
     // Skipped when the first search already has the exact title (tested: the second one then

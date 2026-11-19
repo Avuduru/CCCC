@@ -469,7 +469,7 @@ export function showSearchResults(data, type) {
 function selectItem(item, type) {
     countEvent(`picked-${type}`);
     if (type === 'anime' || type === 'manga') {
-        // AniList (primary) and Jikan/MAL (fallback) use different ID spaces — namespace them
+        // AniList, Kitsu and (older ratings) MyAnimeList use different ID spaces — namespace them
         state.meta.id = item.mal_id ? `${item.id_source || 'mal'}:${item.mal_id}` : '';
     } else if (type === 'book') {
         state.meta.id = item.key || ''; // Open Library work key, e.g. /works/OL893414W

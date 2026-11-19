@@ -52,7 +52,7 @@ Everything else is static HTML/CSS/JS.
   240 API calls / 10 min, 100 images / 10 min, 30 rated works / 10 min; calls that reach RAWG 30 / 10 min and
   100 / day (one script can't spend the site's 20,000-a-month RAWG quota). Server-side caches (searches, game details,
   covers) are capped at 3,000 files per bucket, so unique queries can't fill the disk.
-- **Rating integrity** — a new work's title is taken from its source by id (AniList, Kitsu, Jikan, TMDB, RAWG,
+- **Rating integrity** — a new work's title is taken from its source by id (AniList — also for older MyAnimeList ids —, Kitsu, TMDB, RAWG,
   Open Library — `canonicalTitle()`), never from the browser (the card title is editable and the API can be
   called directly); an id the source says doesn't exist is refused. If the source can't be reached the sent
   title is kept (capped) so a real vote isn't lost — the residual gap. Manual entries keep their typed title

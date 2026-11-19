@@ -422,6 +422,7 @@ export function showSearchResults(data, type) {
             let poster = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='69'%3E%3Crect width='46' height='69' fill='%23262a33'/%3E%3C/svg%3E";
 
             if (item.poster_path) poster = `https://image.tmdb.org/t/p/w92${item.poster_path}`;
+            else if (item.thumb) poster = item.thumb; // IGDB cover, small
             else if (item.background_image) poster = item.background_image; // RAWG
             else if (item.thumbnail) poster = item.thumbnail; // FreeToGame (legacy)
             else if (item.images?.jpg?.small_image_url) poster = item.images.jpg.small_image_url;
@@ -588,9 +589,16 @@ function selectItem(item, type) {
                 updateDisplayedInfo();
             } else {
                 // Fetch if not in cache
+                // No SteamGridDB cover: use the source's own cover (IGDB), if it has one
+                const useSourceCover = () => {
+                    if (!item.cover || state.meta.poster) return;
+                    state.meta.poster = `proxy.php?query=${encodeURIComponent(item.cover)}&type=image_proxy`;
+                    updateDisplayedInfo();
+                };
                 fetch(`proxy.php?query=${encodeURIComponent(searchName)}&type=game_cover`)
                     .then(resp => resp.json())
                     .then(data => {
+                        if (!(data.success && data.data && data.data.length > 0 && data.data[0].url)) useSourceCover();
                         if (data.success && data.data && data.data.length > 0) {
                             const coverUrl = data.data[0].url;
                             if (coverUrl) {
@@ -602,7 +610,7 @@ function selectItem(item, type) {
                             }
                         }
                     })
-                    .catch(err => console.error('Failed to fetch steamgriddb cover:', err));
+                    .catch(err => { console.error('Failed to fetch steamgriddb cover:', err); useSourceCover(); });
             }
         }
 

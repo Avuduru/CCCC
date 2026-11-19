@@ -549,6 +549,11 @@ function canonicalTitle($type, $id)
         if ($t !== '') return $found($t);
         return $st === 404 ? ['found' => false] : null;
     }
+    if ($type === 'game' && preg_match('/^igdb-(\d{1,10})$/', $id, $m)) {
+        $d = igdbQuery('games', 'fields name; where id = ' . (int)$m[1] . ';');
+        if (!empty($d[0]['name'])) return $found($d[0]['name']);
+        return is_array($d) ? ['found' => false] : null;   // empty list = no such game; null = couldn't check
+    }
     if ($type === 'game' && preg_match('/^[a-z0-9-]{1,200}$/i', $id) && $RAWG_KEY) {
         [$st, $d] = $get("https://api.rawg.io/api/games/$id?key=$RAWG_KEY");
         if (!empty($d['name'])) return $found($d['name']);
@@ -571,7 +576,7 @@ function canonicalTitle($type, $id)
  * CACHE_VERSION is part of every key: bump it when filtering/sorting/slimming changes, so old
  * answers are never served. Each bucket keeps at most CACHE_MAX_FILES (oldest dropped first).
  */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const CACHE_MAX_FILES = 3000;
 const SEARCH_TYPES = ['movie', 'tv', 'game', 'anime', 'manga', 'book'];
 function cacheFile($bucket, $key)
@@ -627,6 +632,118 @@ function searchCachePut($type, $query, $response, $complete = true)
 }
 
 /**
+ * IGDB (Twitch): the main game source — no monthly cap (4 requests/second for the whole site),
+ * free for non-commercial use. RAWG stays as the backup. Games from IGDB get ids "igdb-<n>"
+ * (same character set as RAWG slugs, so the page and the rating log treat them alike).
+ * The app access token (valid ~60 days) is kept in the temp dir and renewed before it expires.
+ */
+const IGDB_GAME_TYPES = '(0,2,4,8,9,10)';   // main game, expansion, standalone expansion, remake, remaster, expanded game
+const IGDB_FIELDS = 'name,first_release_date,cover.image_id,artworks.image_id,artworks.width,artworks.height,'
+    . 'screenshots.image_id,genres.name,themes.id,themes.name,platforms.name,aggregated_rating,aggregated_rating_count,'
+    . 'total_rating,total_rating_count,hypes,summary';
+function igdbConfigured()
+{
+    global $IGDB_CLIENT_ID, $IGDB_CLIENT_SECRET;
+    return $IGDB_CLIENT_ID !== '' && $IGDB_CLIENT_SECRET !== '';
+}
+function igdbToken($renew = false)
+{
+    global $IGDB_CLIENT_ID, $IGDB_CLIENT_SECRET;
+    $f = sys_get_temp_dir() . '/cccc-cache/igdb-token.json';
+    $t = $renew ? null : json_decode((string)@file_get_contents($f), true);
+    if (is_array($t) && !empty($t['token']) && ($t['exp'] ?? 0) > time() + 3600) return $t['token'];
+    $r = json_decode((string)fetchUrl('https://id.twitch.tv/oauth2/token', ['Content-Type: application/x-www-form-urlencoded'],
+        http_build_query(['client_id' => $IGDB_CLIENT_ID, 'client_secret' => $IGDB_CLIENT_SECRET, 'grant_type' => 'client_credentials']), 5), true);
+    if (empty($r['access_token'])) return null;
+    @mkdir(dirname($f), 0700, true);
+    $tmp = $f . '.' . getmypid() . '.tmp';
+    if (@file_put_contents($tmp, json_encode(['token' => $r['access_token'], 'exp' => time() + (int)($r['expires_in'] ?? 0)])) !== false) {
+        @rename($tmp, $f) || @unlink($tmp);
+    }
+    return $r['access_token'];
+}
+// POST an Apicalypse query; returns the decoded list, or null on failure (renews the token once on 401)
+function igdbQuery($endpoint, $body)
+{
+    global $IGDB_CLIENT_ID;
+    if (!igdbConfigured() || upstreamDown('igdb')) return null;
+    for ($try = 0; $try < 2; $try++) {
+        $tok = igdbToken($try === 1);
+        if (!$tok) break;
+        $res = fetchUrl("https://api.igdb.com/v4/$endpoint", ["Client-ID: $IGDB_CLIENT_ID", "Authorization: Bearer $tok", 'Accept: application/json'], $body, 5);
+        $d = json_decode((string)$res, true);
+        if (is_array($d) && array_is_list($d)) { upstreamMark('igdb', true); return $d; }
+        $st = upstreamStatus($res);
+        if ($st === 401 && $try === 0) continue;                  // stale token: renew and retry once
+        upstreamMark('igdb', false, $st === 429 ? 5 : 30);       // 429 = over 4/s: a short pause
+        return null;
+    }
+    upstreamMark('igdb', false, 30);
+    return null;
+}
+// IGDB genre names -> the names the site's Arabic genre table knows (themes add Action, Fantasy, …)
+const IGDB_GENRE_MAP = [
+    'Role-playing (RPG)' => 'RPG', 'Shooter' => 'Shooter', 'Platform' => 'Platformer', 'Puzzle' => 'Puzzle',
+    'Racing' => 'Racing', 'Real Time Strategy (RTS)' => 'Strategy', 'Turn-based strategy (TBS)' => 'Strategy',
+    'Strategy' => 'Strategy', 'Tactical' => 'Strategy', 'MOBA' => 'Strategy', 'Simulator' => 'Simulation',
+    'Sport' => 'Sports', 'Fighting' => 'Fighting', 'Arcade' => 'Arcade', 'Pinball' => 'Arcade', 'Indie' => 'Indie',
+    'Adventure' => 'Adventure', 'Point-and-click' => 'Adventure', 'Visual Novel' => 'Adventure',
+    "Hack and slash/Beat 'em up" => 'Action', 'Card & Board Game' => 'Board Games', 'Music' => 'Music',
+    'Quiz/Trivia' => 'Casual',
+];
+const IGDB_THEME_MAP = [
+    'Action' => 'Action', 'Fantasy' => 'Fantasy', 'Science fiction' => 'Sci-Fi', 'Horror' => 'Horror',
+    'Thriller' => 'Thriller', 'Survival' => 'Survival', 'Historical' => 'Historical', 'Comedy' => 'Comedy',
+    'Drama' => 'Drama', 'Mystery' => 'Mystery', 'Kids' => 'Kids', 'Educational' => 'Educational', 'Warfare' => 'War',
+];
+const IGDB_EROTIC_THEME = 42;
+function igdbImg($size, $id) { return $id ? "https://images.igdb.com/igdb/image/upload/t_$size/$id.jpg" : null; }
+// One IGDB game in the shape the page reads (the RAWG shape), plus thumb/cover
+function igdbShape($g, $details = false)
+{
+    $wide = null;                                     // 16:9-ish artwork, else the first screenshot (always 16:9)
+    foreach ($g['artworks'] ?? [] as $a) {
+        $w = (int)($a['width'] ?? 0); $h = (int)($a['height'] ?? 0);
+        if ($h > 0 && $w / $h >= 1.6 && $w / $h <= 1.9 && $w >= 1280) { $wide = $a['image_id']; break; }
+    }
+    if (!$wide && !empty($g['screenshots'][0]['image_id'])) $wide = $g['screenshots'][0]['image_id'];
+    $genres = [];
+    foreach ($g['genres'] ?? [] as $x) if (isset(IGDB_GENRE_MAP[$x['name'] ?? ''])) $genres[] = IGDB_GENRE_MAP[$x['name']];
+    foreach ($g['themes'] ?? [] as $x) if (isset(IGDB_THEME_MAP[$x['name'] ?? ''])) $genres[] = IGDB_THEME_MAP[$x['name']];
+    $genres = array_slice(array_values(array_unique($genres)), 0, 3);
+    $score = null;
+    if (!empty($g['aggregated_rating_count'])) $score = (int)round($g['aggregated_rating']);           // critics
+    elseif (($g['total_rating_count'] ?? 0) >= 5) $score = (int)round($g['total_rating']);             // critics + users
+    $cover = $g['cover']['image_id'] ?? null;
+    $out = [
+        'id' => $g['id'], 'slug' => 'igdb-' . (int)$g['id'], 'id_source' => 'igdb', 'name' => $g['name'] ?? '',
+        'released' => !empty($g['first_release_date']) ? gmdate('Y-m-d', (int)$g['first_release_date']) : null,
+        'background_image' => igdbImg('1080p', $wide), 'thumb' => igdbImg('cover_small', $cover), 'cover' => igdbImg('1080p', $cover),
+        'metacritic' => $score, 'playtime' => null,
+        'platforms' => array_map(fn($p) => ['platform' => ['name' => $p['name'] ?? '']], $g['platforms'] ?? []),
+        'genres' => array_map(fn($n) => ['name' => $n], $genres),
+        'added' => (int)($g['total_rating_count'] ?? 0) + (int)($g['hypes'] ?? 0),   // popularity, for SmartSort
+    ];
+    if ($details) $out['description_raw'] = (string)($g['summary'] ?? '');
+    return $out;
+}
+// Search IGDB; adult games (Erotic theme) dropped. Returns RAWG-shaped results, or null on failure.
+function igdbSearch($text)
+{
+    $q = str_replace(['"', '\\'], '', (string)$text);
+    $d = igdbQuery('games', 'search "' . $q . '"; fields ' . IGDB_FIELDS . '; where game_type = ' . IGDB_GAME_TYPES
+        . ' & version_parent = null; limit 20;');
+    if ($d === null) return null;
+    $out = [];
+    foreach ($d as $g) {
+        $erotic = false;
+        foreach ($g['themes'] ?? [] as $t) if ((int)($t['id'] ?? 0) === IGDB_EROTIC_THEME) $erotic = true;
+        if (!$erotic && !empty($g['id'])) $out[] = igdbShape($g);
+    }
+    return $out;
+}
+
+/**
  * Per-visitor budget for calls that reach RAWG (searches not answered by the cache, the
  * number-swapped second search, game details). Real use stays far below; one script can't
  * spend the site's monthly RAWG quota.
@@ -654,6 +771,7 @@ function slimRawgGame($g, $details = false)
         'genres' => array_map(fn($x) => ['name' => $x['name'] ?? ''], array_values(array_filter($g['genres'] ?? [], 'is_array'))),
     ];
     if ($details) $out['description_raw'] = $g['description_raw'] ?? '';
+    foreach (['thumb', 'cover', 'id_source'] as $k) if (!empty($g[$k])) $out[$k] = $g[$k];   // IGDB extras
     return $out;
 }
 
@@ -790,6 +908,8 @@ loadEnv(__DIR__ . '/.env');
 $TMDB_KEY = getenv('TMDB_KEY') ?: '';
 $RAWG_KEY = getenv('RAWG_KEY') ?: '';
 $STEAMGRIDDB_KEY = getenv('STEAMGRIDDB_KEY') ?: '';
+$IGDB_CLIENT_ID = getenv('IGDB_CLIENT_ID') ?: '';
+$IGDB_CLIENT_SECRET = getenv('IGDB_CLIENT_SECRET') ?: '';
 $DEEPL_KEY = getenv('DEEPL_KEY') ?: '';
 $GOOGLE_BOOKS_KEY = getenv('GOOGLE_BOOKS_KEY') ?: ''; // Optional, works without it
 
@@ -903,6 +1023,27 @@ switch ($type) {
         // RAWG API - comprehensive game database (free and paid games)
         // Fetch 20 to give room for NSFW filtering and smart sorting
         $gameQueries = gameSearchQueries($query);
+        // IGDB first (also the number-swapped text when the first search lacks the exact title;
+        // IGDB has no monthly cap). Empty or failed -> RAWG below.
+        $igdb = igdbSearch($gameQueries[0]);
+        if ($igdb !== null && isset($gameQueries[1])) {
+            $want = normalizeSearchTitle($query);
+            $exact = false;
+            foreach ($igdb as $r) if (normalizeSearchTitle($r['name']) === $want) { $exact = true; break; }
+            if (!$exact) {
+                $alt = igdbSearch($gameQueries[1]);
+                if ($alt === null) $searchComplete = false;
+                $seen = array_flip(array_column($igdb, 'id'));
+                foreach ($alt ?? [] as $r) if (!isset($seen[$r['id']])) { $igdb[] = $r; $seen[$r['id']] = 1; }
+            }
+        }
+        if (!empty($igdb)) {
+            header('X-Game-Source: igdb');
+            $data = ['results' => $igdb];
+            $url = 'IGDB_DONE';
+            break;
+        }
+        header('X-Game-Source: rawg');
         if (!rawgAllowed()) rawgBusy();
         $url = "https://api.rawg.io/api/games?key=$RAWG_KEY&search=" . urlencode($gameQueries[0]) . "&page_size=20";
         break;
@@ -919,6 +1060,17 @@ switch ($type) {
         if (($cached = cacheGet('game_details', $detKey, 604800)) !== false) {
             header('X-Cache: HIT');
             echo $cached;
+            exit;
+        }
+        if (preg_match('/^igdb-(\d{1,10})$/', $detKey, $m)) {
+            $d = igdbQuery('games', 'fields ' . IGDB_FIELDS . '; where id = ' . (int)$m[1] . ';');
+            if (empty($d[0]['id'])) {
+                echo json_encode(['error' => $d === null ? 'Upstream error' : 'Game not found']);
+                exit;
+            }
+            $out = json_encode(slimRawgGame(igdbShape($d[0], true), true));
+            cachePut('game_details', $detKey, $out, 604800);
+            echo $out;
             exit;
         }
         if (!rawgAllowed()) rawgBusy();
@@ -1005,6 +1157,7 @@ switch ($type) {
             'image.tmdb.org',                                        // TMDB posters/backdrops
             'media.rawg.io',                                         // RAWG key art
             'cdn2.steamgriddb.com', 'cdn.steamgriddb.com',           // SteamGridDB covers
+            'images.igdb.com',                                       // IGDB covers / key art (sizes checked below)
             's4.anilist.co',                                         // AniList covers
             'media.kitsu.app',                                       // Kitsu covers (anime/manga backup)
             'cdn.myanimelist.net',                                   // Jikan / MAL covers
@@ -1063,6 +1216,10 @@ switch ($type) {
             if (!$hostAllowed($host, $parts['path'] ?? '', $hop)) $refuse(403, 'Image host not allowed.');
             if ($hop === 0 && strtolower(rtrim($host, '.')) === 'image.tmdb.org'
                 && !preg_match('#^/t/p/w(92|154|185|342|500|780|1280)/[A-Za-z0-9_-]+\.(jpg|png|webp)$#', $parts['path'] ?? '')) {
+                $refuse(403, 'Image size not allowed.');
+            }
+            if ($hop === 0 && strtolower(rtrim($host, '.')) === 'images.igdb.com'
+                && !preg_match('#^/igdb/image/upload/t_(cover_small|cover_big|cover_big_2x|720p|1080p)/[a-z0-9]+\.(jpg|png|webp)$#', $parts['path'] ?? '')) {
                 $refuse(403, 'Image size not allowed.');
             }
             $port = (int)($parts['port'] ?? ($scheme === 'https' ? 443 : 80));
@@ -1785,7 +1942,9 @@ function fetchKitsu($query, $type) {
     return $out;
 }
 
-if ($url === 'ANILIST_PRIMARY') {
+if ($url === 'IGDB_DONE') {
+    // $data already holds IGDB's results (see case 'game'); filters + SmartSort run below
+} else if ($url === 'ANILIST_PRIMARY') {
     // --- REVERSED WATERFALL: ANILIST FIRST ---
     $data = fetchAniListFallback($query, $type);
     
@@ -1817,7 +1976,7 @@ if ($url === 'ANILIST_PRIMARY') {
     // Skipped when the first search already has the exact title (tested: the second one then
     // only adds spin-offs). If it was needed but failed or was over budget, the answer is
     // cached 10 min instead of 24 h.
-    $searchComplete = true;
+    $searchComplete = $searchComplete ?? true;
     $exactFirst = false;
     if ($type === 'game' && isset($gameQueries[1]) && is_array($data) && isset($data['results']) && is_array($data['results'])) {
         $want = normalizeSearchTitle($query);

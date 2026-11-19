@@ -10,6 +10,20 @@ DIR=/opt/cccc-dash
 UNIT=/etc/systemd/system/cccc-dash.service
 
 [ "$(id -u)" -eq 0 ] || { echo "Run this as root."; exit 1; }
+
+# Always run the newest installer: fetch it first and, if it changed, save it over this file and
+# re-run it (an old installer once missed a new file and the dashboard failed to start).
+if [ -z "${CCCC_INSTALLER_FRESH:-}" ] && command -v curl >/dev/null; then
+  NEW=$(mktemp)
+  if curl -fsSL "$BASE/install.sh" -o "$NEW" && bash -n "$NEW"; then
+    if ! cmp -s "$NEW" "$0"; then
+      cp "$NEW" "$0" 2>/dev/null || true
+      echo "Installer updated; running the new one…"
+      CCCC_INSTALLER_FRESH=1 exec bash "$NEW" "$REF"
+    fi
+  fi
+  rm -f "$NEW"
+fi
 command -v python3 >/dev/null || { apt-get update && apt-get -y install python3; }
 command -v curl >/dev/null || { apt-get update && apt-get -y install curl ca-certificates; }
 

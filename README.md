@@ -109,7 +109,7 @@ Conservative Classification of Creative Content (CCCC)
 
 يعتمد محافظ على هذه الخدمات لجلب معلومات الأعمال، دون أن تربطه بأيٍّ منها علاقة رسمية:
 
-- **الأنمي والمانجا:** [AniList](https://anilist.co)، ثم [Kitsu](https://kitsu.io) و[Jikan](https://jikan.moe) (MyAnimeList) بديلَين احتياطيَّين
+- **الأنمي والمانجا:** [AniList](https://anilist.co)، ثم [Kitsu](https://kitsu.io) بديلًا احتياطيًّا
 - **الأفلام والمسلسلات:** [TMDB](https://www.themoviedb.org) — يستخدم هذا الموقع واجهة TMDB البرمجية، لكنه غير معتمد أو مُصادَق عليه من TMDB.
 - **الألعاب:** [RAWG](https://rawg.io) للمعلومات، و[SteamGridDB](https://www.steamgriddb.com) للأغلفة، و[HowLongToBeat](https://howlongtobeat.com) لساعات إنهاء القصة الرئيسية
 - **الكتب:** [Open Library](https://openlibrary.org)
@@ -225,7 +225,7 @@ No email, no cookies. Visits are counted anonymously with GoatCounter (no cookie
 
 Muhafid uses these services and is not affiliated with any of them:
 
-- **Anime & manga:** [AniList](https://anilist.co), with [Kitsu](https://kitsu.io) then [Jikan](https://jikan.moe) (MyAnimeList) as backups
+- **Anime & manga:** [AniList](https://anilist.co), with [Kitsu](https://kitsu.io) as the backup
 - **Movies & TV:** [TMDB](https://www.themoviedb.org) — This product uses the TMDB API but is not endorsed or certified by TMDB.
 - **Games:** [RAWG](https://rawg.io) for game info, [SteamGridDB](https://www.steamgriddb.com) for covers, [HowLongToBeat](https://howlongtobeat.com) for main-story hours
 - **Books:** [Open Library](https://openlibrary.org)
@@ -282,7 +282,7 @@ Developed and maintained by **Kureiji** ([@Avuduru](https://github.com/Avuduru) 
 | `tools/i18n/build_en.py` | Builds `lang/en/*.html` from the Arabic pages and holds their English wording |
 | `tools/i18n/seo.py` | Titles, descriptions, canonical/`hreflang` links, Open Graph / X cards and JSON-LD for every page in both languages |
 | `tools/guide_check.py` · `tools/guide_lock.json` | Guide integrity check and its lock (see "Changing the rating guide") |
-| `tools/upstream_check.py` · `.github/workflows/upstream-check.yml` | Health check of every outside service (AniList, Kitsu, Jikan, TMDB, RAWG, Open Library, HLTB, translate, image proxy), direct and through the site; runs every 6 h on GitHub and emails on failure. Run it by hand before blaming the site: `python tools/upstream_check.py` |
+| `tools/upstream_check.py` · `.github/workflows/upstream-check.yml` | Health check of every outside service (AniList, Kitsu, TMDB, RAWG, Open Library, HLTB, translate, image proxy), direct and through the site; runs every 6 h on GitHub and emails on failure. Run it by hand before blaming the site: `python tools/upstream_check.py` |
 | `.github/workflows/guide-check.yml` | Runs the guide check and the English-sync check on every PR and push to `main` |
 | `SECURITY.md` | Security model, what's enforced where, and owner-side checklist |
 | `tools/og/make_og.py` · `assets/og/` | Renders the link-preview images (1200×630, Arabic and English) |

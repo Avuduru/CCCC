@@ -1,3 +1,6 @@
+> **2026-11-19:** Jikan's public API shut down on 2026-10-01. It is no longer called: AniList → Kitsu only;
+> older `mal:` ids are checked through AniList (`Media(idMal:)`). The text below is the original design.
+
 # Anime & Manga Primary Data Architecture (AniList First)
 
 ## Overview

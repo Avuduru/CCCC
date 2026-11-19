@@ -1559,6 +1559,8 @@ switch ($type) {
                         $hourly[] = ['hour' => $row['h'], 'new' => (int)$row['n']];
                     }
                     $out['hourly'] = $hourly;
+                    $out['last_rating_at'] = $pdo->query("SELECT DATE_FORMAT(MAX(updated_at), '%Y-%m-%d %H:%i:%s') FROM classifications")->fetchColumn() ?: null;
+                    $out['activity_3h'] = (int)$pdo->query("SELECT COUNT(*) FROM classifications WHERE updated_at >= NOW() - INTERVAL 3 HOUR")->fetchColumn();
                     $out['updated_24h'] = (int)$pdo->query(
                         "SELECT COUNT(*) FROM classifications WHERE updated_at >= NOW() - INTERVAL 24 HOUR AND updated_at > created_at")->fetchColumn();
                     $out['by_action'] = [];

@@ -94,7 +94,11 @@ function logClassification(action) {
                 orientation: state.orientation,
                 action: action
             })
-        }).catch(() => {});
+        }).then(r => {
+            // Health signal (anonymous count, see analytics.js): a server error means saving is broken;
+            // a 4xx is a refusal (rate limit, bad title...), counted separately with its code.
+            if (!r.ok) countEvent(r.status >= 500 ? 'save-failed' : `save-rejected-${r.status}`);
+        }).catch(() => countEvent('save-failed'));
     } catch (e) {}
 }
 
@@ -423,6 +427,7 @@ export function handleExport() {
         })
         .catch(err => {
             console.error('Export failed:', err);
+            countEvent('export-failed');
             exportBtn.innerText = t('actions.error');
         })
         .finally(() => {
@@ -458,6 +463,8 @@ export function handleCopyToClipboard() {
     })
     .catch(err => {
         console.error('Clipboard write failed:', err);
+        // NotAllowedError = the browser/user refused the clipboard, not a bug of ours
+        if (err?.name !== 'NotAllowedError') countEvent('copy-failed');
         copyBtn.innerText = t('actions.copy_failed');
     })
     .finally(() => {

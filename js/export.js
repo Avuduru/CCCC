@@ -307,10 +307,18 @@ function showExportModal(url, file) {
 
 // ---- Caption for the post that goes with the card -------------------------------
 // "تصنيفي لـ«{title}» #CCCC" / 'My rating of "{title}" #CCCC'; just "#CCCC" without a title.
+// With the classifier's score (same number as on the card), it goes on its own line:
+//   تصنيفي لـ«{title}»
+//   تقييمي: 9/10 #CCCC
 function shareCaption() {
     const title = (state.meta.title || '').trim();
-    const placeholder = allValues('card.default.title').includes(title);
-    return title && !placeholder ? t('share.caption', { title }) : t('share.caption_untitled');
+    const hasTitle = title && !allValues('card.default.title').includes(title);
+    const score = (state.classifier.rating || '').toString().trim();
+    if (score) {
+        const line = t('share.caption_score', { score });
+        return hasTitle ? t('share.caption_title', { title }) + '\n' + line : line;
+    }
+    return hasTitle ? t('share.caption', { title }) : t('share.caption_untitled');
 }
 
 // Two buttons: open X with the caption filled in (the copied image is pasted by the user),

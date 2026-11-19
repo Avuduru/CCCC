@@ -28,7 +28,7 @@ export async function handleSearch() {
         }
         const data = await resp.json();
         if (stale()) return;
-        if (data) showSearchResults(data, type);
+        if (data) { showSearchResults(data, type); countSearched(); }
     } catch (err) {
         console.error('Search Error:', err);
         if (!stale()) showSearchMessage(navigator.onLine === false ? t('search.offline') : t('search.failed'));
@@ -44,4 +44,13 @@ function showSearchMessage(text) {
     line.textContent = text;
     box.appendChild(line);
     box.classList.remove('hidden');
+}
+
+// Visit counting (GoatCounter, only when the site has it switched on): one "searched"
+// event per page view, after the first search that returns. What was searched is never sent.
+let searchCounted = false;
+function countSearched() {
+    if (searchCounted || typeof window.goatcounter?.count !== 'function') return;
+    searchCounted = true;
+    try { window.goatcounter.count({ path: 'searched', title: 'searched', event: true }); } catch { /* ignore */ }
 }

@@ -103,7 +103,7 @@ Conservative Classification of Creative Content (CCCC)
 
 عند تصدير بطاقة أو نسخها، يحفظ الموقع: العمل الذي صنّفته، والدرجات والشارات التي اخترتها، واسم المُصنِّف وتقييمه من 10 إن كتبهما، والنبذة إن كتبتها بنفسك أو عدّلتها، ولغة الموقع، وإصدار الدليل، وقيمةً مُجزّأة بمفتاح سري (HMAC-SHA256) لعنوان IP بدلًا من العنوان نفسه؛ وذلك لاحتساب تصنيف واحد لكل شخص في كل عمل.
 
-لا يطلب الموقع بريدًا إلكترونيًّا ولا يستخدم أدوات تحليل أو تتبّع. ويُحمّل بعض الخطوط من Google Fonts ومكتبة html2canvas من cdnjs.
+لا يطلب الموقع بريدًا إلكترونيًّا ولا يستخدم كوكيز. يعدّ الزيارات بشكل مجهول عبر GoatCounter (بلا كوكيز ولا بيانات شخصية)، ويُحمّل بعض الخطوط من Google Fonts ومكتبة html2canvas من cdnjs.
 
 ### مصادر البيانات
 
@@ -219,7 +219,7 @@ Full details: [rating guide](https://muhafid.com/en/guide). The whole site is av
 
 When you export or copy a card, the site saves the work, the ratings and badges you picked, your classifier name and /10 score if you entered them, the synopsis if you wrote or edited it yourself, the site language, the guide version, and a keyed hash (HMAC-SHA256) of your IP address — never the IP itself, and not reversible without the server's secret key — so each person counts once per work.
 
-No email, no analytics, no tracking. Some fonts load from Google Fonts and html2canvas from cdnjs.
+No email, no cookies. Visits are counted anonymously with GoatCounter (no cookies, no personal data). Some fonts load from Google Fonts and html2canvas from cdnjs.
 
 ### Data sources
 

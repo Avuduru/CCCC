@@ -99,7 +99,7 @@ PrivateTmp=yes
 WantedBy=multi-user.target
 EOF
 
-# Nightly auto-update (04:00 + up to 30 min random delay; catches up after a power cut)
+# Nightly auto-update (04:00 New York + up to 30 min random delay; catches up after a power cut)
 cat > /etc/systemd/system/cccc-dash-update.service <<EOF
 [Unit]
 Description=Update the CCCC home dashboard from GitHub (main)
@@ -115,7 +115,7 @@ cat > /etc/systemd/system/cccc-dash-update.timer <<EOF
 Description=Nightly update of the CCCC home dashboard
 
 [Timer]
-OnCalendar=*-*-* 04:00:00
+OnCalendar=*-*-* 04:00:00 America/New_York
 RandomizedDelaySec=30min
 Persistent=true
 

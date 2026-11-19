@@ -26,6 +26,9 @@ flags: flagcdn.com, logos: simple-icons — loaded by the browser from CDNs.
 
 ## Install / update (inside the container, as root)
 
+Updates itself every night (~04:00 New York, `cccc-dash-update.timer`): downloads `main`, restarts only if a
+file changed, and rolls back if the new version doesn't start. Run it by hand to update at once.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Avuduru/CCCC/main/tools/dashboard/install.sh -o /root/install.sh
 bash /root/install.sh            # or: bash /root/install.sh <branch>

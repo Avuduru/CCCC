@@ -2,6 +2,7 @@ import { config } from './config.js';
 import { state } from './state.js';
 import { t } from './i18n.js';
 import { showSearchResults } from './ui.js';
+import { countEvent } from './analytics.js';
 
 export async function handleSearch() {
     const searchQuery = document.getElementById('search-query');
@@ -28,7 +29,10 @@ export async function handleSearch() {
         }
         const data = await resp.json();
         if (stale()) return;
-        if (data) { showSearchResults(data, type); countSearched(); }
+        if (data) {
+            showSearchResults(data, type);
+            countEvent(`searched-${type}`, { oncePerPage: true });
+        }
     } catch (err) {
         console.error('Search Error:', err);
         if (!stale()) showSearchMessage(navigator.onLine === false ? t('search.offline') : t('search.failed'));
@@ -44,13 +48,4 @@ function showSearchMessage(text) {
     line.textContent = text;
     box.appendChild(line);
     box.classList.remove('hidden');
-}
-
-// Visit counting (GoatCounter, only when the site has it switched on): one "searched"
-// event per page view, after the first search that returns. What was searched is never sent.
-let searchCounted = false;
-function countSearched() {
-    if (searchCounted || typeof window.goatcounter?.count !== 'function') return;
-    searchCounted = true;
-    try { window.goatcounter.count({ path: 'searched', title: 'searched', event: true }); } catch { /* ignore */ }
 }

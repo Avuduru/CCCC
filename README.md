@@ -330,6 +330,7 @@ To report a bug or suggest a change without code: `gh issue create --repo Avudur
 | `STEAMGRIDDB_KEY` | Game covers | [steamgriddb.com](https://www.steamgriddb.com) → Preferences → API |
 | `APP_ENV` | `local` on your machine, `production` on the server | — |
 | `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` | Saving classifications to MySQL (`DB_HOST` can include `:port`) | Your database |
+| `DB_TLS` | *(optional)* encrypt the DB connection: `prefer` (default; plain if TLS fails, logged), `require` (TLS or no connection), `off`. The server certificate isn't verified (CranL's is self-signed and regenerated) | You |
 | `IP_HASH_SECRET` | Keys the stored visitor-IP hash so a leaked database can't be reversed into IPs. Generate once with `openssl rand -hex 32`; don't change it casually | You |
 | `TRUSTED_IP_HEADER` | *(optional)* the header your host's edge sets to the real client IP, e.g. `X-Real-IP` — used for vote dedup and rate limiting. Unset = last `X-Forwarded-For` entry | Ask your host |
 

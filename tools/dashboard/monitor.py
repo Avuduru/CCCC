@@ -8,7 +8,8 @@ Runs inside server.py (a thread), so it works even when no one has the page open
                         visit counter receiving.
 Read-only: never saves a rating or writes anything on the site.
 
-Alerts (ntfy, optional: NTFY_TOPIC in dash.env):
+Alerts go to Telegram (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID, a bot made with @BotFather) and/or
+ntfy (NTFY_TOPIC) — whichever is set in dash.env:
   * "ours" (the site's own problems) after 2 failed runs in a row; security problems at once.
   * "theirs" (an outside service like Open Library) only after ~1 hour, low priority.
   * one message per run listing every new problem; a "recovered" message when it clears;
@@ -61,6 +62,8 @@ class Monitor:
     def __init__(self, fetch, gc, site, conf):
         self.fetch, self.gc, self.site = fetch, gc, site
         self.topic = conf.get('NTFY_TOPIC', '').strip()
+        self.tg_token = conf.get('TELEGRAM_BOT_TOKEN', '').strip()
+        self.tg_chat = conf.get('TELEGRAM_CHAT_ID', '').strip()
         self.ntfy = conf.get('NTFY_SERVER', 'https://ntfy.sh').rstrip('/')
         tzname = conf.get('ALERT_TZ', 'America/New_York')
         try:
@@ -359,21 +362,41 @@ class Monitor:
         return out
 
     # ------------------------------------------------------------------ alerting
+    @property
+    def alerts_on(self):
+        return bool(self.topic or (self.tg_token and self.tg_chat))
+
+    def _telegram(self, title, message, priority):
+        esc = lambda t: t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        icon = {5: '🚨', 4: '🔴', 3: '🟠', 2: '🟢'}.get(priority, '•')
+        s, _, _, _ = self.fetch(f'https://api.telegram.org/bot{self.tg_token}/sendMessage', method='POST', timeout=15,
+                                headers={'Content-Type': 'application/json'},
+                                data=json.dumps({'chat_id': self.tg_chat, 'parse_mode': 'HTML',
+                                                 'text': f'{icon} <b>{esc(title)}</b>\n{esc(message)}',
+                                                 'disable_web_page_preview': True,
+                                                 'disable_notification': priority <= 2}).encode())  # low priority = silent
+        return s == 200
+
+    def _ntfy(self, title, message, priority, tags):
+        s, _, _, _ = self.fetch(self.ntfy, method='POST', timeout=15, headers={'Content-Type': 'application/json'},
+                                data=json.dumps({'topic': self.topic, 'title': title, 'message': message,
+                                                 'priority': priority, 'tags': tags or []}).encode())
+        return s == 200
+
     def notify(self, title, message, priority=3, tags=None):
         entry = {'at': now_utc().strftime('%Y-%m-%dT%H:%M:%SZ'), 'title': title, 'message': message, 'priority': priority}
         self.sent.insert(0, entry)
         del self.sent[20:]
-        if not self.topic:
-            entry['delivered'] = False
-            return False
-        try:
-            s, _, _, _ = self.fetch(self.ntfy, method='POST', timeout=15, headers={'Content-Type': 'application/json'},
-                                    data=json.dumps({'topic': self.topic, 'title': title, 'message': message,
-                                                     'priority': priority, 'tags': tags or []}).encode())
-            entry['delivered'] = s == 200
-        except Exception:
-            entry['delivered'] = False
-        return entry['delivered']
+        ok = False
+        for enabled, send in ((self.tg_token and self.tg_chat, lambda: self._telegram(title, message, priority)),
+                              (self.topic, lambda: self._ntfy(title, message, priority, tags))):
+            if enabled:
+                try:
+                    ok = send() or ok
+                except Exception:   # never log the exception text: the Telegram URL holds the token
+                    pass
+        entry['delivered'] = ok
+        return ok
 
     def process(self, results):
         """Update failure counters and send one batched message for what changed."""
@@ -473,7 +496,7 @@ class Monitor:
                 'failed': len(failing),
                 'ours_failing': [c['name'] for c in failing if c['owner'] == 'ours'],
                 'home_online': self.home_online,
-                'alerts_on': bool(self.topic),
+                'alerts_on': self.alerts_on,
                 'sent': self.sent[:8],
                 'checks': [{k: c[k] for k in ('group', 'name', 'ok', 'ms', 'note', 'owner')} for c in checks],
             }

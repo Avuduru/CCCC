@@ -138,6 +138,7 @@ def index_rules():
         ('data-value="manual">يدوي<', 'data-value="manual">Manual<', 1),
         ('<span class="kicker-dot"></span>العمل</span>', '<span class="kicker-dot"></span>Work</span>', 1),
         ('placeholder="ابحث عن عمل…"', 'placeholder="Search for a title…"', 1),
+        ('<a id="data-credit" class="data-credit" href="https://rawg.io" target="_blank" rel="noopener" hidden>بيانات الألعاب: RAWG</a>', '<a id="data-credit" class="data-credit" href="https://rawg.io" target="_blank" rel="noopener" hidden>Game data: RAWG</a>', 1),
         ('<span class="search-hint">إدخال</span>', '<span class="search-hint">Enter</span>', 1),
         ('<!-- Each box has its label above it ("your name", "your score"), so no\n                             separate heading is needed; the card itself still says "المُصنّف:" -->',
          '<!-- Each box has its label above it ("your name", "your score"), so no\n                             separate heading is needed; the card itself still says "Rated by:" -->', 1),
@@ -244,6 +245,9 @@ def about_rules():
         ('<h2>مفتوح للجميع</h2>', '<h2>Open to everyone</h2>', 1),
         ('<p>المشروع <a href="https://github.com/Avuduru/CCCC" target="_blank" rel="noopener">مفتوح المصدر</a>، ويمكن لأي شخص استخدامه ومشاركة تصنيفاته.</p>',
          '<p>The project is <a href="https://github.com/Avuduru/CCCC" target="_blank" rel="noopener">open source</a>, and anyone can use it and share their ratings.</p>', 1),
+        ('<h2>مصادر البيانات</h2>', '<h2>Data sources</h2>', 1),
+        ('<p>بيانات الأعمال وصورها من: <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a> (الأفلام والمسلسلات)، و<a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a> و<a href="https://www.steamgriddb.com" target="_blank" rel="noopener">SteamGridDB</a> و<a href="https://howlongtobeat.com" target="_blank" rel="noopener">HowLongToBeat</a> (الألعاب)، و<a href="https://anilist.co" target="_blank" rel="noopener">AniList</a> و<a href="https://kitsu.io" target="_blank" rel="noopener">Kitsu</a> و<a href="https://jikan.moe" target="_blank" rel="noopener">Jikan</a> (الأنمي والمانجا)، و<a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a> (الكتب). يستخدم هذا الموقع واجهة TMDB البرمجية، لكنه غير معتمد ولا مصادق عليه من TMDB.</p>',
+         '<p>Titles, details and images come from <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a> (movies and TV), <a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a>, <a href="https://www.steamgriddb.com" target="_blank" rel="noopener">SteamGridDB</a> and <a href="https://howlongtobeat.com" target="_blank" rel="noopener">HowLongToBeat</a> (games), <a href="https://anilist.co" target="_blank" rel="noopener">AniList</a>, <a href="https://kitsu.io" target="_blank" rel="noopener">Kitsu</a> and <a href="https://jikan.moe" target="_blank" rel="noopener">Jikan</a> (anime and manga), and <a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a> (books). This product uses the TMDB API but is not endorsed or certified by TMDB.</p>', 1),
         # Changelog: add each new entry's English here, matching the Arabic in about.html
         ('<h2>سجل التغييرات</h2>', '<h2>Changelog</h2>', 1),
         ('<p>نسجّل هنا كل تغيير في دليل التصنيف يغيّر معنى التصنيف. ويُحفظ مع كل تصنيف رقم إصدار الدليل الذي صُنِّف وفقه، فلا تختلط التصنيفات القديمة بالجديدة.</p>',

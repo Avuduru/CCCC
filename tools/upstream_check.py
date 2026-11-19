@@ -13,6 +13,9 @@ Two parts:
      game cover, HLTB, translate, the image proxy and stats — with status, time, result count
      and whether the answer came from the 10-minute search cache.
 
+Cached answers prove nothing about the upstream: searches retry with other titles until one is
+answered fresh (WARN if all were cached); cached details are marked "(cache)".
+
 A line is FAIL when the call errors or returns nothing where something is expected, SLOW
 when it takes over 4 s, WARN for a fallback that's down (Kitsu / Jikan — only used when
 AniList fails). Exit code 1 if anything FAILs (the scheduled GitHub job then emails
@@ -89,24 +92,33 @@ st, s, b, h = call('https://howlongtobeat.com/')
 report('HowLongToBeat', st, s, st == 200)
 
 print(f'\nTHROUGH THE SITE — {SITE}/proxy.php')
-# A different everyday title each run, so the 10-minute search cache doesn't hide a dead upstream
-pick = random.choice
-searches = [
-    ('anime', pick(['naruto', 'frieren', 'one piece', 'bleach', 'monster'])),
-    ('manga', pick(['berserk', 'vagabond', 'monster', 'vinland saga'])),
-    ('movie', pick(['dune', 'inception', 'interstellar', 'the matrix'])),
-    ('tv', pick(['breaking bad', 'dark', 'the office', 'severance'])),
-    ('game', pick(['elden ring', 'gta 6', 'minecraft', 'hollow knight'])),
-    ('book', pick(['dune', 'the hobbit', '1984', 'frankenstein'])),
-]
+# Searches are cached (10 min; game searches 24 h), so a cached answer proves nothing about the
+# upstream: try up to 4 different titles until one is answered fresh. If all came from the cache,
+# the line says so (WARN, not OK).
+pool = {
+    'anime': ['naruto', 'frieren', 'one piece', 'bleach', 'monster', 'mushishi', 'haikyuu', 'trigun', 'dorohedoro', 'kingdom'],
+    'manga': ['berserk', 'vagabond', 'monster', 'vinland saga', 'blame', 'pluto', 'dorohedoro', 'kingdom', 'akira', 'gantz'],
+    'movie': ['dune', 'inception', 'interstellar', 'the matrix', 'heat', 'alien', 'arrival', 'gravity', 'up', 'jaws'],
+    'tv': ['breaking bad', 'dark', 'the office', 'severance', 'chernobyl', 'fargo', 'lost', 'friends', 'sherlock', 'dexter'],
+    'game': ['elden ring', 'minecraft', 'hollow knight', 'hades', 'celeste', 'portal', 'doom', 'tetris', 'outer wilds', 'inside',
+             'limbo', 'braid', 'fez', 'cuphead', 'terraria', 'factorio', 'rimworld', 'subnautica', 'firewatch', 'journey'],
+    'book': ['dune', 'the hobbit', '1984', 'frankenstein', 'dracula', 'emma', 'ulysses', 'beloved', 'it', 'carrie'],
+}
 api = SITE + '/proxy.php?'
 img = None
-for typ, q in searches:
-    st, s, b, h = call(api + urllib.parse.urlencode({'type': typ, 'query': q}))
+for typ, titles in pool.items():
+    random.shuffle(titles)
+    for attempt, q in enumerate(titles[:4]):
+        st, s, b, h = call(api + urllib.parse.urlencode({'type': typ, 'query': q}))
+        cached = (h.get('X-Search-Cache') or h.get('x-search-cache') or '').upper() == 'HIT'
+        if not cached or st != 200:
+            break
     d = jget(b)
     n = count(d)
-    cache = (h.get('X-Search-Cache') or h.get('x-search-cache') or '').upper()
-    report(f'search {typ}: "{q}"', st, s, st == 200 and n > 0, f'{n} results' + (' (cache)' if cache == 'HIT' else ''))
+    if cached and st == 200 and n > 0:
+        report(f'search {typ}: "{q}"', st, s, False, f'{n} results, all 4 tries from the cache: upstream not verified', fatal=False)
+    else:
+        report(f'search {typ}: "{q}"', st, s, st == 200 and n > 0, f'{n} results' + (f' (fresh on try {attempt + 1})' if attempt else ''))
     if typ == 'movie' and d and not img:
         for r in d.get('results', []):
             if r.get('poster_path'):
@@ -127,6 +139,8 @@ for name, params, check in [
     st, s, b, h = call(api + urllib.parse.urlencode(params))
     d = jget(b)
     note = '' if check(d) else (b[:80].decode(errors='replace') if b else '')
+    if (h.get('X-Cache') or h.get('x-cache') or '').upper() == 'HIT':
+        note = (note + ' (cache)').strip()
     report(name, st, s, st == 200 and check(d), note)
 
 if img:

@@ -11,15 +11,26 @@
 // the hashes of their own inline scripts, the import map included); WebAssembly for the
 // JPEG encoder; images from anywhere over HTTPS (search thumbnails come straight from
 // TMDB, RAWG, AniList...); fetch() only to this site (proxy.php); no framing by other sites.
+// GoatCounter (anonymous visit counting, no cookies). Off unless GOATCOUNTER_CODE is set
+// (CranL Environment), e.g. "muhafid" -> https://muhafid.goatcounter.com/count.
+// Its script (js/vendor/goatcounter/count.v5.js, ISC) is served from this site; the only
+// thing that leaves the page is the count itself (sendBeacon, or a 1px image if blocked).
+function goatcounterEndpoint()
+{
+    $code = strtolower(trim((string)getenv('GOATCOUNTER_CODE')));
+    return preg_match('/^[a-z0-9][a-z0-9-]{0,48}[a-z0-9]$/', $code) ? "https://$code.goatcounter.com" : '';
+}
+
 function cspFor($scriptHashes = [])
 {
     $hashes = $scriptHashes ? ' ' . implode(' ', array_map(fn($h) => "'sha256-$h'", $scriptHashes)) : '';
+    $gc = goatcounterEndpoint();
     return "default-src 'self'; "
         . "script-src 'self'$hashes 'wasm-unsafe-eval' https://cdnjs.cloudflare.com; "
         . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         . "font-src 'self' https://fonts.gstatic.com data:; "
         . "img-src 'self' data: blob: https:; "
-        . "connect-src 'self' data: blob:; "
+        . "connect-src 'self' data: blob:" . ($gc ? " $gc" : '') . "; "
         . "worker-src 'self' blob:; "
         . "frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'";
 }
@@ -104,7 +115,7 @@ if ($file !== '' && file_exists($file . '.html')) {
     $cacheFile = null;
     if (PHP_SAPI !== 'cli-server') {
         $cacheDir = sys_get_temp_dir() . '/cccc-pages';
-        $stamp = filemtime(__FILE__) . '-' . filemtime($file . '.html');
+        $stamp = filemtime(__FILE__) . '-' . filemtime($file . '.html') . '-' . substr(md5(goatcounterEndpoint()), 0, 6);
         $cacheFile = $cacheDir . '/' . str_replace('/', '_', $file) . '-' . $stamp . '.html';
         $age = @filemtime($cacheFile);
         if ($age !== false && time() - $age < 600 && ($cached = @file_get_contents($cacheFile)) !== false) {
@@ -115,6 +126,12 @@ if ($file !== '' && file_exists($file . '.html')) {
     }
 
     $html = file_get_contents($file . '.html');
+
+    // Visit counter (see goatcounterEndpoint); gets its ?v= from the rewrite below.
+    if (($gc = goatcounterEndpoint()) !== '') {
+        $tag = '<script data-goatcounter="' . $gc . '/count" async src="/js/vendor/goatcounter/count.v5.js"></script>';
+        $html = preg_replace('#</head>#', "    $tag\n</head>", $html, 1);
+    }
 
     // Cache busting: every local file the page references gets ?v=<fingerprint of its
     // content>. Caddy lets browsers keep any ?v= URL for a year (see Caddyfile). It is the

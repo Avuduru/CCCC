@@ -2,6 +2,7 @@ import { config } from './config.js';
 import { state } from './state.js';
 import { t } from './i18n.js';
 import { showSearchResults } from './ui.js';
+import { countEvent } from './analytics.js';
 
 export async function handleSearch() {
     const searchQuery = document.getElementById('search-query');
@@ -28,7 +29,10 @@ export async function handleSearch() {
         }
         const data = await resp.json();
         if (stale()) return;
-        if (data) showSearchResults(data, type);
+        if (data) {
+            showSearchResults(data, type);
+            countEvent(`searched-${type}`, { oncePerPage: true });
+        }
     } catch (err) {
         console.error('Search Error:', err);
         if (!stale()) showSearchMessage(navigator.onLine === false ? t('search.offline') : t('search.failed'));

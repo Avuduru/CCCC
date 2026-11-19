@@ -2,6 +2,7 @@ import { CATEGORIES, iconSrc } from './constants.js';
 import { EN, t, formatCount } from './i18n.js';
 import { state, updateState } from './state.js';
 import { handleSearch } from './api.js';
+import { countEvent } from './analytics.js';
 import { translateGenres, translateText } from './translations.js';
 import { debounce } from './utils.js';
 import { initCard, renderCard, fitCard, scalePreview } from './card.js';
@@ -415,6 +416,13 @@ export function showSearchResults(data, type) {
 
     if (!results.length) {
         container.innerHTML = `<div class="search-result-item">${t('search.no_results')}</div>`;
+        // A dead end only if it is still showing after a pause (not a half-typed word)
+        const shown = container.firstChild;
+        setTimeout(() => {
+            if (container.firstChild === shown && !container.classList.contains('hidden')) {
+                countEvent(`no-results-${type}`, { oncePerPage: true });
+            }
+        }, 3000);
     } else {
         results.slice(0, 5).forEach((item, i) => {
             const title = item.title || item.name || item.title_english || (item.volumeInfo ? item.volumeInfo.title : 'No Title');
@@ -459,6 +467,7 @@ export function showSearchResults(data, type) {
 }
 
 function selectItem(item, type) {
+    countEvent(`picked-${type}`);
     if (type === 'anime' || type === 'manga') {
         // AniList (primary) and Jikan/MAL (fallback) use different ID spaces — namespace them
         state.meta.id = item.mal_id ? `${item.id_source || 'mal'}:${item.mal_id}` : '';

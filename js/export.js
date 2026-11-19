@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { fitCard, CARD_SIZE, MANUAL_PH } from './card.js';
 import { t, allValues, LANG } from './i18n.js';
+import { countEvent } from './analytics.js';
 
 // Exported cards are full-colour (4:4:4) baseline JPEGs at this quality.
 // X/Twitter passes such JPEGs through untouched, while it re-saves PNGs at
@@ -268,6 +269,7 @@ function showExportModal(url, file) {
         shareBtn.className = 'share-btn';
         shareBtn.innerText = t('export_popup.share');
         shareBtn.onclick = async () => {
+            countEvent('share');
             try {
                 await navigator.share({ files: [file], title: state.meta.title || 'CCCC', text: shareCaption() });
                 logClassification('export');
@@ -333,15 +335,21 @@ function captionActions({ withX = true } = {}) {
     x.type = 'button';
     x.className = 'share-x';
     x.innerText = t('share.post_x');
-    x.onclick = () => window.open('https://x.com/intent/post?text=' + encodeURIComponent(caption), '_blank', 'noopener');
+    x.onclick = () => {
+        countEvent('post-x');
+        window.open('https://x.com/intent/post?text=' + encodeURIComponent(caption), '_blank', 'noopener');
+    };
 
     const copy = document.createElement('button');
     copy.type = 'button';
     copy.className = 'share-text';
     copy.innerText = t('share.copy_text');
-    copy.onclick = () => navigator.clipboard.writeText(caption)
-        .then(() => { copy.innerText = t('share.text_copied'); })
-        .catch(err => console.error('Caption copy failed:', err));
+    copy.onclick = () => {
+        countEvent('copy-text');
+        navigator.clipboard.writeText(caption)
+            .then(() => { copy.innerText = t('share.text_copied'); })
+            .catch(err => console.error('Caption copy failed:', err));
+    };
 
     if (withX) row.appendChild(x);
     row.appendChild(copy);

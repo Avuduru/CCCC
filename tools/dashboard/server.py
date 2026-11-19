@@ -236,8 +236,7 @@ if __name__ == '__main__':
         print('sent' if ok else ('NTFY_TOPIC is not set' if not MONITOR.topic else 'could not reach ntfy'))
         sys.exit(0 if ok else 1)
     if '--check-once' in sys.argv:          # run every check once, print, exit (no alerts sent)
-        MONITOR.topic = ''
-        MONITOR.run_once(deep=True)
+        MONITOR.run_once(deep=True, dry=True)
         for c in MONITOR.snapshot()['checks']:
             mark = {True: 'OK  ', False: 'FAIL', None: 'n/a '}[c['ok']]
             print(f"{mark} {c['group']:<9} {c['name']:<28} {c['owner']:<6} {c['ms']:>6} ms  {c['note']}")

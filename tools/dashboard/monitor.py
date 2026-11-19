@@ -434,11 +434,15 @@ class Monitor:
             self.notify('Daily: all good', f'{len(self.checks)} checks passing' + extra, priority=2, tags=['green_circle'])
 
     # ------------------------------------------------------------------ loop + snapshot
-    def run_once(self, deep=True):
+    def run_once(self, deep=True, dry=False):
         results = self.quick()
         if deep and self.home_online:
             results += self.deep()
         with self.lock:
+            if dry:                       # manual test: show results, send/save nothing
+                for c in results:
+                    self.checks[c['id']] = c
+                return
             self.process(results)
             self.heartbeat()
             self._save()

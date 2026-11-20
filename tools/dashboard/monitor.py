@@ -326,8 +326,12 @@ class Monitor:
         for ev, label, limit in SIGNALS:
             def signal(ev=ev, limit=limit):
                 load_visits()
-                n = visits['events'].get(ev, 0)
-                return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h'
+                # 'js-error' also counts 'js-error-<file>-<line>' (the site names where an error happened)
+                hits = {k: v for k, v in visits['events'].items() if k == ev or k.startswith(ev + '-')}
+                n = sum(hits.values())
+                where = sorted(((v, k[len(ev) + 1:]) for k, v in hits.items() if k != ev), reverse=True)[:3]
+                at = (' (at ' + ', '.join(f'{w}' + (f' ×{c}' if c > 1 else '') for c, w in where) + ')') if where else ''
+                return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h{at}'
             add(f'vis-{ev}', 'Visitors', label, signal)
 
         def rejected():

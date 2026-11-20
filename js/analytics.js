@@ -7,6 +7,7 @@
 //   share / post-x / copy-text   the share buttons after Export / Copy
 //   save-failed / save-rejected-<code>   saving a rating failed (5xx or no connection) / was refused (4xx)
 //   export-failed / copy-failed          making the card image failed
+//   jpeg-fallback                         the MozJPEG encoder didn't start; the card was saved with the browser's own JPEG
 //   js-error-<file>-<line>                an uncaught error in this site's own scripts, once per page view
 //                                         (only where it happened, e.g. js-error-export-278; never the message)
 const counted = new Set();

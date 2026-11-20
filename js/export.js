@@ -214,6 +214,7 @@ async function canvasToJpeg(canvas) {
         return { blob: new Blob([buf], { type: 'image/jpeg' }), ext: 'jpg' };
     } catch (e) {
         console.warn('JPEG encoder unavailable, using browser encoder:', e);
+        countEvent('jpeg-fallback', { oncePerPage: true });
         const jpeg = await canvasToBlob(canvas, 'image/jpeg', 1.0);
         if (jpeg) return { blob: jpeg, ext: 'jpg' };
         return { blob: await canvasToBlob(canvas, 'image/png'), ext: 'png' };

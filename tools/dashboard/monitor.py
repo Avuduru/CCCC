@@ -340,16 +340,28 @@ class Monitor:
                 load_visits()
                 # 'js-error' also counts 'js-error-<file>-<line>' (the site names where an error happened)
                 hits = {k: v for k, v in visits['events'].items() if k == ev or k.startswith(ev + '-')}
-                n = sum(hits.values())
                 spots = {}
                 for k, v in hits.items():
                     if k != ev:
                         spot = error_spot(k[len(ev) + 1:])
                         spots[spot] = spots.get(spot, 0) + v
+                # 'page-<line>' = an error the browser blames on the page itself, not one of our js/ files.
+                # Our pages hold no code at those lines (iPhones opening links inside the X app add their own
+                # scripts), so these are shown but never alert.
+                page = sum(v for k, v in spots.items() if k.startswith('page-'))
+                spots = {k: v for k, v in spots.items() if not k.startswith('page-')}
+                n = sum(hits.values()) - page
                 where = sorted(((v, k) for k, v in spots.items()), reverse=True)[:3]
                 at = (' (at ' + ', '.join(f'{w}' + (f' ×{c}' if c > 1 else '') for c, w in where) + ')') if where else ''
-                return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h{at}'
+                extra = f'; {page} more from the page itself (app browsers), not alerted' if page else ''
+                return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h{at}{extra}'
             add(f'vis-{ev}', 'Visitors', label, signal)
+
+        def jpeg_fallback():
+            load_visits()
+            n = sum(v for k, v in visits['events'].items() if k == 'jpeg-fallback')
+            return True, f'{n} card{"s" if n != 1 else ""} saved with the browser\'s own JPEG encoder in the last ~3 h'
+        add('vis-jpeg-fallback', 'Visitors', 'JPEG encoder fallback', jpeg_fallback, owner='info')
 
         def rejected():
             load_visits()

@@ -98,7 +98,9 @@ function logClassification(action) {
             // Health signal (anonymous count, see analytics.js): a server error means saving is broken;
             // a 4xx is a refusal (rate limit, bad title...), counted separately with its code.
             if (!r.ok) countEvent(r.status >= 500 ? 'save-failed' : `save-rejected-${r.status}`);
-        }).catch(() => countEvent('save-failed'));
+        // No answer at all = the visitor's connection dropped (weak signal, app switched away for the share
+        // sheet); counted on its own so it doesn't raise the "saving is broken" alarm.
+        }).catch(() => countEvent('save-offline'));
     } catch (e) {}
 }
 

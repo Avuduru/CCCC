@@ -5,7 +5,8 @@
 //   no-results-<type>  a search that still shows "no results" 3 s later, once per page view
 //   picked-<type>      a search result was chosen
 //   share / post-x / copy-text   the share buttons after Export / Copy
-//   save-failed / save-rejected-<code>   saving a rating failed (5xx or no connection) / was refused (4xx)
+//   save-failed / save-rejected-<code>   saving a rating failed (5xx) / was refused (4xx)
+//   save-offline                          saving got no answer at all (the visitor's connection)
 //   export-failed / copy-failed          making the card image failed
 //   jpeg-fallback                         the MozJPEG encoder didn't start; the card was saved with the browser's own JPEG
 //   js-error-<file>-<line>                an uncaught error in this site's own scripts, once per page view

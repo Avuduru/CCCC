@@ -98,7 +98,9 @@ function logClassification(action) {
             // Health signal (anonymous count, see analytics.js): a server error means saving is broken;
             // a 4xx is a refusal (rate limit, bad title...), counted separately with its code.
             if (!r.ok) countEvent(r.status >= 500 ? 'save-failed' : `save-rejected-${r.status}`);
-        }).catch(() => countEvent('save-failed'));
+        // No answer at all = the visitor's connection dropped (weak signal, app switched away for the share
+        // sheet); counted on its own so it doesn't raise the "saving is broken" alarm.
+        }).catch(() => countEvent('save-offline'));
     } catch (e) {}
 }
 
@@ -214,6 +216,7 @@ async function canvasToJpeg(canvas) {
         return { blob: new Blob([buf], { type: 'image/jpeg' }), ext: 'jpg' };
     } catch (e) {
         console.warn('JPEG encoder unavailable, using browser encoder:', e);
+        countEvent('jpeg-fallback', { oncePerPage: true });
         const jpeg = await canvasToBlob(canvas, 'image/jpeg', 1.0);
         if (jpeg) return { blob: jpeg, ext: 'jpg' };
         return { blob: await canvasToBlob(canvas, 'image/png'), ext: 'png' };

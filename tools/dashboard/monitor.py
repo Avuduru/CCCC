@@ -20,6 +20,7 @@ import base64
 import email.utils
 import json
 import random
+import re
 import socket
 import ssl
 import threading
@@ -61,6 +62,25 @@ OWN_SCRIPTS = {'page', 'analytics', 'api', 'app', 'card', 'config', 'constants',
 def error_spot(tag):
     file, _, line = tag.rpartition('-')
     return tag if file in OWN_SCRIPTS and line.isdigit() and len(line) <= 6 else 'other'
+
+
+# The site's pages. An error the browser blames on a page ('page-<line>') is ours only if that line is inside
+# one of our inline <script> blocks on one of these pages; anywhere else it's a script the visitor's browser
+# added (iPhones opening links inside the X app do this), so it's shown but never alerts.
+SITE_PAGES = ['/', '/en', '/guide', '/about', '/en/guide', '/en/about']
+_INLINE_SCRIPT = re.compile(r'<script\b([^>]*)>(.*?)</script>', re.S | re.I)
+
+
+def inline_script_lines(html):
+    """Line numbers (1-based) covered by inline JavaScript blocks (no src, not JSON-LD / import map)."""
+    lines = set()
+    for m in _INLINE_SCRIPT.finditer(html):
+        attrs = m.group(1).lower()
+        if 'src=' in attrs or re.search(r'type\s*=\s*["\']?(application/ld\+json|importmap|application/json)', attrs):
+            continue
+        first = html.count('\n', 0, m.start()) + 1
+        lines.update(range(first, first + m.group(0).count('\n') + 1))
+    return lines
 
 
 GROUP_ORDER = ['Site', 'Security', 'Visitors', 'Search', 'Cards', 'Sources']
@@ -297,7 +317,13 @@ class Monitor:
 
         # --- security: headers + private paths stay private (any failure alerts at once)
         def headers():
-            s, _, h, _ = self.fetch(f'{self.site}/', timeout=15)
+            try:
+                s, _, h, _ = self.fetch(f'{self.site}/', timeout=15)
+            except Exception as e:
+                return None, f"couldn't check ({type(e).__name__})"
+            if s != 200:
+                # A block page, rate limit or outage has no headers to judge; "Home page" alerts on outages.
+                return None, f"couldn't check (HTTP {s})"
             csp = h.get('Content-Security-Policy', '')
             missing = [n for n, ok in [('CSP', "default-src 'self'" in csp and "'unsafe-inline'" not in csp.split('script-src', 1)[-1].split(';')[0]),
                                        ('HSTS', bool(h.get('Strict-Transport-Security'))),
@@ -307,15 +333,31 @@ class Monitor:
         add('sec-headers', 'Security', 'Security headers', headers, threshold=1)
 
         def private():
-            leaks = []
+            # Only a real 200 is a leak. Timeouts / no answer mean we couldn't check (not a security problem).
+            leaks, unknown = [], 0
             for p in PRIVATE_PATHS:
-                s, _, _, _ = self.fetch(self.site + p, timeout=10)
+                try:
+                    s, _, _, _ = self.fetch(self.site + p, timeout=10)
+                except Exception:
+                    unknown += 1
+                    continue
                 if s == 200:
                     leaks.append(p)
-            s, _, _, _ = self.fetch(f'{self.site}/proxy.php?type=lookup&query=x&content_type=anime', timeout=10)
-            if s != 404:
-                leaks.append(f'lookup is on (HTTP {s})')
-            return not leaks, f'{len(PRIVATE_PATHS)} private paths blocked, lookup off' if not leaks else 'EXPOSED: ' + ', '.join(leaks)
+                elif not s:
+                    unknown += 1
+            try:
+                s, _, _, _ = self.fetch(f'{self.site}/proxy.php?type=lookup&query=x&content_type=anime', timeout=10)
+                if s == 200:
+                    leaks.append('lookup is on')
+                elif s != 404:
+                    unknown += 1
+            except Exception:
+                unknown += 1
+            if leaks:
+                return False, 'EXPOSED: ' + ', '.join(leaks)
+            if unknown:
+                return None, f"couldn't check {unknown} of {len(PRIVATE_PATHS) + 1} (no clear answer), none exposed"
+            return True, f'{len(PRIVATE_PATHS)} private paths blocked, lookup off'
         add('sec-private', 'Security', 'Private files blocked', private, threshold=1)
 
         # --- real visitors (GoatCounter events from the site) + ratings stopped + counter receiving
@@ -335,21 +377,55 @@ class Monitor:
                     pages += hit.get('count', 0)
             visits['pages_3h'] = pages
 
+        page_cache = {}
+
+        def page_lines():
+            if 'lines' not in page_cache:
+                lines = set()
+                for path in SITE_PAGES:
+                    try:
+                        st, body, _, _ = self.fetch(self.site + path, timeout=15)
+                        if st == 200:
+                            lines |= inline_script_lines(body.decode('utf-8', 'replace'))
+                    except Exception:
+                        pass
+                page_cache['lines'] = lines
+            return page_cache['lines']
+
         for ev, label, limit in SIGNALS:
             def signal(ev=ev, limit=limit):
                 load_visits()
                 # 'js-error' also counts 'js-error-<file>-<line>' (the site names where an error happened)
                 hits = {k: v for k, v in visits['events'].items() if k == ev or k.startswith(ev + '-')}
-                n = sum(hits.values())
                 spots = {}
                 for k, v in hits.items():
                     if k != ev:
                         spot = error_spot(k[len(ev) + 1:])
                         spots[spot] = spots.get(spot, 0) + v
+                # 'page-<line>' = an error the browser blames on the page itself. Ours only when the line is in one
+                # of our inline scripts (see SITE_PAGES); otherwise shown but never alerts. If the pages can't be
+                # read, they don't alert either (a site outage has its own checks).
+                # Plain 'js-error' (no spot) came from pages older than #84 and can't be placed: shown, no alert.
+                ours_lines = page_lines() if any(k.startswith('page-') for k in spots) else set()
+                foreign = sum(v for k, v in spots.items() if k.startswith('page-') and int(k[5:]) not in ours_lines)
+                spots = {k: v for k, v in spots.items() if not (k.startswith('page-') and int(k[5:]) not in ours_lines)}
+                legacy = hits.get(ev, 0) if ev == 'js-error' else 0
+                foreign += legacy
+                n = sum(hits.values()) - foreign
                 where = sorted(((v, k) for k, v in spots.items()), reverse=True)[:3]
                 at = (' (at ' + ', '.join(f'{w}' + (f' ×{c}' if c > 1 else '') for c, w in where) + ')') if where else ''
-                return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h{at}'
+                if ev == 'save-failed' and visits['events'].get('save-offline'):
+                    foreign = visits['events']['save-offline']
+                    return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h{at}; {foreign} more lost their connection, not alerted'
+                extra = f'; {foreign} more not from our code (app browsers or pages from before #84), not alerted' if foreign else ''
+                return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h{at}{extra}'
             add(f'vis-{ev}', 'Visitors', label, signal)
+
+        def jpeg_fallback():
+            load_visits()
+            n = sum(v for k, v in visits['events'].items() if k == 'jpeg-fallback')
+            return True, f'{n} card{"s" if n != 1 else ""} saved with the browser\'s own JPEG encoder in the last ~3 h'
+        add('vis-jpeg-fallback', 'Visitors', 'JPEG encoder fallback', jpeg_fallback, owner='info')
 
         def rejected():
             load_visits()

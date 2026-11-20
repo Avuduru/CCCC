@@ -51,6 +51,18 @@ PRIVATE_PATHS = ['/.env', '/.git/config', '/data/schema.sql', '/data/classificat
 # Real visitors' failures (GoatCounter events from js/analytics.js), alert thresholds per ~3 hours
 SIGNALS = [('save-failed', 'Saving ratings', 2), ('export-failed', 'Card export', 3),
            ('copy-failed', 'Card copy', 3), ('js-error', 'Page errors', 3)]
+# Anyone can send GoatCounter an event with any name, so names never reach an alert as-is:
+# only our own script names (js-error-<file>-<line>) and 3-digit HTTP codes are shown, the rest is "other".
+# Adding a file under js/? Add its name here too, or its errors show as "other" (still counted).
+OWN_SCRIPTS = {'page', 'analytics', 'api', 'app', 'card', 'config', 'constants', 'export', 'i18n', 'interact',
+               'phone', 'state', 'translations', 'ui', 'utils', 'encode', 'meta', 'mozjpeg_enc', 'count.v5'}
+
+
+def error_spot(tag):
+    file, _, line = tag.rpartition('-')
+    return tag if file in OWN_SCRIPTS and line.isdigit() and len(line) <= 6 else 'other'
+
+
 GROUP_ORDER = ['Site', 'Security', 'Visitors', 'Search', 'Cards', 'Sources']
 
 
@@ -329,14 +341,24 @@ class Monitor:
                 # 'js-error' also counts 'js-error-<file>-<line>' (the site names where an error happened)
                 hits = {k: v for k, v in visits['events'].items() if k == ev or k.startswith(ev + '-')}
                 n = sum(hits.values())
-                where = sorted(((v, k[len(ev) + 1:]) for k, v in hits.items() if k != ev), reverse=True)[:3]
+                spots = {}
+                for k, v in hits.items():
+                    if k != ev:
+                        spot = error_spot(k[len(ev) + 1:])
+                        spots[spot] = spots.get(spot, 0) + v
+                where = sorted(((v, k) for k, v in spots.items()), reverse=True)[:3]
                 at = (' (at ' + ', '.join(f'{w}' + (f' ×{c}' if c > 1 else '') for c, w in where) + ')') if where else ''
                 return n < limit, f'{n} visitor{"s" if n != 1 else ""} hit it in the last ~3 h{at}'
             add(f'vis-{ev}', 'Visitors', label, signal)
 
         def rejected():
             load_visits()
-            rej = {k[len('save-rejected-'):]: v for k, v in visits['events'].items() if k.startswith('save-rejected-')}
+            rej = {}
+            for k, v in visits['events'].items():
+                if k.startswith('save-rejected-'):
+                    code = k[len('save-rejected-'):]
+                    code = code if len(code) == 3 and code.isdigit() else 'other'
+                    rej[code] = rej.get(code, 0) + v
             n = sum(rej.values())
             return n < 10, ('none' if not n else ', '.join(f'{v}× HTTP {k}' for k, v in sorted(rej.items()))) + ' in the last ~3 h'
         add('vis-rejected', 'Visitors', 'Saves refused (4xx)', rejected)

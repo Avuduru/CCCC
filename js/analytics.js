@@ -22,7 +22,12 @@ export function countEvent(name, { oncePerPage = false } = {}) {
 // Uncaught errors, only from this site's own files (browser extensions and other sites' scripts are ignored).
 // The event says which of our files and line it came from, nothing about the visitor or the error text.
 const ours = (url) => typeof url === 'string' && url.startsWith(location.origin + '/');
-const fileTag = (url) => (String(url).split(/[?#]/)[0].split('/').pop() || 'page').replace(/\.m?js$/, '').replace(/[^\w.-]/g, '').slice(0, 30) || 'page';
+// Only our script files under /js/ get named; anything else (a page, the 404 page at a typed address) is "page".
+const fileTag = (url) => {
+    const path = String(url).split(/[?#]/)[0].replace(location.origin, '');
+    const name = path.startsWith('/js/') ? path.split('/').pop().replace(/\.m?js$/, '') : '';
+    return /^[a-z0-9_.-]{1,30}$/i.test(name) ? name : 'page';
+};
 let errorCounted = false;
 function countError(url, line) {
     if (errorCounted || typeof window.goatcounter?.count !== 'function') return;
@@ -31,11 +36,12 @@ function countError(url, line) {
 }
 window.addEventListener('error', (e) => { if (ours(e.filename)) countError(e.filename, e.lineno); });
 window.addEventListener('unhandledrejection', (e) => {
-    const stack = String(e.reason?.stack || '');
+    let stack = '';
+    try { stack = String(e.reason?.stack || ''); } catch { return; }
     const origin = location.origin + '/';
     // First stack frame from our own origin: ".../js/export.js?v=123:278:15"
     const at = stack.indexOf(origin);
     if (at < 0) return;
     const m = stack.slice(at + origin.length).match(/^(\S+?):(\d+)(?::\d+)?/);
-    countError(m ? m[1] : '', m ? m[2] : 0);
+    countError(m ? origin + m[1] : '', m ? m[2] : 0);
 });

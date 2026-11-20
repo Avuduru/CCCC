@@ -9,7 +9,7 @@ the Caddyfile blocks `/tools` on the site). Refreshes every minute.
   every 2 min the home internet, home page and database; every 10 min every search type and card feature
   through the site, the sources on their own, security (headers + private files blocked), the TLS certificate,
   a stuck deploy (GitHub `main` newer than the live files), the export libraries, real visitors' failures
-  (GoatCounter events `save-failed`, `export-failed`, `copy-failed`, `js-error`, refused saves), "ratings
+  (GoatCounter events `save-failed`, `export-failed`, `copy-failed`, `js-error-<file>-<line>`, refused saves), "ratings
   stopped" and "visit counter not receiving". Searches retry a second title before failing.
 - **Phone alerts** — Telegram (`TELEGRAM_BOT_TOKEN` from @BotFather + `TELEGRAM_CHAT_ID`, found by
   `server.py --telegram-setup` after messaging the bot; low-priority messages arrive silently) and/or ntfy (`NTFY_TOPIC`): our problems after 2 failed runs, security at once (urgent), outside

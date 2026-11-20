@@ -7,7 +7,8 @@
 //   share / post-x / copy-text   the share buttons after Export / Copy
 //   save-failed / save-rejected-<code>   saving a rating failed (5xx or no connection) / was refused (4xx)
 //   export-failed / copy-failed          making the card image failed
-//   js-error                              an uncaught error in this site's own scripts, once per page view
+//   js-error-<file>-<line>                an uncaught error in this site's own scripts, once per page view
+//                                         (only where it happened, e.g. js-error-export-278; never the message)
 const counted = new Set();
 
 export function countEvent(name, { oncePerPage = false } = {}) {
@@ -19,9 +20,28 @@ export function countEvent(name, { oncePerPage = false } = {}) {
 }
 
 // Uncaught errors, only from this site's own files (browser extensions and other sites' scripts are ignored).
+// The event says which of our files and line it came from, nothing about the visitor or the error text.
 const ours = (url) => typeof url === 'string' && url.startsWith(location.origin + '/');
-window.addEventListener('error', (e) => { if (ours(e.filename)) countEvent('js-error', { oncePerPage: true }); });
+// Only our script files under /js/ get named; anything else (a page, the 404 page at a typed address) is "page".
+const fileTag = (url) => {
+    const path = String(url).split(/[?#]/)[0].replace(location.origin, '');
+    const name = path.startsWith('/js/') ? path.split('/').pop().replace(/\.m?js$/, '') : '';
+    return /^[a-z0-9_.-]{1,30}$/i.test(name) ? name : 'page';
+};
+let errorCounted = false;
+function countError(url, line) {
+    if (errorCounted || typeof window.goatcounter?.count !== 'function') return;
+    errorCounted = true;
+    countEvent(`js-error-${fileTag(url)}-${Number(line) || 0}`);
+}
+window.addEventListener('error', (e) => { if (ours(e.filename)) countError(e.filename, e.lineno); });
 window.addEventListener('unhandledrejection', (e) => {
-    const stack = String(e.reason?.stack || '');
-    if (stack.includes(location.origin + '/')) countEvent('js-error', { oncePerPage: true });
+    let stack = '';
+    try { stack = String(e.reason?.stack || ''); } catch { return; }
+    const origin = location.origin + '/';
+    // First stack frame from our own origin: ".../js/export.js?v=123:278:15"
+    const at = stack.indexOf(origin);
+    if (at < 0) return;
+    const m = stack.slice(at + origin.length).match(/^(\S+?):(\d+)(?::\d+)?/);
+    countError(m ? origin + m[1] : '', m ? m[2] : 0);
 });
